@@ -122,6 +122,21 @@ export default function CategoriesScreen() {
                     {category.name}
                   </Text>
                   <Pressable
+                    onPress={() =>
+                      router.push({
+                        pathname: '/category-form',
+                        params: { kind, parentId: category.id },
+                      })
+                    }
+                    accessibilityRole="button"
+                    accessibilityLabel={`${es.categories.addSubcategory}: ${category.name}`}
+                    hitSlop={8}
+                  >
+                    <Text variant="caption" color={colors.primary}>
+                      +
+                    </Text>
+                  </Pressable>
+                  <Pressable
                     onPress={() => editCategory(category)}
                     accessibilityRole="button"
                     hitSlop={8}

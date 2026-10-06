@@ -117,6 +117,10 @@ export const es = {
     color: 'Color',
     parent: 'Categoría padre',
     noParent: 'Ninguna (categoría principal)',
+    parentHelper:
+      'Toca una categoría si quieres que esta sea una subcategoría. Déjala en "Ninguna" para una categoría principal.',
+    subcategoryOf: 'Subcategoría de',
+    addSubcategory: 'Agregar subcategoría',
     saveCategory: 'Guardar categoría',
     nameRequired: 'El nombre es obligatorio.',
     iconRequired: 'Selecciona un ícono.',

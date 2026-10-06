@@ -31,9 +31,11 @@ export default function CategoryFormScreen() {
   const router = useRouter();
   const { spacing, radii, colors } = useTheme();
   const { session, loading: sessionLoading } = useSession();
-  const params = useLocalSearchParams<{ kind?: string; id?: string }>();
+  const params = useLocalSearchParams<{ kind?: string; id?: string; parentId?: string }>();
   const kind = (params.kind === 'income' ? 'income' : 'expense') as CategoryKind;
   const id = typeof params.id === 'string' && params.id.length > 0 ? params.id : undefined;
+  const parentIdParam =
+    typeof params.parentId === 'string' && params.parentId.length > 0 ? params.parentId : undefined;
   const isEditing = !!id;
 
   const { data: categories, isLoading } = useCategories(kind);
@@ -41,6 +43,9 @@ export default function CategoryFormScreen() {
   const updateCategory = useUpdateCategory();
 
   const category = isEditing ? categories?.find((entry) => entry.id === id) : undefined;
+  const parentName = parentIdParam
+    ? categories?.find((entry) => entry.id === parentIdParam)?.name
+    : undefined;
 
   const {
     control,
@@ -49,7 +54,12 @@ export default function CategoryFormScreen() {
     formState: { errors },
   } = useForm<CategoryForm>({
     resolver: zodResolver(categorySchema),
-    defaultValues: { name: '', icon: ICON_SET[0], color: COLOR_PALETTE[0], parentId: null },
+    defaultValues: {
+      name: '',
+      icon: ICON_SET[0],
+      color: COLOR_PALETTE[0],
+      parentId: parentIdParam ?? null,
+    },
   });
 
   useEffect(() => {
@@ -197,33 +207,42 @@ export default function CategoryFormScreen() {
           )}
         />
 
-        <Controller
-          name="parentId"
-          control={control}
-          render={({ field }) => (
-            <View style={{ gap: spacing.sm }}>
-              <Text variant="caption">{es.categories.parent}</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-                <Chip
-                  label={es.categories.noParent}
-                  selected={field.value == null}
-                  onPress={() => field.onChange(null)}
-                />
-                {parentOptions.map((option) => {
-                  const selected = field.value === option.id;
-                  return (
-                    <Chip
-                      key={option.id}
-                      label={option.name}
-                      selected={selected}
-                      onPress={() => field.onChange(selected ? null : option.id)}
-                    />
-                  );
-                })}
+        {parentIdParam ? (
+          <View style={{ gap: spacing.xs }}>
+            <Text variant="caption">
+              {es.categories.subcategoryOf}: {parentName ?? '…'}
+            </Text>
+          </View>
+        ) : (
+          <Controller
+            name="parentId"
+            control={control}
+            render={({ field }) => (
+              <View style={{ gap: spacing.sm }}>
+                <Text variant="caption">{es.categories.parent}</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+                  <Chip
+                    label={es.categories.noParent}
+                    selected={field.value == null}
+                    onPress={() => field.onChange(null)}
+                  />
+                  {parentOptions.map((option) => {
+                    const selected = field.value === option.id;
+                    return (
+                      <Chip
+                        key={option.id}
+                        label={option.name}
+                        selected={selected}
+                        onPress={() => field.onChange(selected ? null : option.id)}
+                      />
+                    );
+                  })}
+                </View>
+                <Text variant="caption">{es.categories.parentHelper}</Text>
               </View>
-            </View>
-          )}
-        />
+            )}
+          />
+        )}
 
         <Button
           title={es.categories.saveCategory}
