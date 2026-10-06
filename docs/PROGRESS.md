@@ -222,3 +222,32 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   1 perfil, 1 cuenta "Efectivo" (cash, saldo 0) y 16 categorías (11 de gasto + 5 de ingreso).
 - **Pendientes:** Ninguno. Siguiente tarea: P2.4 (tipos de TypeScript de la base de datos).
 - **Calidad:** `npm run typecheck`, `npm run lint` y `npm test` (21 tests) en verde.
+
+---
+
+### [2026-10-05] Tarea: P2.4 — Tipos de TypeScript de la base de datos
+
+- **Qué se hizo:** Se creó `src/types/database.ts` con los tipos fieles al esquema (Row/Insert/Update
+  por tabla, enums como uniones de strings, la vista `account_balances` y las funciones
+  `is_owned_category` / `handle_new_user`). El cliente en `src/lib/supabase.ts` ahora se tipa con
+  `createClient<Database>`.
+- **Archivos creados o modificados:**
+  - `src/types/database.ts` (creado)
+  - `src/lib/supabase.ts` (se tipa el cliente)
+  - `src/types/.gitkeep` (eliminado)
+- **Decisiones tomadas:**
+  - No hay Supabase CLI configurado, así que los tipos se escribieron a mano fielmente a
+    `001_schema.sql`. `bigint` se tipa como `number` (igual que la CLi de Supabase).
+  - La vista se declaró como no actualizable (solo `Row` + `Relationships`), como genera la CLI.
+  - Se añadieron helpers `Tables<T>`, `TablesInsert<T>`, `TablesUpdate<T>` y `Enums<T>` para usar
+    en las features.
+- **Pendientes:** Ninguno. **Fase 3 completada.** Siguiente tarea: P3.1 (autenticación).
+- **Cómo regenerar los tipos cuando cambie el esquema (manual):**
+  1. Instalar y autenticar la Supabase CLI (`npm i -g supabase` y `supabase login`).
+  2. Ejecutar:
+     ```
+     supabase gen types typescript --project-id blxqqytzehvzoakiydoo > src/types/database.ts
+     ```
+  3. Revisar el diff y mantener los helpers manuales (`Tables`, `TablesInsert`, etc.) si la CLI los
+     eliminara.
+- **Calidad:** `npm run typecheck`, `npm run lint` y `npm test` (21 tests) en verde.
