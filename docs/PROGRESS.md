@@ -346,3 +346,33 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
 - **Pendientes:** Probar en el dispositivo (paso manual): crear, editar y archivar una cuenta y ver
   los saldos. Siguiente tarea: P5.1 (categorías).
 - **Calidad:** `npm run typecheck`, `npm run lint` y `npm test` (49 tests) en verde.
+
+---
+
+### [2026-10-05] Tarea: P5.1 — Categorías
+
+- **Qué se hizo:** Gestión de categorías en `src/features/categories`: api y hooks (listar por kind,
+  crear, editar, archivar y reordenar por `sort_order`), pantalla en Ajustes con pestañas Gastos/
+  Ingresos, lista con ícono/color/nombre y subcategorías anidadas (un nivel via `parent_id`),
+  formulario con selector de íconos (Ionicons) y paleta fija de 12 colores, archivar con
+  confirmación, y el componente reutilizable `CategoryPicker`. Estados de carga/vacío/error.
+- **Dependencia agregada:** `@expo/vector-icons` (librería de íconos de Expo, pedida por el prompt).
+- **Archivos creados o modificados:**
+  - `src/features/categories/api/categories.ts`, `hooks/useCategories.ts`,
+    `utils/categories.ts` (ICON_SET, COLOR_PALETTE, `groupCategoriesByParent`) +
+    `__tests__/categories.test.ts`
+  - `src/features/categories/components/CategoryIcon.tsx`, `CategoryPicker.tsx`
+  - `app/categories.tsx`, `app/category-form.tsx`
+  - `app/(tabs)/settings.tsx` (acceso a Categorías)
+  - `src/i18n/es.ts` (textos `categories`)
+- **Decisiones tomadas:**
+  - El set de íconos usa nombres de Ionicons (los mismos que los datos por defecto de P2.3) y una
+    paleta fija de 12 colores.
+  - Subcategorías: `parent_id` con un solo nivel; el selector de padre solo ofrece categorías
+    principales (y excluye a la propia).
+  - `reorderCategories` actualiza cada `sort_order` por id (el `upsert` por lote exigía filas
+    completas). La UI de reordenar queda como hook/api por ahora.
+  - `CategoryPicker` se apoya en `useCategories(kind)` y se reutilizará en P6.2.
+- **Pendientes:** Probar en el dispositivo (paso manual): gestionar categorías (crear, editar,
+  subcategoría, archivar) en ambas pestañas. Siguiente tarea: P6.1 (movimientos, capa de datos).
+- **Calidad:** `npm run typecheck`, `npm run lint` y `npm test` (53 tests) en verde.

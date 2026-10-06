@@ -105,6 +105,28 @@ export const es = {
     nameRequired: 'El nombre es obligatorio.',
     invalidBalance: 'Ingresa un monto válido.',
   },
+  categories: {
+    title: 'Categorías',
+    tabExpense: 'Gastos',
+    tabIncome: 'Ingresos',
+    newCategory: 'Nueva categoría',
+    editCategory: 'Editar categoría',
+    name: 'Nombre',
+    namePlaceholder: 'Ej. Comida',
+    icon: 'Ícono',
+    color: 'Color',
+    parent: 'Categoría padre',
+    noParent: 'Ninguna (categoría principal)',
+    saveCategory: 'Guardar categoría',
+    nameRequired: 'El nombre es obligatorio.',
+    iconRequired: 'Selecciona un ícono.',
+    colorRequired: 'Selecciona un color.',
+    emptyTitle: 'Aún no hay categorías',
+    emptyDescription: 'Crea categorías para usarlas al registrar movimientos.',
+    confirmArchiveTitle: '¿Archivar categoría?',
+    confirmArchiveMessage: 'Se ocultará de la lista. Sus movimientos registrados se conservan.',
+    archive: 'Archivar',
+  },
 } as const;
 
 export type Texts = typeof es;

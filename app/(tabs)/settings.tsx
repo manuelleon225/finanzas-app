@@ -97,6 +97,12 @@ export default function SettingsScreen() {
         </Card>
 
         <Button
+          title={es.categories.title}
+          variant="secondary"
+          onPress={() => router.push('/categories')}
+        />
+
+        <Button
           title={es.accounts.title}
           variant="secondary"
           onPress={() => router.push('/accounts')}
