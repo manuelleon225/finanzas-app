@@ -1,4 +1,5 @@
 import * as LocalAuthentication from 'expo-local-authentication';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Switch, View } from 'react-native';
 
@@ -11,6 +12,7 @@ import { useTheme } from '@/theme';
 
 export default function SettingsScreen() {
   const { colors, spacing } = useTheme();
+  const router = useRouter();
   const { user } = useSession();
   const biometricEnabled = useBiometricStore((state) => state.biometricEnabled);
   const setBiometricEnabled = useBiometricStore((state) => state.setBiometricEnabled);
@@ -93,6 +95,12 @@ export default function SettingsScreen() {
             </Text>
           ) : null}
         </Card>
+
+        <Button
+          title={es.accounts.title}
+          variant="secondary"
+          onPress={() => router.push('/accounts')}
+        />
 
         <Button title={es.auth.logout} variant="secondary" onPress={confirmLogout} />
       </View>

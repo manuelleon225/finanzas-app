@@ -316,3 +316,33 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   la huella desde la pantalla de bloqueo. Funciona en Expo Go.
 - **Pendientes:** Ninguno. Siguiente tarea: P4.1 (cuentas).
 - **Calidad:** `npm run typecheck`, `npm run lint` y `npm test` (39 tests) en verde.
+
+---
+
+### [2026-10-05] Tarea: P4.1 — Cuentas
+
+- **Qué se hizo:** Se implementó la gestión de cuentas en `src/features/accounts`: api
+  (`listAccountsWithBalance` sobre la vista `account_balances`, `createAccount`, `updateAccount`,
+  `archiveAccount`), hooks de TanStack Query con invalidación, esquema zod con tests, pantalla de
+  lista (accesible desde Ajustes) con saldo total, y pantalla de crear/editar (nombre, tipo con
+  chips, saldo inicial con `parseMoneyInput` aceptando negativos). Archivar con confirmación y
+  protección de la única cuenta activa. Estados de carga/vacío/error.
+- **Archivos creados o modificados:**
+  - `src/features/accounts/api/accounts.ts`, `hooks/useAccounts.ts`, `utils/schemas.ts` +
+    `__tests__/schemas.test.ts`
+  - `app/accounts.tsx` (lista), `app/account-form.tsx` (crear/editar)
+  - `src/lib/money.ts` (+ `isValidMoneyText`) y `money.test.ts` (+ casos)
+  - `app/(tabs)/settings.tsx` (acceso a Cuentas)
+  - `src/i18n/es.ts` (textos `accounts` y `accountTypes`)
+- **Decisiones tomadas:**
+  - La lista usa la vista `account_balances` (saldo calculado), solo cuentas no archivadas, ordenadas
+    por nombre. El saldo total se calcula sumando la lista.
+  - El formulario trabaja con el texto del saldo y lo valida con `isValidMoneyText`; al guardar se
+    parsea con `parseMoneyInput` (permite negativos para tarjetas de crédito).
+  - La pantalla para editar recibe la cuenta por query param `id` y la busca en la caché de la lista
+    (no se agrega una llamada extra).
+  - Las pantallas de Cuentas son rutas del Stack raíz (se apilan sobre las pestañas) y tienen guarda
+    de sesión propia.
+- **Pendientes:** Probar en el dispositivo (paso manual): crear, editar y archivar una cuenta y ver
+  los saldos. Siguiente tarea: P5.1 (categorías).
+- **Calidad:** `npm run typecheck`, `npm run lint` y `npm test` (49 tests) en verde.

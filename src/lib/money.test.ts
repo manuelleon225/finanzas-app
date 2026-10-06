@@ -1,4 +1,4 @@
-import { formatCOP, parseMoneyInput } from '@/lib/money';
+import { formatCOP, isValidMoneyText, parseMoneyInput } from '@/lib/money';
 
 const NBSP = '\u00a0';
 
@@ -55,5 +55,32 @@ describe('parseMoneyInput', () => {
 
   it('keeps a negative sign', () => {
     expect(parseMoneyInput('-25.000')).toBe(-25000);
+  });
+});
+
+describe('isValidMoneyText', () => {
+  it('accepts empty text as zero', () => {
+    expect(isValidMoneyText('')).toBe(true);
+  });
+
+  it('accepts plain digits', () => {
+    expect(isValidMoneyText('25000')).toBe(true);
+  });
+
+  it('accepts thousands separators', () => {
+    expect(isValidMoneyText('25.000')).toBe(true);
+    expect(isValidMoneyText('25,000')).toBe(true);
+  });
+
+  it('accepts a negative value', () => {
+    expect(isValidMoneyText('-25.000')).toBe(true);
+  });
+
+  it('rejects text without digits', () => {
+    expect(isValidMoneyText('abc')).toBe(false);
+  });
+
+  it('rejects mixed text and digits', () => {
+    expect(isValidMoneyText('1a2')).toBe(false);
   });
 });

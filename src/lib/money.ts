@@ -30,3 +30,21 @@ export function parseMoneyInput(text: string): number {
 
   return isNegative ? -value : value;
 }
+
+export function isValidMoneyText(text: string): boolean {
+  if (typeof text !== 'string') {
+    return false;
+  }
+
+  const trimmed = text.trim();
+
+  if (trimmed === '') {
+    return true;
+  }
+
+  if (!/\d/.test(trimmed)) {
+    return false;
+  }
+
+  return /^[-+]?[\d.,\s\u00a0]+$/.test(trimmed);
+}

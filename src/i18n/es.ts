@@ -77,6 +77,34 @@ export const es = {
     movementsPlaceholder: 'Aquí verás tus movimientos.',
     settingsPlaceholder: 'Configura tu cuenta aquí.',
   },
+  accountTypes: {
+    cash: 'Efectivo',
+    bank: 'Banco',
+    savings: 'Ahorros',
+    credit_card: 'Tarjeta de crédito',
+  },
+  accounts: {
+    title: 'Cuentas',
+    totalBalance: 'Saldo total',
+    newAccount: 'Nueva cuenta',
+    editAccount: 'Editar cuenta',
+    name: 'Nombre',
+    namePlaceholder: 'Ej. Efectivo',
+    type: 'Tipo',
+    initialBalance: 'Saldo inicial',
+    initialBalanceHelper: 'Usa un valor negativo solo para tarjetas de crédito.',
+    saveAccount: 'Guardar cuenta',
+    back: 'Volver a Ajustes',
+    emptyTitle: 'Aún no tienes cuentas',
+    emptyDescription: 'Crea tu primera cuenta para empezar a registrar.',
+    archive: 'Archivar',
+    confirmArchiveTitle: '¿Archivar cuenta?',
+    confirmArchiveMessage:
+      'La cuenta se archivará y dejará de aparecer. Sus movimientos se conservan.',
+    cannotArchiveLast: 'No puedes archivar tu única cuenta activa.',
+    nameRequired: 'El nombre es obligatorio.',
+    invalidBalance: 'Ingresa un monto válido.',
+  },
 } as const;
 
 export type Texts = typeof es;
