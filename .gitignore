@@ -1,0 +1,51 @@
+# Entorno / secretos
+.env
+.env.*
+!.env.example
+
+# Dependencias
+node_modules/
+jspm_packages/
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+expo-env.d.ts
+*.tsbuildinfo
+.kotlin/
+.metro-health-check*
+*.jks
+*.p8
+*.p12
+*.key
+*.pem
+*.mobileprovision
+*.orig.*
+
+# EAS
+.easignore
+
+# Builds nativos
+android/
+ios/
+*.apk
+*.aab
+*.ipa
+
+# Tests
+coverage/
+
+# Logs
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Editor / SO
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
