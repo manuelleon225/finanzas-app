@@ -311,6 +311,8 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   - `shouldLock(enabled, backgroundedAt, now)` es pura y testeada (delay configurable, default 30 s).
   - La comprobación de disponibilidad de biometría usa `hasHardwareAsync` + `isEnrolledAsync`.
   - En Expo Go puede no probarse la biometría indígena en iOS; en Android con huella probablemente sí.
-- **Pendientes:** Probar el switch en el dispositivo cuando sea posible; si Expo Go lo bloquea, se
-  pospone a un development build (fase de release). Siguiente tarea: P4.1 (cuentas).
+- **Verificación funcional:** Probado en el celular del usuario (Android con huella): activó el
+  switch (confirmó con su huella), la app se bloqueó al volver del segundo plano y se desbloqueó con
+  la huella desde la pantalla de bloqueo. Funciona en Expo Go.
+- **Pendientes:** Ninguno. Siguiente tarea: P4.1 (cuentas).
 - **Calidad:** `npm run typecheck`, `npm run lint` y `npm test` (39 tests) en verde.
