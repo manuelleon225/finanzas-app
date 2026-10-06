@@ -144,3 +144,30 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
 - **Pendientes:** Rellenar `.env` con la URL y la anon key reales (paso manual). Siguiente tarea: P2.1.
 - **Verificación:** `npm run typecheck`, `npm run lint` y `npm test` (21 tests) en verde. Sin claves
   reales aún la app arranca; el cliente fallará con un mensaje claro al usarse.
+
+---
+
+### [2026-10-05] Tarea: P2.1 — Migración 001, esquema
+
+- **Qué se hizo:** Se creó `supabase/migrations/001_schema.sql` con los enums, las 5 tablas, los
+  CHECK de `transactions`, las llaves foráneas, los índices (incluido el índice único parcial de
+  recurrentes), el trigger genérico de `updated_at` y la vista `account_balances` con
+  `security_invoker = true`. El script va envuelto en una transacción (`begin`/`commit`).
+- **Archivos creados o modificados:**
+  - `supabase/migrations/001_schema.sql` (creado)
+  - `supabase/migrations/.gitkeep` (eliminado; la carpeta ya tiene contenido)
+  - `eslint.config.js` (se ignora `expo-env.d.ts`, generado por Expo)
+  - `.prettierignore` (se ignora `expo-env.d.ts`)
+- **Decisiones tomadas (donde `docs/DATA_MODEL.md` era ambiguo):**
+  1. `name` en accounts/categories, e `icon`/`color` en categories: NOT NULL.
+  2. `occurred_on`: NOT NULL.
+  3. `categories.parent_id`: `on delete restrict`.
+  4. `transactions.recurring_rule_id`: `on delete set null` (borrar una regla no altera los
+     movimientos ya generados; ver P7.2).
+  5. Índices adicionales por `user_id` (y `categories.parent_id`) para RLS y llaves foráneas.
+  6. `balance` de la vista casteado a `bigint`.
+  7. `gen_random_uuid()` para los id.
+  8. `profiles.display_name` nullable.
+- **Pendientes:** Ejecutar `001_schema.sql` en el SQL Editor de Supabase y verificar las tablas en el
+  Table Editor (paso manual). Siguiente tarea: P2.2 (RLS).
+- **Verificación:** `npm run typecheck`, `npm run lint` y `npm test` (21 tests) en verde.
