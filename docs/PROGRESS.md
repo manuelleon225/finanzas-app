@@ -191,8 +191,9 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
     propia política provocaba el error **"infinite recursion detected in policy"**; la función
     definer evita la recursión y sigue usando `auth.uid()` del usuario que consulta.
   - Sin políticas de `anon`: el acceso anónimo queda denegado por defecto al estar RLS activo.
-- **Verificación funcional:** Se probó con dos usuarios reales (A y B) vía la API: B no ve las
-  cuentas de A, no puede insertar movimientos con `account_id`/`category_id` de A (403, `42501`) y su
+- **Verificación funcional:** Tras aplicar el arreglo, se probó con dos usuarios reales (A y B) vía
+  la API: A crea cuenta/categoría/movimiento (201); B no ve las cuentas ni movimientos de A (0
+  filas), no puede insertar movimientos con `account_id`/`category_id` de A (403, `42501`) y su
   `update` sobre una cuenta de A afecta 0 filas. La vista `account_balances` respeta el RLS.
 - **Pendientes:** Volver a ejecutar `002_rls.sql` corregido en el SQL Editor de Supabase (paso
   manual). Siguiente tarea: P2.3 (usuario nuevo con datos por defecto).
