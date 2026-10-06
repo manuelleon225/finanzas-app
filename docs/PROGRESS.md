@@ -277,6 +277,8 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
     redirige a `/login` si no la hay; el layout raíz muestra `LoadingState` hasta restaurar la sesión.
   - Se regeneraron los tipos de rutas de Expo (`expo start`); hubo que matar un servidor viejo que
     ocupaba el puerto 8081 con rutas antiguas.
-- **Pendientes:** Probar en el celular (paso manual): registrarse, cerrar sesión, volver a entrar.
-  Siguiente tarea: P3.2 (bloqueo con biometría).
+- **Verificación funcional:** Probado en el celular del usuario: registro → entrada automática → vista
+  de 3 pestañas → cerrar sesión desde Ajustes → vuelta al login → inicio de sesión de nuevo. La sesión
+  persiste al reabrir la app.
+- **Pendientes:** Ninguno. Siguiente tarea: P3.2 (bloqueo con biometría).
 - **Calidad:** `npm run typecheck`, `npm run lint` y `npm test` (33 tests) en verde.
