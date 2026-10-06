@@ -171,3 +171,25 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
 - **Pendientes:** Ejecutar `001_schema.sql` en el SQL Editor de Supabase y verificar las tablas en el
   Table Editor (paso manual). Siguiente tarea: P2.2 (RLS).
 - **Verificación:** `npm run typecheck`, `npm run lint` y `npm test` (21 tests) en verde.
+
+---
+
+### [2026-10-05] Tarea: P2.2 — Migración 002, seguridad (RLS)
+
+- **Qué se hizo:** Se creó `supabase/migrations/002_rls.sql`: activa RLS en las cinco tablas y crea
+  políticas separadas de select/insert/update/delete para el rol `authenticated` (sin políticas para
+  `anon`). Las políticas de escritura verifican la propiedad de `account_id`, `transfer_account_id`,
+  `category_id` y `categories.parent_id` con `EXISTS`/`IN`. Se reforzó `account_balances` con
+  `security_invoker = true`. El script es idempotente (usa `drop policy if exists`) y va en una
+  transacción.
+- **Archivos creados o modificados:**
+  - `supabase/migrations/002_rls.sql` (creado)
+- **Decisiones tomadas:**
+  - Se usa `(select auth.uid())` (initplan) en lugar de `auth.uid()` directo, por rendimiento.
+  - Para `categories.parent_id` se usó `parent_id in (select p.id ... where p.user_id = uid)` en vez
+    de `EXISTS`, para evitar la ambigüedad de columna `parent_id` dentro de la subconsulta contra la
+    propia tabla `categories`.
+  - Sin políticas de `anon`: el acceso anónimo queda denegado por defecto al estar RLS activo.
+- **Pendientes:** Ejecutar `002_rls.sql` en el SQL Editor de Supabase (paso manual). Siguiente tarea:
+  P2.3 (usuario nuevo con datos por defecto).
+- **Verificación:** `npm run typecheck`, `npm run lint` y `npm test` (21 tests) en verde.
