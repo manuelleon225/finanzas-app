@@ -137,7 +137,9 @@ export default function CategoryFormScreen() {
       <View style={{ gap: spacing.lg, marginTop: spacing.lg }}>
         <Text variant="title">
           {isEditing
-            ? es.categories.editCategory
+            ? category?.parent_id
+              ? es.categories.editSubcategory
+              : es.categories.editCategory
             : parentIdParam
               ? es.categories.newSubcategory
               : es.categories.newCategory}

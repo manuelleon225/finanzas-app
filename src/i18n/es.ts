@@ -112,6 +112,7 @@ export const es = {
     newCategory: 'Nueva categoría',
     newSubcategory: 'Nueva subcategoría',
     editCategory: 'Editar categoría',
+    editSubcategory: 'Editar subcategoría',
     showArchived: 'Ver archivadas',
     hideArchived: 'Ver activas',
     restore: 'Restaurar',
