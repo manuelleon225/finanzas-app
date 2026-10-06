@@ -195,6 +195,29 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   la API: A crea cuenta/categoría/movimiento (201); B no ve las cuentas ni movimientos de A (0
   filas), no puede insertar movimientos con `account_id`/`category_id` de A (403, `42501`) y su
   `update` sobre una cuenta de A afecta 0 filas. La vista `account_balances` respeta el RLS.
-- **Pendientes:** Volver a ejecutar `002_rls.sql` corregido en el SQL Editor de Supabase (paso
-  manual). Siguiente tarea: P2.3 (usuario nuevo con datos por defecto).
+- **Pendientes:** Aplicado y verificado en Supabase. Siguiente tarea: P2.3 (usuario nuevo con datos
+  por defecto).
+- **Calidad:** `npm run typecheck`, `npm run lint` y `npm test` (21 tests) en verde.
+
+---
+
+### [2026-10-05] Tarea: P2.3 — Migración 003, usuario nuevo con datos por defecto
+
+- **Qué se hizo:** Se creó `supabase/migrations/003_new_user.sql` con la función
+  `public.handle_new_user()` (`SECURITY DEFINER`, `set search_path = ''`, referencias con esquema
+  explícito) y el trigger `on_auth_user_created` (`AFTER INSERT` en `auth.users`). Al registrarse un
+  usuario crea su perfil, una cuenta "Efectivo" (cash, saldo 0) y las 16 categorías por defecto
+  (11 de gasto y 5 de ingreso) con `icon`, `color` y `sort_order`.
+- **Archivos creados o modificados:**
+  - `supabase/migrations/003_new_user.sql` (creado)
+- **Decisiones tomadas:**
+  - Idempotencia: el perfil usa `on conflict (id) do nothing`; la cuenta y las categorías solo se
+    insertan si el usuario aún no tiene ninguna (`where not exists`).
+  - `display_name` se toma de `raw_user_meta_data.display_name` y, si no existe, de la parte local
+    del email.
+  - Los íconos usan nombres de Ionicons (conjunto que se usará en P5.1) y una paleta fija de colores.
+  - La función es `SECURITY DEFINER` porque durante el registro el usuario aún no está autenticado y
+    RLS está activo.
+- **Pendientes:** Ejecutar `003_new_user.sql` en el SQL Editor de Supabase y verificarlo (paso
+  manual). Siguiente tarea: P2.4 (tipos de TypeScript de la base de datos).
 - **Calidad:** `npm run typecheck`, `npm run lint` y `npm test` (21 tests) en verde.
