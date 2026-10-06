@@ -6,15 +6,22 @@ import {
   archiveCategory as archiveCategoryRequest,
   createCategory as createCategoryRequest,
   listCategories,
+  restoreCategory as restoreCategoryRequest,
   reorderCategories as reorderCategoriesRequest,
   updateCategory as updateCategoryRequest,
   type CategoryKind,
 } from '../api/categories';
 
-export function useCategories(kind?: CategoryKind) {
+type ListOptions = {
+  archived?: boolean;
+};
+
+export function useCategories(kind?: CategoryKind, options?: ListOptions) {
+  const archived = options?.archived ?? false;
+
   return useQuery({
-    queryKey: ['categories', kind ?? 'all'],
-    queryFn: () => listCategories(kind),
+    queryKey: ['categories', kind ?? 'all', archived ? 'archived' : 'active'],
+    queryFn: () => listCategories(kind, { archived }),
   });
 }
 
@@ -46,6 +53,17 @@ export function useArchiveCategory() {
 
   return useMutation({
     mutationFn: (id: string) => archiveCategoryRequest(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['categories'] });
+    },
+  });
+}
+
+export function useRestoreCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => restoreCategoryRequest(id),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['categories'] });
     },

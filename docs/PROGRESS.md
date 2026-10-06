@@ -408,3 +408,21 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
 - El computador se apagó a mitad de la verificación de P5.1b; los cambios de código ya estaban
   aplicados pero pendientes de commit. Se re-verificó (typecheck/lint/test + cascada en BD) y se
   completó el commit en esta sesión.
+
+---
+
+### [2026-10-05] Tarea: P5.1c — Visibilidad de archivadas y restauración
+
+- **Qué se hizo:** Tras la retroalimentación del usuario, se agregó la vista "Ver archivadas" en
+  Categorías con botón "Restaurar" (desarchivar), para que el borrado lógico sea reversible y
+  comprensible. El formulario abierto desde el botón "+" ahora dice "Nueva subcategoría".
+- **Cambios:**
+  - `listCategories(kind, { archived })` y hook `useCategories(kind, { archived })`.
+  - `restoreCategory(id)` + `useRestoreCategory` (invalida `['categories']`).
+  - Pantalla de Categorías: toggle "Ver archivadas (n)"/"Ver activas", lista de archivadas con
+    "Restaurar"; se ocultan el botón "Nueva categoría" y el "+" en esa vista.
+  - Regla de negocio: no se puede restaurar una subcategoría si su madre sigue archivada (se avisa
+    que primero se restaure la madre).
+  - Título del formulario distingue "Nueva categoría" vs "Nueva subcategoría".
+- **Calidad:** typecheck, lint y `npm test` (59 tests) en verde.
+- **Pendientes:** Probar en dispositivo la vista de archivadas y restauración. Siguiente: P6.1.

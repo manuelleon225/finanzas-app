@@ -15,7 +15,11 @@ import {
 import { useSession } from '@/features/auth/hooks/AuthProvider';
 import type { Category, CategoryKind } from '@/features/categories/api/categories';
 import { CategoryIcon } from '@/features/categories/components/CategoryIcon';
-import { useArchiveCategory, useCategories } from '@/features/categories/hooks/useCategories';
+import {
+  useArchiveCategory,
+  useCategories,
+  useRestoreCategory,
+} from '@/features/categories/hooks/useCategories';
 import { groupCategoriesByParent } from '@/features/categories/utils/categories';
 import { es } from '@/i18n/es';
 import { useTheme } from '@/theme';
@@ -27,8 +31,17 @@ export default function CategoriesScreen() {
   const { colors, spacing } = useTheme();
   const { session, loading: sessionLoading } = useSession();
   const [kind, setKind] = useState<KindOption>('expense');
-  const { data, isLoading, isError, refetch } = useCategories(kind as CategoryKind);
+  const [showArchived, setShowArchived] = useState(false);
+
+  const activeCategories = useCategories(kind as CategoryKind);
+  const archivedCategories = useCategories(kind as CategoryKind, { archived: true });
   const archiveCategory = useArchiveCategory();
+  const restoreCategory = useRestoreCategory();
+
+  const current = showArchived ? archivedCategories : activeCategories;
+  const data = current.data;
+  const groups = groupCategoriesByParent(data ?? []);
+  const archivedCount = archivedCategories.data?.length ?? 0;
 
   if (sessionLoading) {
     return <LoadingState />;
@@ -38,7 +51,7 @@ export default function CategoriesScreen() {
     return <Redirect href="/login" />;
   }
 
-  if (isLoading) {
+  if (current.isLoading) {
     return (
       <Screen>
         <LoadingState />
@@ -46,15 +59,13 @@ export default function CategoriesScreen() {
     );
   }
 
-  if (isError) {
+  if (current.isError) {
     return (
       <Screen>
-        <ErrorState onRetry={() => void refetch()} />
+        <ErrorState onRetry={() => void current.refetch()} />
       </Screen>
     );
   }
-
-  const groups = groupCategoriesByParent(data ?? []);
 
   function confirmArchive(category: Category) {
     Alert.alert(es.categories.confirmArchiveTitle, es.categories.confirmArchiveMessage, [
@@ -67,6 +78,19 @@ export default function CategoriesScreen() {
         },
       },
     ]);
+  }
+
+  function restore(category: Category) {
+    if (category.parent_id) {
+      const parentArchived = (archivedCategories.data ?? []).some(
+        (entry) => entry.id === category.parent_id,
+      );
+      if (parentArchived) {
+        Alert.alert(es.categories.title, es.categories.cannotRestoreChild);
+        return;
+      }
+    }
+    restoreCategory.mutate(category.id);
   }
 
   function editCategory(category: Category) {
@@ -94,17 +118,37 @@ export default function CategoriesScreen() {
           onChange={setKind}
         />
 
-        <Button
-          title={es.categories.newCategory}
-          onPress={() => router.push({ pathname: '/category-form', params: { kind } })}
-        />
+        <Pressable
+          onPress={() => setShowArchived((value) => !value)}
+          accessibilityRole="button"
+          accessibilityState={{ selected: showArchived }}
+          hitSlop={8}
+          style={{ alignSelf: 'flex-start' }}
+        >
+          <Text variant="caption" color={colors.primary}>
+            {showArchived
+              ? es.categories.hideArchived
+              : `${es.categories.showArchived}${archivedCount > 0 ? ` (${archivedCount})` : ''}`}
+          </Text>
+        </Pressable>
+
+        {!showArchived ? (
+          <Button
+            title={es.categories.newCategory}
+            onPress={() => router.push({ pathname: '/category-form', params: { kind } })}
+          />
+        ) : null}
 
         {groups.length === 0 ? (
           <EmptyState
             title={es.categories.emptyTitle}
-            description={es.categories.emptyDescription}
-            actionLabel={es.categories.newCategory}
-            onAction={() => router.push({ pathname: '/category-form', params: { kind } })}
+            description={showArchived ? es.categories.noArchived : es.categories.emptyDescription}
+            actionLabel={showArchived ? undefined : es.categories.newCategory}
+            onAction={
+              showArchived
+                ? undefined
+                : () => router.push({ pathname: '/category-form', params: { kind } })
+            }
           />
         ) : (
           <View style={{ gap: spacing.md }}>
@@ -121,39 +165,53 @@ export default function CategoriesScreen() {
                   <Text variant="body" style={{ flex: 1 }}>
                     {category.name}
                   </Text>
-                  <Pressable
-                    onPress={() =>
-                      router.push({
-                        pathname: '/category-form',
-                        params: { kind, parentId: category.id },
-                      })
-                    }
-                    accessibilityRole="button"
-                    accessibilityLabel={`${es.categories.addSubcategory}: ${category.name}`}
-                    hitSlop={8}
-                  >
-                    <Text variant="caption" color={colors.primary}>
-                      +
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => editCategory(category)}
-                    accessibilityRole="button"
-                    hitSlop={8}
-                  >
-                    <Text variant="caption" color={colors.primary}>
-                      {es.common.edit}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => confirmArchive(category)}
-                    accessibilityRole="button"
-                    hitSlop={8}
-                  >
-                    <Text variant="caption" color={colors.danger}>
-                      {es.categories.archive}
-                    </Text>
-                  </Pressable>
+                  {showArchived ? (
+                    <Pressable
+                      onPress={() => restore(category)}
+                      accessibilityRole="button"
+                      hitSlop={8}
+                    >
+                      <Text variant="caption" color={colors.primary}>
+                        {es.categories.restore}
+                      </Text>
+                    </Pressable>
+                  ) : (
+                    <>
+                      <Pressable
+                        onPress={() =>
+                          router.push({
+                            pathname: '/category-form',
+                            params: { kind, parentId: category.id },
+                          })
+                        }
+                        accessibilityRole="button"
+                        accessibilityLabel={`${es.categories.addSubcategory}: ${category.name}`}
+                        hitSlop={8}
+                      >
+                        <Text variant="caption" color={colors.primary}>
+                          +
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => editCategory(category)}
+                        accessibilityRole="button"
+                        hitSlop={8}
+                      >
+                        <Text variant="caption" color={colors.primary}>
+                          {es.common.edit}
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => confirmArchive(category)}
+                        accessibilityRole="button"
+                        hitSlop={8}
+                      >
+                        <Text variant="caption" color={colors.danger}>
+                          {es.categories.archive}
+                        </Text>
+                      </Pressable>
+                    </>
+                  )}
                 </View>
 
                 {children.map((child) => (
@@ -170,24 +228,38 @@ export default function CategoriesScreen() {
                     <Text variant="body" style={{ flex: 1 }}>
                       {child.name}
                     </Text>
-                    <Pressable
-                      onPress={() => editCategory(child)}
-                      accessibilityRole="button"
-                      hitSlop={8}
-                    >
-                      <Text variant="caption" color={colors.primary}>
-                        {es.common.edit}
-                      </Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => confirmArchive(child)}
-                      accessibilityRole="button"
-                      hitSlop={8}
-                    >
-                      <Text variant="caption" color={colors.danger}>
-                        {es.categories.archive}
-                      </Text>
-                    </Pressable>
+                    {showArchived ? (
+                      <Pressable
+                        onPress={() => restore(child)}
+                        accessibilityRole="button"
+                        hitSlop={8}
+                      >
+                        <Text variant="caption" color={colors.primary}>
+                          {es.categories.restore}
+                        </Text>
+                      </Pressable>
+                    ) : (
+                      <>
+                        <Pressable
+                          onPress={() => editCategory(child)}
+                          accessibilityRole="button"
+                          hitSlop={8}
+                        >
+                          <Text variant="caption" color={colors.primary}>
+                            {es.common.edit}
+                          </Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={() => confirmArchive(child)}
+                          accessibilityRole="button"
+                          hitSlop={8}
+                        >
+                          <Text variant="caption" color={colors.danger}>
+                            {es.categories.archive}
+                          </Text>
+                        </Pressable>
+                      </>
+                    )}
                   </View>
                 ))}
               </Card>

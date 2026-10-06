@@ -133,7 +133,11 @@ export default function CategoryFormScreen() {
     <Screen scroll>
       <View style={{ gap: spacing.lg, marginTop: spacing.lg }}>
         <Text variant="title">
-          {isEditing ? es.categories.editCategory : es.categories.newCategory}
+          {isEditing
+            ? es.categories.editCategory
+            : parentIdParam
+              ? es.categories.newSubcategory
+              : es.categories.newCategory}
         </Text>
 
         <Controller
