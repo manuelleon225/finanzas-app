@@ -147,13 +147,13 @@ export default function CategoryFormScreen() {
                           justifyContent: 'center',
                           borderWidth: 2,
                           borderColor: selected ? colors.primary : colors.border,
-                          backgroundColor: colors.surface,
+                          backgroundColor: selected ? colors.primary : colors.surface,
                         },
                       ]}
                     >
                       <CategoryIcon
                         icon={icon}
-                        color={selected ? colors.primary : colors.textSecondary}
+                        color={selected ? colors.onPrimary : colors.textSecondary}
                         size={22}
                       />
                     </Pressable>
