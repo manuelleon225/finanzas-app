@@ -59,6 +59,19 @@ export const es = {
     movements: 'Movimientos',
     settings: 'Ajustes',
   },
+  biometric: {
+    enable: 'Bloquear con biometría',
+    enableDescription: 'La app pedirá tu huella o Face ID al volver del segundo plano.',
+    enablePrompt: 'Confirma tu huella o Face ID para activar el bloqueo.',
+    unlockPrompt: 'Desbloquea Finanzas',
+    unlock: 'Desbloquear',
+    lockScreenTitle: 'Aplicación bloqueada',
+    lockScreenDescription: 'Autentícate para continuar.',
+    unavailable:
+      'Tu dispositivo no tiene biometría configurada. Actívala en los ajustes del sistema.',
+    cancelled: 'Autenticación cancelada. No se activó el bloqueo.',
+    retry: 'No se pudo autenticar. Inténtalo de nuevo.',
+  },
   screens: {
     homePlaceholder: 'Aquí verás tu resumen y el "Disponible hoy".',
     movementsPlaceholder: 'Aquí verás tus movimientos.',

@@ -282,3 +282,35 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   persiste al reabrir la app.
 - **Pendientes:** Ninguno. Siguiente tarea: P3.2 (bloqueo con biometría).
 - **Calidad:** `npm run typecheck`, `npm run lint` y `npm test` (33 tests) en verde.
+
+---
+
+### [2026-10-05] Tarea: P3.2 — Bloqueo con biometría
+
+- **Qué se hizo:** Se agregó bloqueo opcional con huella/Face ID. Store de Zustand
+  `useBiometricStore` persiste `biometricEnabled` en SecureStore (nunca `isLocked`). El switch en
+  Ajustes verifica hardware/biometría y pide autenticarse una vez al activar. Hook `useBiometricLock`
+  observa `AppState` y bloquea al volver del segundo plano tras 30 segundos (constante configurable).
+  `LockScreen` permite desbloquear con biometría o cerrar sesión. Función pura `shouldLock` con tests.
+  Permiso de Face ID en iOS configurado en español. Instalado `zustand`.
+- **Dependencias agregadas:** `expo-local-authentication`, `expo-secure-store`, `zustand`
+  (pedidos por el prompt / stack del proyecto).
+- **Archivos creados o modificados:**
+  - `src/features/auth/store/useBiometricStore.ts` (creado)
+  - `src/features/auth/hooks/useBiometricLock.ts` (creado)
+  - `src/features/auth/components/LockScreen.tsx` (creado)
+  - `src/features/auth/utils/biometrics.ts` + `__tests__/biometrics.test.ts` (creados)
+  - `app/(tabs)/settings.tsx` (switch de biometría)
+  - `app/_layout.tsx` (LockScreen por encima de la navegación)
+  - `src/i18n/es.ts` (textos `biometric`)
+  - `app.json` (plugin `expo-local-authentication` con `faceIDPermission` en español)
+- **Decisiones tomadas:**
+  - `isLocked` NO se persiste (un bloqueo no debe sobrevivir como estado almacenado).
+  - Al arrancar con biometría activada y sesión, la app bloquea de inmediato (además del bloqueo por
+    segundo plano). Si no hay sesión, no se muestra el bloqueo.
+  - `shouldLock(enabled, backgroundedAt, now)` es pura y testeada (delay configurable, default 30 s).
+  - La comprobación de disponibilidad de biometría usa `hasHardwareAsync` + `isEnrolledAsync`.
+  - En Expo Go puede no probarse la biometría indígena en iOS; en Android con huella probablemente sí.
+- **Pendientes:** Probar el switch en el dispositivo cuando sea posible; si Expo Go lo bloquea, se
+  pospone a un development build (fase de release). Siguiente tarea: P4.1 (cuentas).
+- **Calidad:** `npm run typecheck`, `npm run lint` y `npm test` (39 tests) en verde.
