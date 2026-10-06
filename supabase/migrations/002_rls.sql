@@ -7,7 +7,7 @@
 -- rol `anon`.
 --
 -- Cómo ejecutarla: pegar TODO este archivo en el SQL Editor de Supabase y
--- ejecutarlo UNA sola vez (es idempotente: puede reintentarse sin residuos).
+-- ejecutarlo. Es idempotente: puede volver a ejecutarse sin residuos.
 --
 -- Requiere haber ejecutado antes la migración 001.
 -- ============================================================================
@@ -25,7 +25,31 @@ alter table public.transactions enable row level security;
 alter table public.recurring_rules enable row level security;
 
 -- ============================================================================
--- 2. Políticas de profiles (se identifica por id = auth.uid())
+-- 2. Función auxiliar para comprobar si una categoría es del usuario actual.
+-- Es SECURITY DEFINER para saltarse el RLS al leer categories desde dentro de
+-- una política de la propia tabla categories (evita la recursión infinita).
+-- Sigue usando auth.uid(), que corresponde al usuario que hace la petición.
+-- ============================================================================
+
+create or replace function public.is_owned_category(category_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = ''
+stable
+as $$
+  select exists (
+    select 1
+    from public.categories c
+    where c.id = category_id
+      and c.user_id = (select auth.uid())
+  );
+$$;
+
+grant execute on function public.is_owned_category(uuid) to authenticated;
+
+-- ============================================================================
+-- 3. Políticas de profiles (se identifica por id = auth.uid())
 -- ============================================================================
 
 drop policy if exists profiles_select_own on public.profiles;
@@ -50,7 +74,7 @@ create policy profiles_delete_own
   using ((select auth.uid()) = id);
 
 -- ============================================================================
--- 3. Políticas de accounts
+-- 4. Políticas de accounts
 -- ============================================================================
 
 drop policy if exists accounts_select_own on public.accounts;
@@ -75,9 +99,9 @@ create policy accounts_delete_own
   using ((select auth.uid()) = user_id);
 
 -- ============================================================================
--- 4. Políticas de categories
+-- 5. Políticas de categories
 -- Al insertar/actualizar, el parent_id (si no es nulo) debe ser del mismo
--- usuario.
+-- usuario. Se comprueba con la función auxiliar para evitar recursión.
 -- ============================================================================
 
 drop policy if exists categories_select_own on public.categories;
@@ -92,10 +116,7 @@ create policy categories_insert_own
     (select auth.uid()) = user_id
     and (
       parent_id is null
-      or parent_id in (
-        select p.id from public.categories p
-        where p.user_id = (select auth.uid())
-      )
+      or public.is_owned_category(parent_id)
     )
   );
 
@@ -107,10 +128,7 @@ create policy categories_update_own
     (select auth.uid()) = user_id
     and (
       parent_id is null
-      or parent_id in (
-        select p.id from public.categories p
-        where p.user_id = (select auth.uid())
-      )
+      or public.is_owned_category(parent_id)
     )
   );
 
@@ -120,7 +138,7 @@ create policy categories_delete_own
   using ((select auth.uid()) = user_id);
 
 -- ============================================================================
--- 5. Políticas de transactions
+-- 6. Políticas de transactions
 -- Al insertar/actualizar, account_id, transfer_account_id y category_id deben
 -- pertenecer al mismo usuario (con EXISTS).
 -- ============================================================================
@@ -187,7 +205,7 @@ create policy transactions_delete_own
   using ((select auth.uid()) = user_id);
 
 -- ============================================================================
--- 6. Políticas de recurring_rules
+-- 7. Políticas de recurring_rules
 -- Al insertar/actualizar, account_id y category_id deben ser del mismo usuario.
 -- ============================================================================
 
@@ -233,7 +251,7 @@ create policy recurring_rules_delete_own
   using ((select auth.uid()) = user_id);
 
 -- ============================================================================
--- 7. Asegurar que la vista account_balances respete RLS
+-- 8. Asegurar que la vista account_balances respete RLS
 -- (security_invoker = true hace que use los permisos y el RLS del usuario que
 -- consulta, no los del dueño de la vista).
 -- ============================================================================

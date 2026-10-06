@@ -186,10 +186,14 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   - `supabase/migrations/002_rls.sql` (creado)
 - **Decisiones tomadas:**
   - Se usa `(select auth.uid())` (initplan) en lugar de `auth.uid()` directo, por rendimiento.
-  - Para `categories.parent_id` se usó `parent_id in (select p.id ... where p.user_id = uid)` en vez
-    de `EXISTS`, para evitar la ambigüedad de columna `parent_id` dentro de la subconsulta contra la
-    propia tabla `categories`.
+  - `categories.parent_id` se valida con la función `public.is_owned_category(uuid)`
+    (`SECURITY DEFINER`, `set search_path = ''`). Una subconsulta directa a `categories` dentro de su
+    propia política provocaba el error **"infinite recursion detected in policy"**; la función
+    definer evita la recursión y sigue usando `auth.uid()` del usuario que consulta.
   - Sin políticas de `anon`: el acceso anónimo queda denegado por defecto al estar RLS activo.
-- **Pendientes:** Ejecutar `002_rls.sql` en el SQL Editor de Supabase (paso manual). Siguiente tarea:
-  P2.3 (usuario nuevo con datos por defecto).
-- **Verificación:** `npm run typecheck`, `npm run lint` y `npm test` (21 tests) en verde.
+- **Verificación funcional:** Se probó con dos usuarios reales (A y B) vía la API: B no ve las
+  cuentas de A, no puede insertar movimientos con `account_id`/`category_id` de A (403, `42501`) y su
+  `update` sobre una cuenta de A afecta 0 filas. La vista `account_balances` respeta el RLS.
+- **Pendientes:** Volver a ejecutar `002_rls.sql` corregido en el SQL Editor de Supabase (paso
+  manual). Siguiente tarea: P2.3 (usuario nuevo con datos por defecto).
+- **Calidad:** `npm run typecheck`, `npm run lint` y `npm test` (21 tests) en verde.
