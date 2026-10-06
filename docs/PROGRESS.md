@@ -251,3 +251,32 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   3. Revisar el diff y mantener los helpers manuales (`Tables`, `TablesInsert`, etc.) si la CLI los
      eliminara.
 - **Calidad:** `npm run typecheck`, `npm run lint` y `npm test` (21 tests) en verde.
+
+---
+
+### [2026-10-05] Tarea: P3.1 — Registro, login y sesión
+
+- **Qué se hizo:** Se implementó la autenticación por email/contraseña: capa api
+  (`signUp`, `signIn`, `signOut`, `resetPassword`, `getSession`), traductor de errores de Supabase a
+  español, `AuthProvider` + `useSession` (escucha `onAuthStateChange`), esquemas zod con tests,
+  pantallas de login/registro/recuperar contraseña con react-hook-form + zod, tres pestañas
+  (Inicio, Movimientos, Ajustes con "Cerrar sesión") y protección de rutas con anti-parpadeo.
+- **Dependencias agregadas:** `react-hook-form`, `zod`, `@hookform/resolvers` (pedidas por el prompt).
+- **Archivos creados o modificados:**
+  - `src/features/auth/api/auth.ts`, `src/features/auth/hooks/AuthProvider.tsx`
+  - `src/features/auth/utils/authErrors.ts`, `schemas.ts` + `__tests__/` (schemas y authErrors)
+  - `app/(auth)/_layout.tsx`, `login.tsx`, `register.tsx`, `forgot-password.tsx`
+  - `app/(tabs)/_layout.tsx`, `index.tsx`, `movements.tsx`, `settings.tsx`
+  - `app/_layout.tsx` (AuthProvider + LoadingState mientras carga la sesión)
+  - `src/i18n/es.ts` (textos de auth y tabs)
+  - Se eliminó `app/index.tsx` (la raíz "/" ahora es `(tabs)/index`).
+- **Decisiones tomadas:**
+  - Errores de Supabase traducidos con `translateAuthError` en una función pura (testeada).
+  - Los esquemas zod usan la API de zod v4 (`z.email()`).
+  - Protección de rutas con layouts de grupo: `(auth)` redirige a "/" si hay sesión; `(tabs)`
+    redirige a `/login` si no la hay; el layout raíz muestra `LoadingState` hasta restaurar la sesión.
+  - Se regeneraron los tipos de rutas de Expo (`expo start`); hubo que matar un servidor viejo que
+    ocupaba el puerto 8081 con rutas antiguas.
+- **Pendientes:** Probar en el celular (paso manual): registrarse, cerrar sesión, volver a entrar.
+  Siguiente tarea: P3.2 (bloqueo con biometría).
+- **Calidad:** `npm run typecheck`, `npm run lint` y `npm test` (33 tests) en verde.
