@@ -74,7 +74,7 @@ export default function CategoriesScreen() {
   }
 
   return (
-    <Screen>
+    <Screen scroll>
       <View style={{ gap: spacing.lg, marginTop: spacing.lg }}>
         <View style={{ gap: spacing.xs }}>
           <Pressable onPress={() => router.back()} accessibilityRole="button" hitSlop={8}>
@@ -92,6 +92,11 @@ export default function CategoriesScreen() {
           ]}
           value={kind}
           onChange={setKind}
+        />
+
+        <Button
+          title={es.categories.newCategory}
+          onPress={() => router.push({ pathname: '/category-form', params: { kind } })}
         />
 
         {groups.length === 0 ? (
@@ -174,11 +179,6 @@ export default function CategoriesScreen() {
             ))}
           </View>
         )}
-
-        <Button
-          title={es.categories.newCategory}
-          onPress={() => router.push({ pathname: '/category-form', params: { kind } })}
-        />
       </View>
     </Screen>
   );

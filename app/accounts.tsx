@@ -70,7 +70,7 @@ export default function AccountsScreen() {
   }
 
   return (
-    <Screen>
+    <Screen scroll>
       <View style={{ gap: spacing.lg, marginTop: spacing.lg }}>
         <View style={{ gap: spacing.xs }}>
           <Pressable onPress={() => router.back()} accessibilityRole="button" hitSlop={8}>
@@ -87,6 +87,8 @@ export default function AccountsScreen() {
           <Text variant="body">{es.accounts.totalBalance}</Text>
           <MoneyText amount={totalBalance} />
         </Card>
+
+        <Button title={es.accounts.newAccount} onPress={() => router.push('/account-form')} />
 
         {accounts.length === 0 ? (
           <EmptyState
@@ -142,8 +144,6 @@ export default function AccountsScreen() {
             ))}
           </View>
         )}
-
-        <Button title={es.accounts.newAccount} onPress={() => router.push('/account-form')} />
       </View>
     </Screen>
   );
