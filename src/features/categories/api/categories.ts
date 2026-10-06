@@ -24,6 +24,20 @@ export async function listCategories(kind?: CategoryKind, options: { archived?: 
   return (data ?? []) as Category[];
 }
 
+export async function getCategoriesByIds(ids: string[]) {
+  if (ids.length === 0) {
+    return [] as Category[];
+  }
+
+  const { data, error } = await supabase.from('categories').select('*').in('id', ids);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []) as Category[];
+}
+
 export async function createCategory(input: TablesInsert<'categories'>) {
   const { data, error } = await supabase.from('categories').insert(input).select().single();
 

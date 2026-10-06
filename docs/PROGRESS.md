@@ -426,3 +426,24 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   - Título del formulario distingue "Nueva categoría" vs "Nueva subcategoría".
 - **Calidad:** typecheck, lint y `npm test` (59 tests) en verde.
 - **Pendientes:** Probar en dispositivo la vista de archivadas y restauración. Siguiente: P6.1.
+
+---
+
+### [2026-10-05] Tarea: Ajustes de integración Categorías ↔ Movimientos (pre-P6)
+
+- **Qué se hizo:** Tres ajustes de arquitectura/UX antes de construir movimientos:
+  1. **Selector de categoría preserva la categoría asignada al editar**: `CategoryPicker` acepta
+     `additionIds`; tras las activas, incluye la(s) categoría(s) pasadas aunque estén archivadas
+     (función pura `mergeCategories` con tests; api `getCategoriesByIds` sin filtrar is_archived).
+  2. **Máximo 1 nivel de jerarquía**: al editar una categoría principal que ya tiene subcategorías,
+     se oculta el selector de padre y se fuerza `parent_id = null` (imposible crear un 3er nivel).
+  3. **Aviso al restaurar una madre**: nuevo componente `Snackbar` (overlay en `Screen`) que, al
+     restaurar una categoría madre con subcategorías aún archivadas, muestra:
+     "Categoría restaurada. Sus subcategorías continúan archivadas y puedes restaurarlas de forma
+     individual.".
+- **Archivos**: `CategoryPicker.tsx`, `api/categories.ts` (getCategoriesByIds), `utils/categories.ts`
+  (mergeCategories + test), `ui/Snackbar.tsx`, `ui/Screen.tsx` (prop overlay), `app/categories.tsx`,
+  `app/category-form.tsx`, `src/i18n/es.ts`.
+- **Calidad:** typecheck, lint y `npm test` (62 tests) en verde; bundle Android OK.
+- **Pendientes:** Usar `CategoryPicker additionIds` en la edición de movimientos (P6.2). Siguiente
+  tarea real: P6.1 (movimientos, capa de datos).

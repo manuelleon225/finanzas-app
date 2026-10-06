@@ -10,6 +10,7 @@ export type ScreenProps = {
   padded?: boolean;
   style?: ViewStyle;
   contentContainerStyle?: ViewStyle;
+  overlay?: ReactNode;
 };
 
 export function Screen({
@@ -18,6 +19,7 @@ export function Screen({
   padded = true,
   style,
   contentContainerStyle,
+  overlay,
 }: ScreenProps) {
   const { colors, spacing } = useTheme();
   const padding = padded ? spacing.lg : 0;
@@ -35,6 +37,7 @@ export function Screen({
         >
           {children}
         </ScrollView>
+        {overlay}
       </SafeAreaView>
     );
   }
@@ -45,6 +48,7 @@ export function Screen({
       edges={['top', 'left', 'right']}
     >
       {children}
+      {overlay}
     </SafeAreaView>
   );
 }

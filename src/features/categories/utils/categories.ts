@@ -72,6 +72,19 @@ export function groupCategoriesByParent(categories: Category[]): CategoryWithChi
     }));
 }
 
+export function mergeCategories(active: Category[], additions: Category[]): Category[] {
+  const merged = [...active];
+  const knownIds = new Set(active.map((category) => category.id));
+
+  for (const category of additions) {
+    if (!knownIds.has(category.id)) {
+      merged.push(category);
+    }
+  }
+
+  return merged;
+}
+
 export type ValidateCategoryNameParams = {
   name: string;
   kind: CategoryKind;

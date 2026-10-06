@@ -10,6 +10,7 @@ import {
   LoadingState,
   Screen,
   SegmentedControl,
+  Snackbar,
   Text,
 } from '@/components/ui';
 import { useSession } from '@/features/auth/hooks/AuthProvider';
@@ -32,6 +33,7 @@ export default function CategoriesScreen() {
   const { session, loading: sessionLoading } = useSession();
   const [kind, setKind] = useState<KindOption>('expense');
   const [showArchived, setShowArchived] = useState(false);
+  const [snackbar, setSnackbar] = useState<string | null>(null);
 
   const activeCategories = useCategories(kind as CategoryKind);
   const archivedCategories = useCategories(kind as CategoryKind, { archived: true });
@@ -90,7 +92,17 @@ export default function CategoriesScreen() {
         return;
       }
     }
-    restoreCategory.mutate(category.id);
+
+    restoreCategory.mutate(category.id, {
+      onSuccess: () => {
+        const hasArchivedChildren = (archivedCategories.data ?? []).some(
+          (entry) => entry.parent_id === category.id,
+        );
+        setSnackbar(
+          hasArchivedChildren ? es.categories.restoreMotherNotice : es.categories.restoreSuccess,
+        );
+      },
+    });
   }
 
   function editCategory(category: Category) {
@@ -98,7 +110,7 @@ export default function CategoriesScreen() {
   }
 
   return (
-    <Screen scroll>
+    <Screen scroll overlay={<Snackbar message={snackbar} onDismiss={() => setSnackbar(null)} />}>
       <View style={{ gap: spacing.lg, marginTop: spacing.lg }}>
         <View style={{ gap: spacing.xs }}>
           <Pressable onPress={() => router.back()} accessibilityRole="button" hitSlop={8}>

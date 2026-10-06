@@ -118,6 +118,11 @@ export const es = {
     cannotRestoreChild:
       'Primero restaura la categoría madre para poder restaurar esta subcategoría.',
     noArchived: 'No hay categorías archivadas.',
+    restoreSuccess: 'Categoría restaurada.',
+    restoreMotherNotice:
+      'Categoría restaurada. Sus subcategorías continúan archivadas y puedes restaurarlas de forma individual.',
+    cannotBeSubcategory:
+      'Esta categoría tiene subcategorías, por lo que no puede convertirse en subcategoría de otra.',
     name: 'Nombre',
     namePlaceholder: 'Ej. Comida',
     icon: 'Ícono',

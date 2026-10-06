@@ -47,6 +47,9 @@ export default function CategoryFormScreen() {
   const updateCategory = useUpdateCategory();
 
   const category = isEditing ? categories?.find((entry) => entry.id === id) : undefined;
+  const hasChildren = isEditing
+    ? (categories ?? []).some((entry) => entry.parent_id === id)
+    : false;
   const parentName = parentIdParam
     ? categories?.find((entry) => entry.id === parentIdParam)?.name
     : undefined;
@@ -116,7 +119,7 @@ export default function CategoryFormScreen() {
       icon: values.icon,
       color: values.color,
       kind,
-      parent_id: values.parentId,
+      parent_id: hasChildren ? null : values.parentId,
     };
 
     if (isEditing) {
@@ -229,10 +232,12 @@ export default function CategoryFormScreen() {
           )}
         />
 
-        {parentIdParam ? (
+        {parentIdParam || hasChildren ? (
           <View style={{ gap: spacing.xs }}>
             <Text variant="caption">
-              {es.categories.subcategoryOf}: {parentName ?? '…'}
+              {hasChildren
+                ? es.categories.cannotBeSubcategory
+                : `${es.categories.subcategoryOf}: ${parentName ?? '…'}`}
             </Text>
           </View>
         ) : (
