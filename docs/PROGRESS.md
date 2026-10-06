@@ -376,3 +376,35 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
 - **Pendientes:** Probar en el dispositivo (paso manual): gestionar categorías (crear, editar,
   subcategoría, archivar) en ambas pestañas. Siguiente tarea: P6.1 (movimientos, capa de datos).
 - **Calidad:** `npm run typecheck`, `npm run lint` y `npm test` (53 tests) en verde.
+
+---
+
+### [2026-10-05] Tarea: P5.1b — Reglas de negocio de categorías (ajustes aprobados)
+
+- **Qué se hizo:** Implementación de las 3 reglas acordadas tras el análisis funcional:
+  1. **Archivo en cascada**: al archivar una categoría madre se archivan también sus subcategorías
+     (`archiveCategory` busca los hijos y actualiza `is_archived=true` en lote con `.in('id', ...)`).
+  2. **Validación de nombres (formulario/zod)**: una subcategoría NO puede llamarse igual que su
+     madre, y no se permiten nombres duplicados entre hermanas ni entre categorías principales del
+     mismo kind. Comparación con `trim()` + `toLowerCase()`, en una función pura
+     `validateCategoryName` con tests.
+  3. Editar una categoría no se rechaza a sí misma (se excluye por `editingId`).
+- **Decisiones diferidas (documentadas):**
+  - Índices `UNIQUE` parciales en Postgres (padres por `user_id+kind+name WHERE parent_id IS NULL`;
+    hermanas por `user_id+parent_id+name WHERE parent_id IS NOT NULL`) se agregarán en P9 tras
+    limpiar posibles duplicados en datos reales.
+  - Reglas de "desarchivar/reactivar" (no reactivar hijas en cascada; bloquear hija activa bajo madre
+    archivada) se implementarán cuando exista la pantalla de desarchivar.
+  - El `kind` de una categoría no es editable (no afecta balances: el tipo vive en transactions.type).
+- **Verificación funcional (BD):** Con un usuario de prueba y la misma secuencia que ejecuta la app,
+  se creó un padre con 2 hijas + 1 categoría aparte; al "archivar" el padre, la madre y las 2 hijas
+  quedaron `is_archived=true` y la categoría ajena quedó intacta (RLS `.in()` OK).
+- **Pendientes:** Probar en el dispositivo el archivo en cascada y los mensajes de nombre duplicado.
+  Siguiente tarea: P6.1 (movimientos, capa de datos).
+- **Calidad:** `npm run typecheck`, `npm run lint` y `npm test` (59 tests) en verde.
+
+### [2026-10-05] Nota de incidencias
+
+- El computador se apagó a mitad de la verificación de P5.1b; los cambios de código ya estaban
+  aplicados pero pendientes de commit. Se re-verificó (typecheck/lint/test + cascada en BD) y se
+  completó el commit en esta sesión.

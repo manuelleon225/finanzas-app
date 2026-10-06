@@ -1,5 +1,7 @@
+import { es } from '@/i18n/es';
 import type { Tables } from '@/types/database';
 
+export type CategoryKind = 'income' | 'expense';
 export type Category = Tables<'categories'>;
 
 export const ICON_SET: string[] = [
@@ -68,4 +70,47 @@ export function groupCategoriesByParent(categories: Category[]): CategoryWithChi
         (a, b) => a.sort_order - b.sort_order,
       ),
     }));
+}
+
+export type ValidateCategoryNameParams = {
+  name: string;
+  kind: CategoryKind;
+  parentId: string | null;
+  editingId?: string;
+  categories: Category[];
+};
+
+export function validateCategoryName({
+  name,
+  kind,
+  parentId,
+  editingId,
+  categories,
+}: ValidateCategoryNameParams): string | null {
+  const normalized = name.trim().toLowerCase();
+
+  if (!normalized) {
+    return null;
+  }
+
+  const siblings = categories.filter(
+    (category) =>
+      category.kind === kind && category.parent_id === parentId && category.id !== editingId,
+  );
+  const isDuplicate = siblings.some(
+    (category) => category.name.trim().toLowerCase() === normalized,
+  );
+
+  if (isDuplicate) {
+    return es.categories.duplicateName;
+  }
+
+  if (parentId) {
+    const parent = categories.find((category) => category.id === parentId);
+    if (parent && parent.name.trim().toLowerCase() === normalized) {
+      return es.categories.sameAsParent;
+    }
+  }
+
+  return null;
 }

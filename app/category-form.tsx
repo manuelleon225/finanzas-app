@@ -14,7 +14,11 @@ import {
   useCreateCategory,
   useUpdateCategory,
 } from '@/features/categories/hooks/useCategories';
-import { COLOR_PALETTE, ICON_SET } from '@/features/categories/utils/categories';
+import {
+  COLOR_PALETTE,
+  ICON_SET,
+  validateCategoryName,
+} from '@/features/categories/utils/categories';
 import { es } from '@/i18n/es';
 import { useTheme } from '@/theme';
 
@@ -51,6 +55,7 @@ export default function CategoryFormScreen() {
     control,
     handleSubmit,
     reset,
+    setError,
     formState: { errors },
   } = useForm<CategoryForm>({
     resolver: zodResolver(categorySchema),
@@ -93,6 +98,19 @@ export default function CategoryFormScreen() {
   const isPending = createCategory.isPending || updateCategory.isPending;
 
   const onSubmit = handleSubmit((values) => {
+    const nameError = validateCategoryName({
+      name: values.name,
+      kind,
+      parentId: values.parentId,
+      editingId: id,
+      categories: categories ?? [],
+    });
+
+    if (nameError) {
+      setError('name', { type: 'manual', message: nameError });
+      return;
+    }
+
     const payload = {
       name: values.name.trim(),
       icon: values.icon,

@@ -1,4 +1,4 @@
-import { groupCategoriesByParent, type Category } from '../categories';
+import { groupCategoriesByParent, validateCategoryName, type Category } from '../categories';
 
 describe('groupCategoriesByParent', () => {
   it('devuelve una lista vacía si no hay categorías', () => {
@@ -34,5 +34,76 @@ describe('groupCategoriesByParent', () => {
     const groups = groupCategoriesByParent(categories);
     expect(groups).toHaveLength(1);
     expect(groups[0].children).toEqual([]);
+  });
+});
+
+describe('validateCategoryName', () => {
+  const categories = [
+    { id: 'comida', name: 'Comida', kind: 'expense', parent_id: null },
+    { id: 'salario', name: 'Salario', kind: 'income', parent_id: null },
+    { id: 'restaurante', name: 'Restaurante', kind: 'expense', parent_id: 'comida' },
+  ] as Category[];
+
+  it('acepta un nombre nuevo', () => {
+    expect(
+      validateCategoryName({
+        name: 'Mercado',
+        kind: 'expense',
+        parentId: null,
+        categories,
+      }),
+    ).toBeNull();
+  });
+
+  it('rechaza un nombre duplicado entre categorías principales (ignorando mayúsculas y espacios)', () => {
+    const error = validateCategoryName({
+      name: '  comida  ',
+      kind: 'expense',
+      parentId: null,
+      categories,
+    });
+    expect(error).toBe('Ya existe una categoría con este nombre.');
+  });
+
+  it('rechaza un nombre duplicado entre hermanas', () => {
+    const error = validateCategoryName({
+      name: 'Restaurante',
+      kind: 'expense',
+      parentId: 'comida',
+      categories,
+    });
+    expect(error).toBe('Ya existe una categoría con este nombre.');
+  });
+
+  it('rechaza que una subcategoría se llame igual que su madre', () => {
+    const error = validateCategoryName({
+      name: 'Comida',
+      kind: 'expense',
+      parentId: 'comida',
+      categories,
+    });
+    expect(error).toBe('Una subcategoría no puede llamarse igual que su categoría madre.');
+  });
+
+  it('no rechaza el mismo nombre en un kind distinto', () => {
+    const error = validateCategoryName({
+      name: 'Salario',
+      kind: 'expense',
+      parentId: null,
+      categories,
+    });
+    expect(error).toBeNull();
+  });
+
+  it('no se rechaza a sí misma al editar', () => {
+    expect(
+      validateCategoryName({
+        name: 'Comida',
+        kind: 'expense',
+        parentId: null,
+        editingId: 'comida',
+        categories,
+      }),
+    ).toBeNull();
   });
 });

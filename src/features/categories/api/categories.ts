@@ -50,12 +50,21 @@ export async function updateCategory(id: string, input: TablesUpdate<'categories
 }
 
 export async function archiveCategory(id: string) {
+  const { data: children, error: childrenError } = await supabase
+    .from('categories')
+    .select('id')
+    .eq('parent_id', id);
+
+  if (childrenError) {
+    throw childrenError;
+  }
+
+  const childrenIds = children?.map((child) => child.id) ?? [];
   const { data, error } = await supabase
     .from('categories')
     .update({ is_archived: true })
-    .eq('id', id)
-    .select()
-    .single();
+    .in('id', [id, ...childrenIds])
+    .select();
 
   if (error) {
     throw error;

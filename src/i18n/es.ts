@@ -125,6 +125,8 @@ export const es = {
     nameRequired: 'El nombre es obligatorio.',
     iconRequired: 'Selecciona un ícono.',
     colorRequired: 'Selecciona un color.',
+    duplicateName: 'Ya existe una categoría con este nombre.',
+    sameAsParent: 'Una subcategoría no puede llamarse igual que su categoría madre.',
     emptyTitle: 'Aún no hay categorías',
     emptyDescription: 'Crea categorías para usarlas al registrar movimientos.',
     confirmArchiveTitle: '¿Archivar categoría?',
