@@ -218,6 +218,7 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   - Los íconos usan nombres de Ionicons (conjunto que se usará en P5.1) y una paleta fija de colores.
   - La función es `SECURITY DEFINER` porque durante el registro el usuario aún no está autenticado y
     RLS está activo.
-- **Pendientes:** Ejecutar `003_new_user.sql` en el SQL Editor de Supabase y verificarlo (paso
-  manual). Siguiente tarea: P2.4 (tipos de TypeScript de la base de datos).
+- **Verificación funcional:** Aplicado en Supabase y comprobado vía API con un usuario nuevo: se crea
+  1 perfil, 1 cuenta "Efectivo" (cash, saldo 0) y 16 categorías (11 de gasto + 5 de ingreso).
+- **Pendientes:** Ninguno. Siguiente tarea: P2.4 (tipos de TypeScript de la base de datos).
 - **Calidad:** `npm run typecheck`, `npm run lint` y `npm test` (21 tests) en verde.
