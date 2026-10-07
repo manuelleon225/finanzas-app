@@ -6,6 +6,7 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import {
   Button,
   Chip,
+  EmptyState,
   ErrorState,
   Input,
   LoadingState,
@@ -133,6 +134,19 @@ export default function RecurringFormScreen() {
     return (
       <Screen>
         <ErrorState onRetry={() => void accountsQuery.refetch()} />
+      </Screen>
+    );
+  }
+
+  if (!isEditing && accounts.length === 0) {
+    return (
+      <Screen>
+        <EmptyState
+          title={es.transactionForm.noAccountsTitle}
+          description={es.transactionForm.noAccountsDescription}
+          actionLabel={es.accounts.newAccount}
+          onAction={() => router.push('/account-form')}
+        />
       </Screen>
     );
   }

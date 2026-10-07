@@ -680,3 +680,30 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
 - **Pendientes:** Probar en el dispositivo (recargar; el dev server regenerará los tipos de rutas).
 - **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (137 tests) en
   verde; bundle Android OK.
+
+---
+
+### [2026-10-05] Tarea: P9.1 — Calidad, accesibilidad y rendimiento
+
+- **Qué se hizo:**
+  1. **Estados**: se agregó el estado "sin cuentas" en `app/recurring-form.tsx` (estaba en
+     transaction-form pero faltaba en el formulario de reglas).
+  2. **Accesibilidad**: botones flotantes y Switch ya tenían label; se añadió `accessibilityLabel`
+     a los selectores ‹ › de Inicio y al botón de ayuda "?" de "Disponible hoy".
+  3. **Textos**: se verificó que no hay strings de usuario fuera de `src/i18n/es.ts` (solo símbolos,
+     nombres de íconos y formato de fecha).
+  4. **Limpieza**: se eliminó `app/design-preview.tsx` y el bloque `designPreview` de i18n. No había
+     `console.log` ni TODO.
+  5. **Rendimiento**: la fila de la lista de movimientos se extrajo a un componente memoizado
+     (`MovementRow` con `React.memo`) y `confirmDelete` se envolvió en `useCallback` (antes de los
+     returns condicionales); las claves ya eran estables (`item.id`).
+- **Hallazgos no corregidos (y por qué):**
+  - Contraste: no se midió formalmente (ratios); la paleta usa colores con buen contraste en ambos
+    temas, pero la verificación visual final queda como pendiente en la prueba de dispositivo.
+  - Escalado de fuente: los textos usan `allowFontScaling` por defecto (escalan con el sistema).
+  - Íconos de categoría en listas son decorativos (van acompañados de texto); los táctiles tienen
+    label.
+  - El placeholder "AAAA-MM-DD" del formulario recurrente es un formato, no un texto de marca.
+  - El aviso informativo de React Compiler con `react-hook-form` no se suprime (herramienta, no error).
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (137 tests) en
+  verde; bundle Android OK.

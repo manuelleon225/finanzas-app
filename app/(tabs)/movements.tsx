@@ -1,7 +1,7 @@
 import { addMonths, format, startOfMonth, subDays, subMonths } from 'date-fns';
 import { Redirect, useRouter } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -120,25 +120,28 @@ export default function MovementsScreen() {
     Boolean,
   ).length;
 
+  const confirmDelete = useCallback(
+    (transaction: TransactionWithRelations) => {
+      Alert.alert(es.transactionList.deleteTitle, es.transactionList.deleteMessage, [
+        { text: es.common.cancel, style: 'cancel' },
+        {
+          text: es.transactionForm.delete,
+          style: 'destructive',
+          onPress: () => {
+            deleteTransaction.mutate(transaction.id, { onSuccess: () => setDeleted(transaction) });
+          },
+        },
+      ]);
+    },
+    [deleteTransaction],
+  );
+
   if (sessionLoading) {
     return <LoadingState />;
   }
 
   if (!session) {
     return <Redirect href="/login" />;
-  }
-
-  function confirmDelete(transaction: TransactionWithRelations) {
-    Alert.alert(es.transactionList.deleteTitle, es.transactionList.deleteMessage, [
-      { text: es.common.cancel, style: 'cancel' },
-      {
-        text: es.transactionForm.delete,
-        style: 'destructive',
-        onPress: () => {
-          deleteTransaction.mutate(transaction.id, { onSuccess: () => setDeleted(transaction) });
-        },
-      },
-    ]);
   }
 
   function undoDelete() {
@@ -281,63 +284,7 @@ export default function MovementsScreen() {
                 />
               </View>
             )}
-            renderItem={({ item }) => {
-              const isExtra = item.nature === 'extra';
-              const isTransfer = item.type === 'transfer';
-              const categoryName = isTransfer
-                ? `${item.account?.name ?? '?'} → ${item.transfer_account?.name ?? '?'}`
-                : (item.category?.name ?? '—');
-              const kind =
-                item.type === 'income' ? 'income' : item.type === 'expense' ? 'expense' : 'neutral';
-              const details = isTransfer
-                ? (item.note ?? '')
-                : [item.note, item.account?.name].filter(Boolean).join(' · ');
-
-              return (
-                <Pressable
-                  onPress={() =>
-                    router.push({ pathname: '/transaction-form', params: { id: item.id } })
-                  }
-                  onLongPress={() => confirmDelete(item)}
-                  accessibilityRole="button"
-                  style={styles.row}
-                >
-                  <CategoryIcon
-                    icon={
-                      isTransfer
-                        ? 'swap-horizontal-outline'
-                        : (item.category?.icon ?? 'ellipsis-horizontal-outline')
-                    }
-                    color={
-                      isTransfer
-                        ? colors.textSecondary
-                        : (item.category?.color ?? colors.textSecondary)
-                    }
-                    size={22}
-                  />
-                  <View style={{ flex: 1 }}>
-                    <View style={styles.titleRow}>
-                      <Text variant="body">{categoryName}</Text>
-                      {isExtra ? (
-                        <Text variant="caption" color={colors.extra}>
-                          · {es.transactionList.extra}
-                        </Text>
-                      ) : null}
-                      {item.recurring_rule_id ? (
-                        <Ionicons
-                          name="repeat"
-                          size={14}
-                          color={colors.textSecondary}
-                          accessibilityLabel={es.transactionList.recurring}
-                        />
-                      ) : null}
-                    </View>
-                    {details.length > 0 ? <Text variant="caption">{details}</Text> : null}
-                  </View>
-                  <MoneyText amount={item.amount} kind={kind} signed />
-                </Pressable>
-              );
-            }}
+            renderItem={({ item }) => <MovementRow item={item} onLongPress={confirmDelete} />}
           />
         )}
       </View>
@@ -360,6 +307,66 @@ export default function MovementsScreen() {
     </Screen>
   );
 }
+
+const MovementRow = memo(function MovementRow({
+  item,
+  onLongPress,
+}: {
+  item: TransactionWithRelations;
+  onLongPress: (transaction: TransactionWithRelations) => void;
+}) {
+  const { colors } = useTheme();
+  const router = useRouter();
+
+  const isExtra = item.nature === 'extra';
+  const isTransfer = item.type === 'transfer';
+  const categoryName = isTransfer
+    ? `${item.account?.name ?? '?'} → ${item.transfer_account?.name ?? '?'}`
+    : (item.category?.name ?? '—');
+  const kind = item.type === 'income' ? 'income' : item.type === 'expense' ? 'expense' : 'neutral';
+  const details = isTransfer
+    ? (item.note ?? '')
+    : [item.note, item.account?.name].filter(Boolean).join(' · ');
+
+  return (
+    <Pressable
+      onPress={() => router.push({ pathname: '/transaction-form', params: { id: item.id } })}
+      onLongPress={() => onLongPress(item)}
+      accessibilityRole="button"
+      style={styles.row}
+    >
+      <CategoryIcon
+        icon={
+          isTransfer
+            ? 'swap-horizontal-outline'
+            : (item.category?.icon ?? 'ellipsis-horizontal-outline')
+        }
+        color={isTransfer ? colors.textSecondary : (item.category?.color ?? colors.textSecondary)}
+        size={22}
+      />
+      <View style={{ flex: 1 }}>
+        <View style={styles.titleRow}>
+          <Text variant="body">{categoryName}</Text>
+          {isExtra ? (
+            <Text variant="caption" color={colors.extra}>
+              · {es.transactionList.extra}
+            </Text>
+          ) : null}
+          {item.recurring_rule_id ? (
+            <Ionicons
+              name="repeat"
+              size={14}
+              color={colors.textSecondary}
+              accessibilityLabel={es.transactionList.recurring}
+            />
+          ) : null}
+        </View>
+        {details.length > 0 ? <Text variant="caption">{details}</Text> : null}
+      </View>
+      <MoneyText amount={item.amount} kind={kind} signed />
+    </Pressable>
+  );
+});
 
 type FiltersSheetProps = {
   visible: boolean;

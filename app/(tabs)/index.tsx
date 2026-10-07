@@ -86,13 +86,23 @@ export default function HomeScreen() {
             {es.home.greeting}, {displayName || '…'}
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-            <Pressable onPress={() => setMonthAnchor((anchor) => subMonths(anchor, 1))} hitSlop={8}>
+            <Pressable
+              onPress={() => setMonthAnchor((anchor) => subMonths(anchor, 1))}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={es.transactionList.previousMonth}
+            >
               <Text variant="subtitle" color={colors.primary}>
                 ‹
               </Text>
             </Pressable>
             <Text variant="subtitle">{formatMonthLabel(monthAnchor)}</Text>
-            <Pressable onPress={() => setMonthAnchor((anchor) => addMonths(anchor, 1))} hitSlop={8}>
+            <Pressable
+              onPress={() => setMonthAnchor((anchor) => addMonths(anchor, 1))}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={es.transactionList.nextMonth}
+            >
               <Text variant="subtitle" color={colors.primary}>
                 ›
               </Text>
@@ -121,7 +131,12 @@ export default function HomeScreen() {
             <Card style={{ gap: spacing.sm }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
                 <Text variant="body">{es.home.availableToday}</Text>
-                <Pressable onPress={showAvailableHelp} accessibilityRole="button" hitSlop={8}>
+                <Pressable
+                  onPress={showAvailableHelp}
+                  accessibilityRole="button"
+                  accessibilityLabel={es.home.helpTitle}
+                  hitSlop={8}
+                >
                   <Text variant="caption" color={colors.textSecondary}>
                     ?
                   </Text>

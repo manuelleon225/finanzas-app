@@ -16,10 +16,6 @@ export const es = {
     emptyDescription: 'Cuando registres información aparecerá en esta pantalla.',
     errorTitle: 'Algo salió mal',
   },
-  designPreview: {
-    title: 'Sistema de diseño',
-    subtitle: 'Pantalla temporal de desarrollo. Se eliminará antes de publicar.',
-  },
   auth: {
     welcome: 'Bienvenido',
     loginTitle: 'Inicia sesión',
