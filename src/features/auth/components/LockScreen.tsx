@@ -1,4 +1,5 @@
 import * as LocalAuthentication from 'expo-local-authentication';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -10,6 +11,7 @@ import { useTheme } from '@/theme';
 
 export function LockScreen() {
   const { colors, spacing } = useTheme();
+  const router = useRouter();
   const unlock = useBiometricStore((state) => state.unlock);
   const [attempting, setAttempting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +31,7 @@ export function LockScreen() {
       });
       if (result.success) {
         unlock();
+        router.replace('/');
       } else {
         setError(es.biometric.retry);
       }
