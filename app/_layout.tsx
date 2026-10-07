@@ -1,6 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { View } from 'react-native';
 
 import { LoadingState } from '@/components/ui';
@@ -27,10 +28,18 @@ function LockOverlay() {
 function RootNavigator() {
   const { loading } = useSession();
   const { colors } = useTheme();
+  const router = useRouter();
+  const isLocked = useBiometricStore((state) => state.isLocked);
 
   useBiometricLock();
   useRecurringGeneration();
   useReminderScheduling();
+
+  useEffect(() => {
+    if (isLocked) {
+      router.dismissAll();
+    }
+  }, [isLocked, router]);
 
   if (loading) {
     return (
