@@ -447,3 +447,33 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
 - **Calidad:** typecheck, lint y `npm test` (62 tests) en verde; bundle Android OK.
 - **Pendientes:** Usar `CategoryPicker additionIds` en la edición de movimientos (P6.2). Siguiente
   tarea real: P6.1 (movimientos, capa de datos).
+
+---
+
+### [2026-10-05] Tarea: P6.1 — Capa de datos de movimientos
+
+- **Qué se hizo:** Se implementó la capa de datos de `src/features/transactions` (sin pantallas):
+  - `utils/schemas.ts`: esquema zod discriminado por `type` (income/expense/transfer) que replica
+    las reglas CHECK (transfer → cuenta destino obligatoria y distinta, sin categoría ni naturaleza;
+    income/expense → categoría y naturaleza obligatorias, sin cuenta destino), con mensajes en español.
+  - `api/transactions.ts`: `listTransactions` (filtros por rango de fechas, cuenta, categoría, tipo,
+    naturaleza y texto en nota; paginación por cursor `occurred_on+id`; incluye categoría, cuenta y
+    cuenta destino), `getTransaction`, `createTransaction`, `updateTransaction`, `deleteTransaction`.
+  - `hooks/useTransactions.ts`: `useTransactions` (infinite query) y mutaciones que invalidan
+    `transactions`, `accounts` y `summary`.
+  - `utils/transactions.ts`: `calculateTotals` (ingresos, gastos, balance; transferencias no cuentan)
+    y `groupTransactionsByDay` (agrupado por día con total del día).
+  - `src/lib/dates.ts`: `isValidISODate` (valida fechas reales, incluidos bisiestos).
+- **Archivos creados:** `src/features/transactions/{utils/schemas.ts, utils/transactions.ts,
+  api/transactions.ts, hooks/useTransactions.ts}` + tests (`utils/__tests__/schemas.test.ts`,
+  `utils/__tests__/transactions.test.ts`), `src/lib/dates.ts` + `dates.test.ts`,
+  `src/i18n/es.ts` (bloque `transactions`).
+- **Decisiones tomadas:**
+  - Paginación por cursor compuesto (`occurred_on` desc, `id` desc) con filtro `or(and(...))`.
+  - El filtro por cuenta usa `account_id` (cuenta origen); las transferencias entrantes no se
+    incluyen por `transfer_account_id` (se puede ampliar si la UX lo pide).
+  - Los mensajes de campos faltantes se personalizan con la opción `error` de zod v4.
+  - `getTransaction` incluye las relaciones (categoría/cuentas) y no filtra categorías archivadas,
+    para que el historial conserve el nombre.
+- **Pendientes:** Pantallas de registro y listado (P6.2 y P6.3). Siguiente tarea: P6.2.
+- **Calidad:** `npm run typecheck`, `npm run lint` y `npm test` (86 tests) en verde.

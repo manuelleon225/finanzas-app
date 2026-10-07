@@ -83,6 +83,14 @@ export const es = {
     savings: 'Ahorros',
     credit_card: 'Tarjeta de crédito',
   },
+  transactions: {
+    amountPositive: 'El monto debe ser mayor que cero.',
+    accountRequired: 'Selecciona una cuenta.',
+    transferAccountRequired: 'Selecciona la cuenta destino.',
+    categoryRequired: 'Selecciona una categoría.',
+    differentAccounts: 'Las cuentas de origen y destino deben ser distintas.',
+    invalidDate: 'Fecha inválida.',
+  },
   accounts: {
     title: 'Cuentas',
     totalBalance: 'Saldo total',
