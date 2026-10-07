@@ -655,3 +655,28 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   en Expo Go se deja implementado y lazzy-load para no romper la app.
 - **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (129 tests) en
   verde; bundle Android OK.
+
+---
+
+### [2026-10-05] Tarea: P8.1 + P8.2 — Lógica del resumen y pantalla de Inicio
+
+- **Qué se hizo:** Se implementó la lógica del resumen mensual y la pantalla de Inicio:
+  - `src/features/summary/utils/summary.ts` (pura): `calculateMonthSummary(transactions, rules,
+    today)` con desglose Base/Extra de ingresos y gastos, balance, gastos recurrentes pendientes
+    (ocurrencias posteriores a hoy dentro del mes), `disponible_mes`, `disponible_hoy` (fórmula de
+    DATA_MODEL) y `extraDependency`. Tests exhaustivos (transferencias ignoradas, último día,
+    pendientes, negativo → 0, dependencia de extras).
+  - `useMonthSummary(month)`: junta movimientos del mes + reglas activas de gasto; devuelve summary,
+    movimientos del mes (para "últimos 5"), carga/error/refetch.
+  - `useProfile()` (auth): display_name de profiles para el saludo.
+  - `app/(tabs)/index.tsx`: saludo + selector de mes, tarjeta **Disponible hoy** (+ ayuda), tarjetas
+    Ingresos/Gastos del mes con Base|Extra, indicador **Dependencia de extras** con barra, saldo
+    total + cuentas, últimos 5 movimientos con "Ver todos", FAB, skeletons, vacío, error con
+    reintento y pull-to-refresh.
+  - `getTransactionsInRange` ahora ordena desc para los "últimos 5".
+- **Incidencias:** el computador se apagó dos veces durante el trabajo; archivos a medio escribir se
+  reconstruyeron, y el `.expo/types/router.d.ts` generado quedó corrupto y se eliminó (lo regenera
+  el dev server al arrancar).
+- **Pendientes:** Probar en el dispositivo (recargar; el dev server regenerará los tipos de rutas).
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (137 tests) en
+  verde; bundle Android OK.

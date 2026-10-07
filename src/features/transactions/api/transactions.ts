@@ -122,7 +122,9 @@ export async function getTransactionsInRange(
     .from('transactions')
     .select(TRANSACTIONS_SELECT)
     .gte('occurred_on', from)
-    .lte('occurred_on', to);
+    .lte('occurred_on', to)
+    .order('occurred_on', { ascending: false })
+    .order('id', { ascending: false });
 
   if (error) {
     throw error;

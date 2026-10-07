@@ -59,6 +59,26 @@ export const es = {
     movements: 'Movimientos',
     settings: 'Ajustes',
   },
+  home: {
+    greeting: 'Hola',
+    availableToday: 'Disponible hoy',
+    availableThisMonth: 'Disponible este mes',
+    helpTitle: '¿Qué es "Disponible hoy"?',
+    helpBody:
+      'Es lo que puedes gastar hoy sin romper el mes: lo que queda del mes, dividido entre los días que faltan (contando hoy).',
+    incomes: 'Ingresos del mes',
+    expenses: 'Gastos del mes',
+    baseLabel: 'Base',
+    extraLabel: 'Extra',
+    extraDependency: 'Dependencia de extras',
+    extraDependencyHint:
+      'El porcentaje de tus ingresos de este mes que viene de entradas no esperadas (extra).',
+    totalBalance: 'Saldo total',
+    recentMovements: 'Últimos movimientos',
+    viewAll: 'Ver todos',
+    emptyTitle: 'Registra tu primer movimiento',
+    emptyDescription: 'Usa el botón + para empezar a ver tu resumen aquí.',
+  },
   biometric: {
     enable: 'Bloquear con biometría',
     enableDescription: 'La app pedirá tu huella o Face ID al volver del segundo plano.',
