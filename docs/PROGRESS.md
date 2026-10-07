@@ -538,3 +538,25 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   P6.4 (transferencias).
 - **Calidad:** `npm run typecheck`, `npm run lint` (1 aviso informativo) y `npm test` (97 tests) en
   verde; bundle Android OK.
+
+---
+
+### [2026-10-05] Tarea: P6.4 — Transferencias
+
+- **Qué se hizo:** Se agregó el tipo **Transferencia** al formulario y a la lista:
+  - En el modal aparece la opción "Transferencia"; al elegirla se ocultan categoría y naturaleza y
+    se muestran **Cuenta origen** y **Cuenta destino** (deben ser distintas). Si hay menos de dos
+    cuentas activas, se muestra un mensaje y se deshabilita guardar.
+  - El formulario construye el payload de transferencia (`transfer_account_id`, sin categoría ni
+    naturaleza) y valida con el esquema zod (que ya contempla la transferencia).
+  - En la lista, las transferencias se muestran como **"Origen → Destino"** con ícono propio y color
+    neutro, y no afectan los totales (ni del día ni del mes).
+- **Archivos modificados:** `app/transaction-form.tsx`, `app/(tabs)/movements.tsx`,
+  `src/features/transactions/utils/form.ts` (+ test), `src/i18n/es.ts`.
+- **Verificación funcional (BD):** Transferencia de **100.000** de Banco a Efectivo → `account_balances`
+  devuelve **Banco -100.000** y **Efectivo +100.000**; los totales del mes no cambian (transferencias
+  ignoradas por `calculateTotals`, cubierto con tests).
+- **Pendientes:** Probar en el dispositivo. **Fase 6 (Movimientos) completada.** Sugerencia de la
+  guía: usar la app unos días antes de seguir con recurrentes (P7.1).
+- **Calidad:** `npm run typecheck`, `npm run lint` (1 aviso informativo) y `npm test` (98 tests) en
+  verde; bundle Android OK.

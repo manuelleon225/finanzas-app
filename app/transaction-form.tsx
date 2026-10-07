@@ -72,6 +72,7 @@ export default function TransactionFormScreen() {
       nature: 'base',
       amountText: '',
       accountId: '',
+      transferAccountId: '',
       categoryId: '',
       occurredOn: todayISO(),
       note: '',
@@ -98,10 +99,16 @@ export default function TransactionFormScreen() {
   useEffect(() => {
     if (isEditing && transaction) {
       reset({
-        type: transaction.type === 'income' ? 'income' : 'expense',
+        type:
+          transaction.type === 'income'
+            ? 'income'
+            : transaction.type === 'transfer'
+              ? 'transfer'
+              : 'expense',
         nature: transaction.nature === 'extra' ? 'extra' : 'base',
         amountText: String(transaction.amount),
         accountId: transaction.account_id,
+        transferAccountId: transaction.transfer_account_id ?? '',
         categoryId: transaction.category_id ?? '',
         occurredOn: transaction.occurred_on,
         note: transaction.note ?? '',
@@ -157,6 +164,7 @@ export default function TransactionFormScreen() {
 
   const isPending =
     createTransaction.isPending || updateTransaction.isPending || deleteTransaction.isPending;
+  const transferUnavailable = type === 'transfer' && accounts.length < 2;
 
   const save = (afterSave: 'close' | 'another') =>
     handleSubmit((values) => {
@@ -172,20 +180,29 @@ export default function TransactionFormScreen() {
         return;
       }
 
-      if (parsed.data.type === 'transfer') {
-        return;
-      }
-
-      const payload: TablesInsert<'transactions'> = {
-        type: parsed.data.type,
-        nature: parsed.data.nature,
-        amount: parsed.data.amount,
-        account_id: parsed.data.account_id,
-        category_id: parsed.data.category_id,
-        transfer_account_id: null,
-        occurred_on: parsed.data.occurred_on,
-        note: parsed.data.note ?? null,
-      };
+      const data = parsed.data;
+      const payload: TablesInsert<'transactions'> =
+        data.type === 'transfer'
+          ? {
+              type: 'transfer',
+              amount: data.amount,
+              account_id: data.account_id,
+              transfer_account_id: data.transfer_account_id,
+              nature: null,
+              category_id: null,
+              occurred_on: data.occurred_on,
+              note: data.note ?? null,
+            }
+          : {
+              type: data.type,
+              nature: data.nature,
+              amount: data.amount,
+              account_id: data.account_id,
+              category_id: data.category_id,
+              transfer_account_id: null,
+              occurred_on: data.occurred_on,
+              note: data.note ?? null,
+            };
 
       const onSuccess = () => {
         setLastAccountId(parsed.data.account_id);
@@ -279,10 +296,11 @@ export default function TransactionFormScreen() {
           name="type"
           control={control}
           render={({ field }) => (
-            <SegmentedControl<'income' | 'expense'>
+            <SegmentedControl<'income' | 'expense' | 'transfer'>
               options={[
                 { label: es.transactionForm.expense, value: 'expense' },
                 { label: es.transactionForm.income, value: 'income' },
+                { label: es.transactionForm.transfer, value: 'transfer' },
               ]}
               value={field.value}
               onChange={(value) => {
@@ -293,47 +311,55 @@ export default function TransactionFormScreen() {
           )}
         />
 
-        <Controller
-          name="nature"
-          control={control}
-          render={({ field }) => (
-            <View style={{ gap: spacing.xs }}>
-              <SegmentedControl<'base' | 'extra'>
-                options={[
-                  { label: es.transactionForm.base, value: 'base' },
-                  { label: es.transactionForm.extra, value: 'extra' },
-                ]}
-                value={field.value}
-                onChange={field.onChange}
-              />
-              <Text variant="caption">{es.transactionForm.natureHelp}</Text>
-            </View>
-          )}
-        />
-
-        <View style={{ gap: spacing.sm }}>
-          <Text variant="caption">{es.transactionForm.category}</Text>
-          <CategoryPicker
-            kind={categoryKind}
-            value={watch('categoryId') || null}
-            onChange={(categoryId) => setValue('categoryId', categoryId)}
-            additionIds={
-              isEditing && transaction?.category_id ? [transaction.category_id] : undefined
-            }
+        {type !== 'transfer' ? (
+          <Controller
+            name="nature"
+            control={control}
+            render={({ field }) => (
+              <View style={{ gap: spacing.xs }}>
+                <SegmentedControl<'base' | 'extra'>
+                  options={[
+                    { label: es.transactionForm.base, value: 'base' },
+                    { label: es.transactionForm.extra, value: 'extra' },
+                  ]}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+                <Text variant="caption">{es.transactionForm.natureHelp}</Text>
+              </View>
+            )}
           />
-          {errors.categoryId ? (
-            <Text variant="caption" color={colors.danger}>
-              {errors.categoryId.message}
-            </Text>
-          ) : null}
-        </View>
+        ) : null}
+
+        {type !== 'transfer' ? (
+          <View style={{ gap: spacing.sm }}>
+            <Text variant="caption">{es.transactionForm.category}</Text>
+            <CategoryPicker
+              kind={categoryKind}
+              value={watch('categoryId') || null}
+              onChange={(categoryId) => setValue('categoryId', categoryId)}
+              additionIds={
+                isEditing && transaction?.category_id ? [transaction.category_id] : undefined
+              }
+            />
+            {errors.categoryId ? (
+              <Text variant="caption" color={colors.danger}>
+                {errors.categoryId.message}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
 
         <Controller
           name="accountId"
           control={control}
           render={({ field }) => (
             <View style={{ gap: spacing.sm }}>
-              <Text variant="caption">{es.transactionForm.account}</Text>
+              <Text variant="caption">
+                {type === 'transfer'
+                  ? es.transactionForm.accountOrigin
+                  : es.transactionForm.account}
+              </Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
                 {accountOptions.map((option) => (
                   <Chip
@@ -352,6 +378,39 @@ export default function TransactionFormScreen() {
             </View>
           )}
         />
+
+        {type === 'transfer' ? (
+          <Controller
+            name="transferAccountId"
+            control={control}
+            render={({ field }) => (
+              <View style={{ gap: spacing.sm }}>
+                <Text variant="caption">{es.transactionForm.accountDestination}</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+                  {accountOptions.map((option) => (
+                    <Chip
+                      key={option.id}
+                      label={option.name}
+                      selected={field.value === option.id}
+                      onPress={() => field.onChange(option.id)}
+                    />
+                  ))}
+                </View>
+                {errors.transferAccountId ? (
+                  <Text variant="caption" color={colors.danger}>
+                    {errors.transferAccountId.message}
+                  </Text>
+                ) : null}
+              </View>
+            )}
+          />
+        ) : null}
+
+        {type === 'transfer' && accounts.length < 2 ? (
+          <Text variant="caption" color={colors.danger}>
+            {es.transactionForm.transferNeedsTwoAccounts}
+          </Text>
+        ) : null}
 
         <Controller
           name="occurredOn"
@@ -396,14 +455,14 @@ export default function TransactionFormScreen() {
           title={es.transactionForm.save}
           onPress={() => void save('close')()}
           loading={isPending}
-          disabled={isPending}
+          disabled={isPending || transferUnavailable}
         />
         {!isEditing ? (
           <Button
             title={es.transactionForm.saveAndAdd}
             variant="secondary"
             onPress={() => void save('another')()}
-            disabled={isPending}
+            disabled={isPending || transferUnavailable}
           />
         ) : null}
 

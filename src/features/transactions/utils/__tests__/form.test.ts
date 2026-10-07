@@ -6,6 +6,7 @@ describe('buildTransactionCandidate', () => {
     nature: 'base' as const,
     amountText: '25.000',
     accountId: 'a1',
+    transferAccountId: '',
     categoryId: 'c1',
     occurredOn: '2026-06-10',
     note: '',
@@ -26,12 +27,30 @@ describe('buildTransactionCandidate', () => {
     const candidate = buildTransactionCandidate({ ...baseValues, note: '  Almuerzo  ' });
     expect(candidate.note).toBe('Almuerzo');
   });
+
+  it('construye una transferencia con cuenta origen y destino', () => {
+    const candidate = buildTransactionCandidate({
+      ...baseValues,
+      type: 'transfer',
+      accountId: 'origen',
+      transferAccountId: 'destino',
+    });
+    expect(candidate).toEqual({
+      type: 'transfer',
+      amount: 25000,
+      account_id: 'origen',
+      transfer_account_id: 'destino',
+      occurred_on: '2026-06-10',
+      note: undefined,
+    });
+  });
 });
 
 describe('formFieldForIssuePath', () => {
   it('mapea las rutas de zod a los campos del formulario', () => {
     expect(formFieldForIssuePath(['amount'])).toBe('amountText');
     expect(formFieldForIssuePath(['account_id'])).toBe('accountId');
+    expect(formFieldForIssuePath(['transfer_account_id'])).toBe('transferAccountId');
     expect(formFieldForIssuePath(['category_id'])).toBe('categoryId');
     expect(formFieldForIssuePath(['occurred_on'])).toBe('occurredOn');
   });

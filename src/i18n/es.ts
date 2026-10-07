@@ -97,6 +97,11 @@ export const es = {
     amount: 'Monto',
     expense: 'Gasto',
     income: 'Ingreso',
+    transfer: 'Transferencia',
+    accountOrigin: 'Cuenta origen',
+    accountDestination: 'Cuenta destino',
+    transferNeedsTwoAccounts:
+      'Necesitas al menos dos cuentas activas para registrar una transferencia.',
     nature: 'Naturaleza',
     base: 'Base',
     extra: 'Extra',

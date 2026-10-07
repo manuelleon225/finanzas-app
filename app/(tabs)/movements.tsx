@@ -282,12 +282,15 @@ export default function MovementsScreen() {
             )}
             renderItem={({ item }) => {
               const isExtra = item.nature === 'extra';
-              const categoryName =
-                item.category?.name ??
-                (item.type === 'transfer' ? es.transactionList.transfer : '—');
+              const isTransfer = item.type === 'transfer';
+              const categoryName = isTransfer
+                ? `${item.account?.name ?? '?'} → ${item.transfer_account?.name ?? '?'}`
+                : (item.category?.name ?? '—');
               const kind =
                 item.type === 'income' ? 'income' : item.type === 'expense' ? 'expense' : 'neutral';
-              const details = [item.note, item.account?.name].filter(Boolean).join(' · ');
+              const details = isTransfer
+                ? (item.note ?? '')
+                : [item.note, item.account?.name].filter(Boolean).join(' · ');
 
               return (
                 <Pressable
@@ -299,8 +302,16 @@ export default function MovementsScreen() {
                   style={styles.row}
                 >
                   <CategoryIcon
-                    icon={item.category?.icon ?? 'swap-horizontal-outline'}
-                    color={item.category?.color ?? colors.textSecondary}
+                    icon={
+                      isTransfer
+                        ? 'swap-horizontal-outline'
+                        : (item.category?.icon ?? 'ellipsis-horizontal-outline')
+                    }
+                    color={
+                      isTransfer
+                        ? colors.textSecondary
+                        : (item.category?.color ?? colors.textSecondary)
+                    }
                     size={22}
                   />
                   <View style={{ flex: 1 }}>
