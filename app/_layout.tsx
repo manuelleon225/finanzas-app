@@ -9,6 +9,7 @@ import { AuthProvider, useSession } from '@/features/auth/hooks/AuthProvider';
 import { useBiometricLock } from '@/features/auth/hooks/useBiometricLock';
 import { useBiometricStore } from '@/features/auth/store/useBiometricStore';
 import { useRecurringGeneration } from '@/features/recurring/hooks/useRecurringGeneration';
+import { useReminderScheduling } from '@/features/recurring/hooks/useReminderScheduling';
 import { queryClient } from '@/lib/queryClient';
 import { useTheme } from '@/theme';
 
@@ -29,6 +30,7 @@ function RootNavigator() {
 
   useBiometricLock();
   useRecurringGeneration();
+  useReminderScheduling();
 
   if (loading) {
     return (

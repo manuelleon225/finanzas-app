@@ -196,6 +196,18 @@ export const es = {
     generatedNote:
       'Los movimientos ya generados no cambian si editas o eliminas la regla. La generación es retroactiva hasta 12 meses.',
   },
+  reminders: {
+    enable: 'Recordatorios de pagos',
+    enableDescription: 'Te avisamos antes de que venza un pago recurrente.',
+    anticipation: 'Cuándo avisar',
+    sameDay: 'El mismo día',
+    oneDayBefore: '1 día antes',
+    permissionDenied:
+      'Para activar los recordatorios, permite las notificaciones en los ajustes del sistema.',
+    paymentFallback: 'Pago',
+    titleToday: 'Hoy vence: ',
+    titleTomorrow: 'Mañana vence: ',
+  },
   accounts: {
     title: 'Cuentas',
     totalBalance: 'Saldo total',

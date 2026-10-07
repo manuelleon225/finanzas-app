@@ -624,3 +624,31 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   Siguiente tarea: P7.3 (recordatorios locales).
 - **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (123 tests) en
   verde; bundle Android OK.
+
+---
+
+### [2026-10-05] Tarea: P7.3 — Recordatorios locales de pagos
+
+- **Qué se hizo:** Recordatorios locales con `expo-notifications`:
+  - Store persistido `useReminderPrefs` (`remindersEnabled`, `anticipationDays` 0 = mismo día / 1 =
+    un día antes).
+  - En Ajustes: switch "Recordatorios de pagos" (pide permiso SOLO al activarlo; si no se concede,
+    avisa) y selector de anticipación.
+  - `computeReminderPlans` (función pura): para cada regla activa de GASTO, calcula las ocurrencias
+    de los próximos 30 días y genera el plan (disparo a las 9:00 local, anticipado X días, título
+    "Mañana/Hoy vence: …" y cuerpo "… — $ monto").
+  - `api/reminders.ts`: canal de Android ("default"), cancela todas las programadas y reprograma;
+    omite disparos ya pasados.
+  - Hook `useReminderScheduling()` (en el layout raíz): reprograma/ cancela al cambiar la
+    configuración, las reglas o la sesión.
+- **Archivos:** `src/features/recurring/{store/useReminderPrefs.ts, utils/notifications.ts + test,
+  api/reminders.ts, hooks/useReminderScheduling.ts}`, `app/(tabs)/settings.tsx`, `app/_layout.tsx`,
+  `src/i18n/es.ts` (bloque `reminders`). Dependencia: `expo-notifications`.
+- **Decisiones tomadas:**
+  - El permiso se solicita solo al activar el switch (nunca al abrir la app).
+  - Se reprograma todo al cambiar config/reglas: primero se cancelan las anteriores (sin duplicar).
+  - Los disparos con fecha pasada se omiten.
+- **Prueba en el dispositivo (paso manual):** activar el switch (conceder permiso), crear una regla
+  de gasto con ocurrencia en 1-2 días y verificar la notificación; al desactivar, se cancelan.
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (129 tests) en
+  verde; bundle Android OK.

@@ -1,12 +1,17 @@
 import * as LocalAuthentication from 'expo-local-authentication';
+import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Switch, View } from 'react-native';
 
-import { Button, Card, Screen, Text } from '@/components/ui';
+import { Button, Card, Chip, Screen, Text } from '@/components/ui';
 import { signOut } from '@/features/auth/api/auth';
 import { useSession } from '@/features/auth/hooks/AuthProvider';
 import { useBiometricStore } from '@/features/auth/store/useBiometricStore';
+import {
+  useReminderPrefs,
+  type AnticipationDays,
+} from '@/features/recurring/store/useReminderPrefs';
 import { es } from '@/i18n/es';
 import { useTheme } from '@/theme';
 
@@ -18,6 +23,30 @@ export default function SettingsScreen() {
   const setBiometricEnabled = useBiometricStore((state) => state.setBiometricEnabled);
   const [enabling, setEnabling] = useState(false);
   const [biometricError, setBiometricError] = useState<string | null>(null);
+  const remindersEnabled = useReminderPrefs((state) => state.remindersEnabled);
+  const setRemindersEnabled = useReminderPrefs((state) => state.setRemindersEnabled);
+  const anticipationDays = useReminderPrefs((state) => state.anticipationDays);
+  const setAnticipationDays = useReminderPrefs((state) => state.setAnticipationDays);
+  const [togglingReminders, setTogglingReminders] = useState(false);
+
+  async function toggleReminders(value: boolean) {
+    if (!value) {
+      setRemindersEnabled(false);
+      return;
+    }
+
+    setTogglingReminders(true);
+    try {
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(es.reminders.enable, es.reminders.permissionDenied);
+        return;
+      }
+      setRemindersEnabled(true);
+    } finally {
+      setTogglingReminders(false);
+    }
+  }
 
   async function toggleBiometric(value: boolean) {
     setBiometricError(null);
@@ -93,6 +122,47 @@ export default function SettingsScreen() {
             <Text variant="caption" color={colors.danger}>
               {biometricError}
             </Text>
+          ) : null}
+        </Card>
+
+        <Card style={{ gap: spacing.sm }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: spacing.md,
+            }}
+          >
+            <View style={{ flex: 1, gap: spacing.xs }}>
+              <Text variant="body">{es.reminders.enable}</Text>
+              <Text variant="caption">{es.reminders.enableDescription}</Text>
+            </View>
+            <Switch
+              value={remindersEnabled}
+              onValueChange={(value) => void toggleReminders(value)}
+              disabled={togglingReminders}
+              trackColor={{ true: colors.primary, false: colors.border }}
+              thumbColor={remindersEnabled ? '#FFFFFF' : colors.textSecondary}
+              accessibilityLabel={es.reminders.enable}
+            />
+          </View>
+          {remindersEnabled ? (
+            <View style={{ gap: spacing.xs }}>
+              <Text variant="caption">{es.reminders.anticipation}</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+                <Chip
+                  label={es.reminders.sameDay}
+                  selected={anticipationDays === 0}
+                  onPress={() => setAnticipationDays(0 as AnticipationDays)}
+                />
+                <Chip
+                  label={es.reminders.oneDayBefore}
+                  selected={anticipationDays === 1}
+                  onPress={() => setAnticipationDays(1 as AnticipationDays)}
+                />
+              </View>
+            </View>
           ) : null}
         </Card>
 
