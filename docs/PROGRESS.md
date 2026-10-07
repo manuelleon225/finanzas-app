@@ -721,5 +721,8 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
     tooling; NO se actualizó nada (requeriría cambios que rompen).
   - Reporte: `docs/SECURITY_REVIEW.md`.
   - Script de prueba RLS con dos usuarios: `supabase/tests/002_rls_test.sql` (avisos OK/esperado).
-- **Pendientes:** Ejecutar `002_rls_test.sql` en Supabase y confirmar la salida (paso manual).
+- **Pendientes:** ~~Ejecutar `002_rls_test.sql` en Supabase y confirmar la salida (paso manual).~~
+- **Verificación RLS (en vivo):** ejecutado el script con dos usuarios reales (rol A y B): **7/7
+  `passed = true`** (A crea datos; B no ve la cuenta ni el movimiento de A; B bloqueado al insertar
+  con recursos de A; B no modifica filas de A; anon no ve cuentas; limpieza OK).
 - **Calidad:** typecheck, lint y 137 tests en verde.

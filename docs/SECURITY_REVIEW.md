@@ -57,4 +57,4 @@ Fecha: 2026-10-05. Alcance: auditoría sin agregar funcionalidades.
 | RLS completo y sin `anon` | ✅ PASA (código) |
 | Sin logs financieros/tokens | ✅ PASA |
 | `npm audit` | ⚠️ Revisar (dev/build tooling) |
-| Prueba RLS con dos usuarios en vivo | ⏳ Pendiente de ejecutar el script |
+| Prueba RLS con dos usuarios en vivo | ✅ PASA (7/7 checks con usuarios reales) |
