@@ -9,3 +9,7 @@ export function isValidISODate(value: string): boolean {
 
   return isValid(date) && format(date, 'yyyy-MM-dd') === value;
 }
+
+export function todayISO(): string {
+  return format(new Date(), 'yyyy-MM-dd');
+}

@@ -1,10 +1,11 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { TablesInsert, TablesUpdate } from '@/types/database';
 
 import {
   createTransaction as createTransactionRequest,
   deleteTransaction as deleteTransactionRequest,
+  getTransaction,
   listTransactions,
   updateTransaction as updateTransactionRequest,
   type TransactionCursor,
@@ -23,6 +24,14 @@ export function useTransactions(filters?: TransactionFilters) {
     initialPageParam: null as TransactionCursor | null,
     queryFn: ({ pageParam }) => listTransactions(filters, pageParam ?? undefined),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+  });
+}
+
+export function useTransaction(id?: string) {
+  return useQuery({
+    queryKey: ['transactions', 'detail', id],
+    queryFn: () => getTransaction(id as string),
+    enabled: !!id,
   });
 }
 

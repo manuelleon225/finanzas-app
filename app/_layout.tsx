@@ -38,7 +38,9 @@ function RootNavigator() {
 
   return (
     <View style={{ flex: 1 }}>
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="transaction-form" options={{ presentation: 'modal' }} />
+      </Stack>
       <LockOverlay />
     </View>
   );

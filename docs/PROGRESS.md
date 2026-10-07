@@ -477,3 +477,35 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
     para que el historial conserve el nombre.
 - **Pendientes:** Pantallas de registro y listado (P6.2 y P6.3). Siguiente tarea: P6.2.
 - **Calidad:** `npm run typecheck`, `npm run lint` y `npm test` (86 tests) en verde.
+
+---
+
+### [2026-10-05] Tarea: P6.2 — Pantalla de registrar movimiento
+
+- **Qué se hizo:** Se creó `app/transaction-form.tsx` como modal (mismo formulario para crear y
+  editar), con:
+  - Monto grande con teclado numérico y autofocus, y el monto formateado mientras se escribe.
+  - SegmentedControl Gasto/Ingreso; SegmentedControl Base/Extra con línea de ayuda.
+  - `CategoryPicker` filtrado por tipo (con `additionIds` para conservar la categoría asignada al
+    editar, aunque esté archivada).
+  - Selector de cuenta con la **última cuenta usada** recordada (store Zustand persistido en
+    AsyncStorage).
+  - Fecha por defecto hoy con atajos Hoy/Ayer; nota opcional.
+  - Botones "Guardar" y "Guardar y agregar otro"; validación con el esquema zod de P6.1 mostrando
+    errores en línea; feedback con `Snackbar`.
+  - Modo edición: carga los datos y permite eliminar con confirmación.
+  - Botón flotante (+) en las pestañas Inicio y Movimientos (nuevo componente `Fab`).
+- **Archivos creados/modificados:** `app/transaction-form.tsx`, `app/(tabs)/_layout.tsx` (FAB),
+  `app/_layout.tsx` (ruta modal), `src/components/ui/Fab.tsx` (+ export),
+  `src/features/transactions/store/useTransactionPrefs.ts`,
+  `src/features/transactions/utils/form.ts` + test, hook `useTransaction`,
+  `src/lib/dates.ts` (`todayISO`), `src/i18n/es.ts` (bloque `transactionForm`).
+- **Decisiones tomadas:**
+  - La transferencia no se ofrece aún en el selector (llega en P6.4); el formulario solo crea/edita
+    ingresos y gastos.
+  - La cuenta por defecto es la última usada (o la primera) y se recuerda al guardar.
+  - Fecha sin selector de calendario (evita dependencias nuevas): atajos Hoy/Ayer + texto de la fecha.
+- **Pendientes:** Probar en el dispositivo (registrar un gasto base en ≤3 toques, ver saldos, editar
+  y eliminar). Siguiente tarea: P6.3 (lista de movimientos).
+- **Calidad:** `npm run typecheck`, `npm run lint` (1 aviso informativo de React Compiler) y
+  `npm test` (91 tests) en verde; bundle Android OK.
