@@ -707,3 +707,19 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   - El aviso informativo de React Compiler con `react-hook-form` no se suprime (herramienta, no error).
 - **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (137 tests) en
   verde; bundle Android OK.
+
+---
+
+### [2026-10-05] Tarea: P9.2 — Revisión de seguridad
+
+- **Qué se hizo:** Auditoría de seguridad (sin funcionalidades nuevas):
+  - Secretos: sin claves/tokens en código ni historial; `.env` ignorado; solo `.env.example`
+    versionado. ✅
+  - RLS: 5 tablas habilitadas, 21 políticas solo `authenticated`, ninguna `anon`. ✅
+  - Logs: no hay `console.*`; no se registran datos financieros ni tokens. ✅
+  - `npm audit`: 66 vulnerabilidades (16 mod / 50 altas / 0 críticas), casi todas de dev/build
+    tooling; NO se actualizó nada (requeriría cambios que rompen).
+  - Reporte: `docs/SECURITY_REVIEW.md`.
+  - Script de prueba RLS con dos usuarios: `supabase/tests/002_rls_test.sql` (avisos OK/esperado).
+- **Pendientes:** Ejecutar `002_rls_test.sql` en Supabase y confirmar la salida (paso manual).
+- **Calidad:** typecheck, lint y 137 tests en verde.
