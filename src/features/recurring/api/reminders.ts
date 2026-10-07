@@ -1,4 +1,4 @@
-import Constants from 'expo-constants';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 
 import {
@@ -15,7 +15,7 @@ type NotificationsModule = typeof import('expo-notifications');
 let notificationsModule: NotificationsModule | null = null;
 
 export function remindersSupported(): boolean {
-  return Constants.executionEnvironment !== Constants.ExecutionEnvironment.StoreClient;
+  return Constants.executionEnvironment !== ExecutionEnvironment.StoreClient;
 }
 
 async function getNotifications(): Promise<NotificationsModule> {
