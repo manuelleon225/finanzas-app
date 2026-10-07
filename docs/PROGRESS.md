@@ -617,7 +617,10 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
 - **Tests:** `computeMissingOccurrences`, `retroactiveStart`, `maxOfDates` y el caso de aceptación
   (regla mensual con inicio hace 3 meses → 3 o 4 movimientos según la fecha; sin duplicados) (123
   tests en total).
-- **Pendientes:** Ejecutar la migración 004 en Supabase y verificar la generación en BD y en el
-  dispositivo. Siguiente tarea: P7.3 (recordatorios locales).
+- **Verificación funcional (BD):** Tras aplicar la migración 004, una regla mensual con inicio
+  hace 3 meses generó **exactamente 4 movimientos** (jul-05, ago-05, sep-05, oct-05) y al repetir el
+  upsert **no se duplicó** (0 insertados).
+- **Pendientes:** Probar la generación en el dispositivo (crear una regla y recargar la app).
+  Siguiente tarea: P7.3 (recordatorios locales).
 - **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (123 tests) en
   verde; bundle Android OK.
