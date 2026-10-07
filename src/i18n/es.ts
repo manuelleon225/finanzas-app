@@ -204,6 +204,8 @@ export const es = {
     oneDayBefore: '1 día antes',
     permissionDenied:
       'Para activar los recordatorios, permite las notificaciones en los ajustes del sistema.',
+    requiresBuild:
+      'Los recordatorios requieren una versión de desarrollo de la app (no funcionan en Expo Go). Se probarán en la fase de publicación.',
     paymentFallback: 'Pago',
     titleToday: 'Hoy vence: ',
     titleTomorrow: 'Mañana vence: ',

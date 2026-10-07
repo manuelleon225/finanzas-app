@@ -1,5 +1,4 @@
 import * as LocalAuthentication from 'expo-local-authentication';
-import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Switch, View } from 'react-native';
@@ -37,12 +36,15 @@ export default function SettingsScreen() {
 
     setTogglingReminders(true);
     try {
+      const Notifications = await import('expo-notifications');
       const { status } = await Notifications.requestPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert(es.reminders.enable, es.reminders.permissionDenied);
         return;
       }
       setRemindersEnabled(true);
+    } catch {
+      Alert.alert(es.reminders.enable, es.reminders.requiresBuild);
     } finally {
       setTogglingReminders(false);
     }

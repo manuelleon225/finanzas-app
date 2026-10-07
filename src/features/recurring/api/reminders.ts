@@ -1,4 +1,3 @@
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import {
@@ -7,7 +6,23 @@ import {
   type ReminderRule,
 } from '../utils/notifications';
 
+// expo-notifications no funciona en Expo Go (SDK 53+) y lanza un error al
+// importarlo. Se carga de forma diferida para no romper el arranque de la app
+// en Expo Go; al usarlo (activar recordatorios) el llamador captura el error.
+type NotificationsModule = typeof import('expo-notifications');
+
+let notificationsModule: NotificationsModule | null = null;
+
+async function getNotifications(): Promise<NotificationsModule> {
+  if (!notificationsModule) {
+    notificationsModule = await import('expo-notifications');
+  }
+  return notificationsModule;
+}
+
 export async function ensureNotificationChannel() {
+  const Notifications = await getNotifications();
+
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'Recordatorios',
@@ -18,6 +33,7 @@ export async function ensureNotificationChannel() {
 }
 
 export async function cancelAllReminders() {
+  const Notifications = await getNotifications();
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   await Promise.all(
     scheduled.map((notification) =>
@@ -40,6 +56,7 @@ export async function scheduleReminderPlans(
 
   await ensureNotificationChannel();
 
+  const Notifications = await getNotifications();
   const now = Date.now();
   let scheduled = 0;
 

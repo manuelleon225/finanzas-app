@@ -21,7 +21,7 @@ export function useReminderScheduling() {
     }
 
     if (!user || !remindersEnabled) {
-      void cancelAllReminders();
+      void cancelAllReminders().catch(() => undefined);
       return;
     }
 

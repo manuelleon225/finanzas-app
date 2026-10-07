@@ -648,7 +648,10 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   - El permiso se solicita solo al activar el switch (nunca al abrir la app).
   - Se reprograma todo al cambiar config/reglas: primero se cancelan las anteriores (sin duplicar).
   - Los disparos con fecha pasada se omiten.
-- **Prueba en el dispositivo (paso manual):** activar el switch (conceder permiso), crear una regla
-  de gasto con ocurrencia en 1-2 días y verificar la notificación; al desactivar, se cancelan.
+  - **Expo Go:** expo-notifications ya no funciona ahí (SDK 53+) y lanza un error al importarlo, por
+    lo que se carga de forma **diferida** (dynamic import solo al usarlo). En Expo Go el arranque no
+    se rompe; al intentar activar recordatorios se muestra que requiere un *development build*.
+- **Prueba en el dispositivo (paso manual):** requiere un development build (fase de publicación);
+  en Expo Go se deja implementado y lazzy-load para no romper la app.
 - **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (129 tests) en
   verde; bundle Android OK.
