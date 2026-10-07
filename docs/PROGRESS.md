@@ -560,3 +560,33 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   guía: usar la app unos días antes de seguir con recurrentes (P7.1).
 - **Calidad:** `npm run typecheck`, `npm run lint` (1 aviso informativo) y `npm test` (98 tests) en
   verde; bundle Android OK.
+
+---
+
+### [2026-10-05] Tarea: P7.1 — Reglas recurrentes (sin generar movimientos)
+
+- **Qué se hizo:** Gestión de reglas recurrentes en `src/features/recurring` (aún sin generar
+  movimientos):
+  - `utils/recurrence.ts`: `getOccurrences(rule, from, to)`, `getNextOccurrence(rule, after)` y
+    `formatFrequency(rule)` (frecuencia legible en español), respetando las definiciones del modelo
+    (weekly/biweekly cada 7/14 días; semimonthly días 15 y último; monthly con día inexistente usa el
+    último del mes) y `start_date`/`end_date`.
+  - `utils/schemas.ts`: esquema zod de la regla (tipo, naturaleza, monto, cuenta, categoría, nota,
+    frecuencia, inicio y fin opcional; fin no anterior al inicio).
+  - `api/recurring.ts` y hooks: listar (con categoría/cuenta), crear, editar, activar/desactivar y
+    eliminar.
+  - Pantallas: `app/recurring.tsx` (lista con nota/nombre, monto, frecuencia legible, próxima fecha y
+    switch de activa) y `app/recurring-form.tsx` (crear/editar con todos los campos). Acceso desde
+    Ajustes.
+- **Tests:** casos exhaustivos de fechas: weekly/biweekly, monthly con día 31 e inicio 29-feb,
+  semimonthly en meses de 28/30/31, `end_date`, rangos vacíos y `getNextOccurrence` (117 tests en
+  total).
+- **Decisiones tomadas:**
+  - `getOccurrences` devuelve fechas ordenadas dentro de `[from, to]` ∩ `[start, end]`.
+  - `getNextOccurrence` busca estrictamente después de la fecha dada (horizonte de 2 años si no hay
+    `end_date`).
+  - Mostrar "nombre" = `note` (fallback al nombre de categoría), ya que la tabla no tiene columna de
+    nombre.
+- **Pendientes:** Generar movimientos (P7.2) y recordatorios (P7.3). Siguiente tarea: P7.2.
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (117 tests) en
+  verde; bundle Android OK.

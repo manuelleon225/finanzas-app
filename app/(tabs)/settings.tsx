@@ -103,6 +103,12 @@ export default function SettingsScreen() {
         />
 
         <Button
+          title={es.recurring.title}
+          variant="secondary"
+          onPress={() => router.push('/recurring')}
+        />
+
+        <Button
           title={es.accounts.title}
           variant="secondary"
           onPress={() => router.push('/accounts')}
