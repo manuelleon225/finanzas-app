@@ -213,6 +213,7 @@ export default function RecurringFormScreen() {
     <Screen scroll>
       <View style={{ gap: spacing.lg, marginTop: spacing.lg }}>
         <Text variant="title">{isEditing ? es.recurring.editRule : es.recurring.newRule}</Text>
+        <Text variant="caption">{es.recurring.generatedNote}</Text>
 
         <MoneyText
           amount={parseMoneyInput(amountText)}

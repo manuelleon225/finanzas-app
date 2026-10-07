@@ -8,6 +8,7 @@ import { LockScreen } from '@/features/auth/components/LockScreen';
 import { AuthProvider, useSession } from '@/features/auth/hooks/AuthProvider';
 import { useBiometricLock } from '@/features/auth/hooks/useBiometricLock';
 import { useBiometricStore } from '@/features/auth/store/useBiometricStore';
+import { useRecurringGeneration } from '@/features/recurring/hooks/useRecurringGeneration';
 import { queryClient } from '@/lib/queryClient';
 import { useTheme } from '@/theme';
 
@@ -27,6 +28,7 @@ function RootNavigator() {
   const { colors } = useTheme();
 
   useBiometricLock();
+  useRecurringGeneration();
 
   if (loading) {
     return (

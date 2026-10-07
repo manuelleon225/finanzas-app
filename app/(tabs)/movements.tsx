@@ -1,5 +1,6 @@
 import { addMonths, format, startOfMonth, subDays, subMonths } from 'date-fns';
 import { Redirect, useRouter } from 'expo-router';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -321,6 +322,14 @@ export default function MovementsScreen() {
                         <Text variant="caption" color={colors.extra}>
                           · {es.transactionList.extra}
                         </Text>
+                      ) : null}
+                      {item.recurring_rule_id ? (
+                        <Ionicons
+                          name="repeat"
+                          size={14}
+                          color={colors.textSecondary}
+                          accessibilityLabel={es.transactionList.recurring}
+                        />
                       ) : null}
                     </View>
                     {details.length > 0 ? <Text variant="caption">{details}</Text> : null}

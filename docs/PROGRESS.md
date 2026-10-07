@@ -590,3 +590,34 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
 - **Pendientes:** Generar movimientos (P7.2) y recordatorios (P7.3). Siguiente tarea: P7.2.
 - **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (117 tests) en
   verde; bundle Android OK.
+
+---
+
+### [2026-10-05] Tarea: P7.2 — Generación automática de movimientos
+
+- **Qué se hizo:** Se implementó la generación automática a partir de reglas activas:
+  - Lógica pura `computeMissingOccurrences` + `retroactiveStart` (máx. 12 meses hacia atrás) y
+    `maxOfDates`.
+  - `generateDueTransactions()` en `api/recurring.ts`: para cada regla activa calcula las
+    ocurrencias desde `max(start_date, hoy-12m)` hasta hoy, descuenta las ya generadas y crea los
+    movimientos con `recurring_rule_id` y `occurrence_date` usando `upsert` con
+    `ignoreDuplicates`.
+  - Hook `useRecurringGeneration()`: ejecuta al abrir la app con sesión y al volver del segundo
+    plano, con enfriamiento de 1 hora; si generó algo, invalida transacciones, cuentas y resumen.
+  - La lista de movimientos marca con un ícono `repeat` los generados por una regla.
+  - Texto de ayuda en el formulario de reglas: los movimientos ya generados no cambian al editar o
+    eliminar la regla.
+- **Migración 004:** `supabase/migrations/004_recurring_unique.sql` — el índice único de
+  recurrentes pasa de **parcial** a **normal** (`(recurring_rule_id, occurrence_date)`), porque
+  PostgREST no admite índices parciales como objetivo de `ON CONFLICT`. En Postgres los `NULL` son
+  distintos, así que los movimientos manuales no se ven afectados. Se actualizó
+  `docs/DATA_MODEL.md`.
+- **Hallazgo en la verificación (BD):** con el índice parcial, el `upsert` devolvía
+  `42P10 "no unique constraint matching ON CONFLICT"`; por eso se requiere la migración 004.
+- **Tests:** `computeMissingOccurrences`, `retroactiveStart`, `maxOfDates` y el caso de aceptación
+  (regla mensual con inicio hace 3 meses → 3 o 4 movimientos según la fecha; sin duplicados) (123
+  tests en total).
+- **Pendientes:** Ejecutar la migración 004 en Supabase y verificar la generación en BD y en el
+  dispositivo. Siguiente tarea: P7.3 (recordatorios locales).
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (123 tests) en
+  verde; bundle Android OK.

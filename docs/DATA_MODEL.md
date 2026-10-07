@@ -91,7 +91,9 @@ frequency         ('weekly', 'biweekly', 'semimonthly', 'monthly')
 
 **Índices:**
 
-- Índice único **parcial** sobre `(recurring_rule_id, occurrence_date)` donde `recurring_rule_id` no sea nulo.
+- Índice único sobre `(recurring_rule_id, occurrence_date)` (no parcial; ver migración 004). Los
+  `NULL` se consideran distintos en un `UNIQUE`, así que los movimientos manuales no se ven
+  afectados; solo se impide duplicar una ocurrencia generada.
 - `(user_id, occurred_on desc)`.
 - `(user_id, account_id)`.
 - `(user_id, category_id)`.

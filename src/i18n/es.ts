@@ -154,6 +154,7 @@ export const es = {
     emptyFiltered: 'No hay movimientos con estos filtros.',
     deleted: 'Movimiento eliminado.',
     undo: 'Deshacer',
+    recurring: 'Recurrente',
     deleteTitle: 'Eliminar movimiento',
     deleteMessage: '¿Quieres eliminarlo? Podrás deshacer durante unos segundos.',
     summaryOf: 'Resumen',
@@ -192,6 +193,8 @@ export const es = {
     confirmDeleteMessage: 'Los movimientos ya generados no se cambian.',
     endBeforeStart: 'La fecha de fin no puede ser anterior al inicio.',
     dateHint: 'Formato AAAA-MM-DD',
+    generatedNote:
+      'Los movimientos ya generados no cambian si editas o eliminas la regla. La generación es retroactiva hasta 12 meses.',
   },
   accounts: {
     title: 'Cuentas',
