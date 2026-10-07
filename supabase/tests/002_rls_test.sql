@@ -11,6 +11,7 @@
 
 drop table if exists _rls_results;
 create temp table _rls_results (check_name text, passed boolean, detail text);
+grant all on _rls_results to authenticated, anon;
 
 do $$
 declare
