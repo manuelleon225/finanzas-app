@@ -509,3 +509,32 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   y eliminar). Siguiente tarea: P6.3 (lista de movimientos).
 - **Calidad:** `npm run typecheck`, `npm run lint` (1 aviso informativo de React Compiler) y
   `npm test` (91 tests) en verde; bundle Android OK.
+
+---
+
+### [2026-10-05] Tarea: P6.3 — Lista de movimientos
+
+- **Qué se hizo:** Se implementó la pestaña Movimientos:
+  - `SectionList` agrupada por día (encabezado con "Hoy"/"Ayer"/fecha y total del día). Cada fila:
+    ícono/color de categoría, nombre, nota y cuenta, monto con `MoneyText` y etiqueta "Extra".
+  - Encabezado con **selector de mes** (anterior/siguiente) y **resumen del mes** (ingresos, gastos,
+    balance) calculado con `calculateTotals` sobre una consulta del rango del mes.
+  - **Filtros** en hoja inferior (tipo, naturaleza Todos/Base/Extra, cuenta y categoría) con
+    indicador de filtros activos y botón para limpiarlos.
+  - **Búsqueda** por texto en la nota (con debounce).
+  - Toque en fila → editar; mantener presionada → eliminar con confirmación y **Deshacer** (Snackbar
+    con acción que reinserta el movimiento).
+  - Paginación infinita, pull-to-refresh, estados de carga/vacío/error.
+- **Archivos creados/modificados:** `app/(tabs)/movements.tsx`, `src/components/ui/Snackbar.tsx`
+  (acción opcional), `src/features/transactions/{api,hooks,utils}/…` (rango, helpers de fecha,
+  `toInsertPayload`), `src/i18n/es.ts` (bloque `transactionList`), tests de utilidades.
+- **Decisiones tomadas:**
+  - El resumen del mes se calcula sobre el rango completo del mes (consulta aparte), sin aplicar los
+    filtros de la lista, para que refleje el mes real.
+  - Eliminar es definitivo en la app (DELETE), pero se ofrece "Deshacer" reinsertando el movimiento
+    (nuevo id) durante 5 s.
+  - La transferencia aún no se crea (P6.4); si existiera, se muestra en neutro sin afectar totales.
+- **Pendientes:** Probar en dispositivo con varios movimientos, filtros y deshacer. Siguiente tarea:
+  P6.4 (transferencias).
+- **Calidad:** `npm run typecheck`, `npm run lint` (1 aviso informativo) y `npm test` (97 tests) en
+  verde; bundle Android OK.

@@ -114,6 +114,23 @@ export async function getTransaction(id: string): Promise<TransactionWithRelatio
   return (data as unknown as TransactionWithRelations | null) ?? null;
 }
 
+export async function getTransactionsInRange(
+  from: string,
+  to: string,
+): Promise<TransactionWithRelations[]> {
+  const { data, error } = await supabase
+    .from('transactions')
+    .select(TRANSACTIONS_SELECT)
+    .gte('occurred_on', from)
+    .lte('occurred_on', to);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []) as unknown as TransactionWithRelations[];
+}
+
 export async function createTransaction(input: TablesInsert<'transactions'>) {
   const { data, error } = await supabase.from('transactions').insert(input).select().single();
 

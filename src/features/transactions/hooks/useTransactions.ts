@@ -6,6 +6,7 @@ import {
   createTransaction as createTransactionRequest,
   deleteTransaction as deleteTransactionRequest,
   getTransaction,
+  getTransactionsInRange,
   listTransactions,
   updateTransaction as updateTransactionRequest,
   type TransactionCursor,
@@ -32,6 +33,13 @@ export function useTransaction(id?: string) {
     queryKey: ['transactions', 'detail', id],
     queryFn: () => getTransaction(id as string),
     enabled: !!id,
+  });
+}
+
+export function useTransactionsInRange(from: string, to: string) {
+  return useQuery({
+    queryKey: ['transactions', 'range', from, to],
+    queryFn: () => getTransactionsInRange(from, to),
   });
 }
 

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '@/theme';
 
@@ -9,9 +9,17 @@ export type SnackbarProps = {
   message: string | null;
   onDismiss: () => void;
   durationMs?: number;
+  actionLabel?: string;
+  onAction?: () => void;
 };
 
-export function Snackbar({ message, onDismiss, durationMs = 3500 }: SnackbarProps) {
+export function Snackbar({
+  message,
+  onDismiss,
+  durationMs = 3500,
+  actionLabel,
+  onAction,
+}: SnackbarProps) {
   const { colors, radii, spacing } = useTheme();
 
   useEffect(() => {
@@ -28,9 +36,7 @@ export function Snackbar({ message, onDismiss, durationMs = 3500 }: SnackbarProp
   }
 
   return (
-    <Text
-      variant="caption"
-      accessibilityLiveRegion="polite"
+    <View
       style={[
         styles.snackbar,
         {
@@ -38,12 +44,21 @@ export function Snackbar({ message, onDismiss, durationMs = 3500 }: SnackbarProp
           borderColor: colors.border,
           borderRadius: radii.md,
           padding: spacing.md,
-          color: colors.textPrimary,
+          gap: spacing.sm,
         },
       ]}
     >
-      {message}
-    </Text>
+      <Text variant="caption" style={{ flex: 1 }}>
+        {message}
+      </Text>
+      {actionLabel && onAction ? (
+        <Pressable onPress={onAction} accessibilityRole="button" hitSlop={8}>
+          <Text variant="caption" color={colors.primary}>
+            {actionLabel}
+          </Text>
+        </Pressable>
+      ) : null}
+    </View>
   );
 }
 
@@ -55,7 +70,8 @@ const styles = StyleSheet.create({
     bottom: 24,
     zIndex: 1100,
     elevation: 1100,
-    textAlign: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
   },
 });
