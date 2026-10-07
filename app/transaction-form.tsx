@@ -219,12 +219,27 @@ export default function TransactionFormScreen() {
 
   const parsedAmount = parseMoneyInput(amountText);
 
+  function close() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/');
+    }
+  }
+
   return (
     <Screen scroll overlay={<Snackbar message={snackbar} onDismiss={() => setSnackbar(null)} />}>
       <View style={{ gap: spacing.lg, marginTop: spacing.lg }}>
-        <Text variant="title">
-          {isEditing ? es.transactionForm.editTitle : es.transactionForm.newTitle}
-        </Text>
+        <View style={{ gap: spacing.xs }}>
+          <Pressable onPress={close} accessibilityRole="button" hitSlop={8} style={styles.close}>
+            <Text variant="caption" color={colors.primary}>
+              {es.common.cancel}
+            </Text>
+          </Pressable>
+          <Text variant="title">
+            {isEditing ? es.transactionForm.editTitle : es.transactionForm.newTitle}
+          </Text>
+        </View>
 
         <MoneyText
           amount={parsedAmount}
@@ -405,6 +420,9 @@ export default function TransactionFormScreen() {
 }
 
 const styles = StyleSheet.create({
+  close: {
+    alignSelf: 'flex-start',
+  },
   amountDisplay: {
     fontSize: 40,
     lineHeight: 48,
