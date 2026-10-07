@@ -36,7 +36,7 @@ function RootNavigator() {
   useReminderScheduling();
 
   useEffect(() => {
-    if (isLocked) {
+    if (isLocked && router.canDismiss()) {
       router.dismissAll();
     }
   }, [isLocked, router]);
