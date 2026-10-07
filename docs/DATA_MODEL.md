@@ -162,18 +162,48 @@ Entretenimiento, Ropa, Suscripciones, Otros.
 
 **Ingresos (`income`):** Salario, Extra, Ventas, Regalos, Otros.
 
-## 6. Regla de negocio: "Disponible hoy" (v1)
+## 6. Regla de negocio: "Disponible hoy" (v2)
 
-> Supuesto editable. Si el producto cambia, se edita este documento primero.
+> V1 editable. Si el producto cambia, se edita este documento primero y luego el código.
+
+Fórmula:
 
 ```text
-disponible_mes = ingresos_registrados_del_mes
-               - gastos_registrados_del_mes
-               - gastos_recurrentes_del_mes_que_aun_no_ocurren
-
-disponible_hoy = max(0, disponible_mes) / dias_restantes_del_mes (contando hoy)
+liquidBalance  = suma de saldos de cuentas activas con counts_as_liquid = true
+horizonDate    = fecha de la próxima ocurrencia (estrictamente posterior a hoy) de la regla
+                 recurrente activa de ingreso BASE más cercana; si no hay ninguna,
+                 el primer día del mes siguiente
+daysToIncome   = max(1, días calendario entre hoy y horizonDate)
+committed      = suma de las ocurrencias de reglas recurrentes activas de GASTO con fecha entre
+                 mañana y el día anterior a horizonDate (inclusive)
+                 + gastos PENDIENTES de confirmar
+extraCushion   = max(0, ingresos extra del mes − gastos extra del mes)
+availableTotal = liquidBalance − committed
+availableBase  = availableTotal − extraCushion   (si includeExtras es false)
+                 availableTotal                   (si includeExtras es true)
+spentToday    = gastos publicados de hoy (sin transferencias)
+allowanceToday = floor( max(0, availableBase + spentToday) / daysToIncome )
+remainingToday = max(0, allowanceToday − spentToday)
 ```
 
-- Las **transferencias no cuentan** (ni como ingreso ni como gasto).
-- `dias_restantes_del_mes` incluye el día de hoy.
-- Los gastos recurrentes ya generados como movimientos no se cuentan dos veces.
+Supuestos (v1 editable):
+
+- Las cuentas con `counts_as_liquid = false` (p. ej. ahorros/tarjetas por defecto) no aportan al
+  dinero disponible para gastar.
+- `horizonDate` ancla el gasto al próximo ingreso base (quincena/mes); si no existe ingreso
+  recurrente, se usa el cierre de mes como fallback.
+- Los **extras** se muestran aparte como colchón y, por defecto, **no inflan** el número
+  (`includeExtras = false`).
+- Las **transferencias** nunca cuentan como gasto ni ingreso.
+- Los gastos **pendientes de confirmar** reducen el disponible aunque aún no estén publicados.
+
+## 7. Cambios planificados (aún no implementados)
+
+| Campo / tabla | Descripción |
+|---|---|
+| `accounts.counts_as_liquid` | `boolean` (default `true`). Marca cuentas cuyo saldo cuenta en "Disponible hoy". |
+| tabla `budgets` | Presupuesto mensual por categoría principal de gasto (monto, `is_active`). |
+| `transactions.status` | `enum 'posted'` \| `'pending'` (default `'posted'`). Los `pending` no cuentan en saldos/totales/presupuestos/análisis; sí en `committed`. |
+| `recurring_rules.confirmation_mode` | `enum 'auto'` \| `'confirm'` (default `'auto'`). En `confirm`, la generación crea movimientos `pending`. |
+
+Se implementarán con las migraciones 005 (líquidas), 006 (budgets) y 007 (status/pending).

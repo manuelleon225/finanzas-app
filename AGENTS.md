@@ -66,6 +66,19 @@ docs/                     # documentación del proyecto
 - **Textos de UI**: todos centralizados en `src/i18n/es.ts`. Nunca strings sueltos en componentes.
 - **Secretos**: solo en `.env`, nunca en el repositorio. Jamás usar la `service_role key` en la app.
 
+## 4.bis Diseño y UI
+
+- Antes de tocar cualquier UI, lee `docs/DESIGN_SYSTEM.md` (fuente de verdad visual) y la sección
+  correspondiente de `docs/UX_SPEC.md` (estructura y textos de cada pantalla). No los modifiques ni
+  los parafrasees: si una pantalla necesita algo que no está ahí, pregunta, no inventes.
+- **No puedes ver la pantalla**: nunca afirmes que algo "se ve bien". Verifica con tipos, tests y
+  lint, y entrega siempre una lista "Para revisar visualmente" con lo que la persona debe mirar.
+- **Prohibidos colores hexadecimales, `rgb()` y valores de diseño sueltos fuera de `src/theme`**:
+  todo sale de los tokens.
+- **Un solo botón primario por vista**.
+- **Ámbar solo para la naturaleza "extra"**, nunca para advertencias.
+- Reglas de accesibilidad y microcopy según `docs/UX_SPEC.md` (sección "Estados y microcopy").
+
 ## 5. Reglas de trabajo
 
 - Antes de cada tarea, lee `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/DATA_MODEL.md` y `docs/PROGRESS.md`.

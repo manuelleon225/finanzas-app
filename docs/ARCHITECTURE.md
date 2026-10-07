@@ -78,12 +78,18 @@ Pantalla (app/)  →  hook de feature  →  api de feature  →  Supabase
 | Fechas como string `'YYYY-MM-DD'` | Evita corrimientos por zona horaria. |
 | Saldos calculados, no guardados | Una sola fuente de verdad; se evita la desincronización. |
 | Lógica de negocio en funciones puras | Fácil de testear y de razonar. |
+| Fuente **Manrope** (400–700) | Tipografía del sistema de diseño v2; los montos usan números tabulares. |
+| Modo de tema (`system \| dark \| light`) | Preferencia persistida (Zustand); por defecto **oscuro**. |
+| Gráficos propios con `react-native-svg` | Sin librerías de gráficos externas; los charts se auditan y son accesibles. |
+| Cola offline (TanStack Query persistido) | **Planificado (Fase R5)**: solo creación de movimientos; edición/eliminación requieren red. |
+| Haptics (`expo-haptics`) | Feedback táctil acotado a acciones convencionales (tap/select/success/error/warning). |
 
 ## 6. Entornos y configuración
 
 - Variables públicas de Expo: `EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
 - `.env` está ignorado por git; solo se versiona `.env.example` con valores vacíos.
 - El cliente de Supabase debe fallar con un error claro y legible si faltan las variables.
+- Documentos de diseño como fuente de verdad: `docs/DESIGN_SYSTEM.md` y `docs/UX_SPEC.md`.
 
 ## 7. Calidad
 

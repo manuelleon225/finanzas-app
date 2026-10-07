@@ -31,21 +31,44 @@ Las apps de finanzas típicas tratan todos los ingresos y gastos por igual. Eso 
 2. **"Disponible hoy"**: indicador diario de cuánto se puede gastar sin romper el mes.
 3. **Registro rápido**: agregar un movimiento debe tomar 2 o 3 toques como máximo.
 
-## 5. Alcance del MVP
+## 5. Alcance
 
-- Autenticación con email y contraseña.
+Registrado y en producción de desarrollo (MVP original):
+
+- Autenticación con email y contraseña (y bloqueo biométrico opcional).
 - Cuentas (efectivo, banco, ahorros, tarjeta de crédito) con saldo calculado.
 - Categorías de ingreso y gasto, con subcategorías de un nivel.
 - Movimientos: ingreso, gasto y transferencia.
 - Reglas recurrentes y generación automática de movimientos.
 - Pantalla de inicio con resumen del mes y "Disponible hoy".
+- Recordatorios locales de pagos próximos.
 
-## 6. Fuera del MVP (futuro)
+Rediseño v2 (en curso, ver `docs/APP_GUIDE.md` / guías R): navegación de 5 elementos, fórmula v2 de
+"Disponible hoy" anclada al próximo ingreso base, sistema de diseño v2 (tema oscuro por defecto) y
+registro rápido con teclado numérico propio.
 
-Se documenta como roadmap posterior:
+Añadido antes de publicar (Fase R5):
 
-- **V1.5**: presupuestos por categoría, metas de ahorro, deudas y tarjetas, reportes.
-- **V2**: registro por voz, foto de recibo, exportar datos (CSV/PDF), modo sin conexión.
+- Presupuestos por categoría de gasto.
+- Análisis (gráficos propios: gastos por categoría, tendencia mensual, base vs. extras, insights).
+- Registro de movimientos sin conexión (solo creación) con cola de sincronización.
+- Recurrentes con modo "pedir confirmación" (pagos de monto variable).
+- Exportar movimientos a CSV.
+- Eliminar cuenta desde la app (Edge Function) y deep links (recuperar contraseña / confirmar correo).
+
+## 6. Fuera de alcance por ahora (futuro)
+
+- Tarjetas de crédito y deudas dedicadas.
+- Metas de ahorro.
+- Registro por voz.
+- Foto de recibo.
+- Cuentas compartidas.
+- Login social (Google/Apple) y plan premium.
+
+Roadmap posterior tras el núcleo:
+
+- **V1.5**: metas de ahorro, deudas y tarjetas, reportes avanzados.
+- **V2**: registro por voz, foto de recibo, exportar datos (PDF).
 - **V3**: login con Google/Apple, plan premium, cuentas compartidas.
 
 ## 7. Fases del proyecto

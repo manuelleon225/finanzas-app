@@ -726,3 +726,26 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   `passed = true`** (A crea datos; B no ve la cuenta ni el movimiento de A; B bloqueado al insertar
   con recursos de A; B no modifica filas de A; anon no ve cuentas; limpieza OK).
 - **Calidad:** typecheck, lint y 137 tests en verde.
+
+---
+
+## Rediseño (guía v2: prompts R)
+
+### [2026-10-05] Tarea: R0.1 — Actualizar la memoria del proyecto
+
+- **Qué se hizo (solo documentación, sin código):**
+  - Se crearon **`docs/DESIGN_SYSTEM.md`** y **`docs/UX_SPEC.md`** copiando **verbatim** los Anexos
+    A y B de la guía de rediseño (no modificados ni parafraseados). Son la fuente de verdad visual.
+  - `AGENTS.md`: nueva sección **"4.bis Diseño y UI"** (leer DESIGN_SYSTEM/UX_SPEC antes de tocar
+    UI; reglas: "no ver la pantalla" + lista "Para revisar visualmente", prohibido hex fuera de
+    `src/theme`, un solo botón primary, ámbar solo para extra).
+  - `docs/DECISIONS.md`: registro de decisiones con el formato fecha/decisión/motivo.
+  - `docs/DATA_MODEL.md`: se reemplazó la fórmula "Disponible hoy" (v1) por la **v2** (anclada al
+    próximo ingreso base) y se agregó "## 7. Cambios planificados" (`accounts.counts_as_liquid`,
+    tabla `budgets`, `transactions.status`, `recurring_rules.confirmation_mode`).
+  - `docs/PRD.md`: alcance (MVP + rediseño v2 + Fase R5) y fuera de alcance actualizados.
+  - `docs/ARCHITECTURE.md`: Manrope, modo de tema, offline planificado (TanStack persistido) y
+    gráficos propios (react-native-svg) en decisiones técnicas.
+- **Pendientes:** Ejecutar los prompts R1.x (migración 005 + nueva fórmula). Nota: la guía sugiere
+  trabajar en una rama `feat/redesign` (decisión del usuario).
+- **Calidad:** (solo documentación; `npm run typecheck` y `npm test` se confirman al empezar R1).
