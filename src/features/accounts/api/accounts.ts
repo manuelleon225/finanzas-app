@@ -11,12 +11,15 @@ export type AccountWithBalance = {
   initial_balance: number;
   is_archived: boolean;
   balance: number;
+  counts_as_liquid: boolean;
 };
 
 export async function listAccountsWithBalance(options: { includeArchived?: boolean } = {}) {
   let query = supabase
     .from('account_balances')
-    .select('account_id, user_id, name, type, initial_balance, is_archived, balance')
+    .select(
+      'account_id, user_id, name, type, initial_balance, is_archived, balance, counts_as_liquid',
+    )
     .order('name', { ascending: true });
 
   if (!options.includeArchived) {

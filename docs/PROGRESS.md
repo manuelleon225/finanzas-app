@@ -749,3 +749,20 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
 - **Pendientes:** Ejecutar los prompts R1.x (migración 005 + nueva fórmula). Nota: la guía sugiere
   trabajar en una rama `feat/redesign` (decisión del usuario).
 - **Calidad:** (solo documentación; `npm run typecheck` y `npm test` se confirman al empezar R1).
+
+### [2026-10-05] Tarea: R1.1 — Cuenta líquida (counts_as_liquid)
+
+- **Qué se hizo:**
+  - Migración `005_accounts_liquid.sql`: columna `accounts.counts_as_liquid` (default true),
+    actualiza a false las existentes de tipo `savings`/`credit_card`, y recrea `account_balances`
+    agregando la columna al final (conservando `security_invoker`).
+  - `src/types/database.ts`: campo en accounts (Row/Insert/Update) y en la vista.
+  - Capa de cuentas: `AccountWithBalance.counts_as_liquid` y la vista trae el campo.
+  - `app/account-form.tsx`: switch **"Cuenta para gastar"** con ayuda; valor por defecto según tipo
+    (true para cash/bank, false para savings/credit_card), que se ajusta al cambiar el tipo si el
+    usuario no lo tocó (función pura `defaultCountsAsLiquid` con tests).
+  - Textos en `src/i18n/es.ts` (`accounts.countsAsLiquid` / `countsAsLiquidHelp`).
+- **Pendientes (✋):** ejecutar `005_accounts_liquid.sql` en Supabase y verificar que una cuenta de
+  ahorros quedó con el switch apagado (y que las tarjetas de crédito también). Siguiente: R1.2.
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (139) en
+  verde; bundle Android OK.

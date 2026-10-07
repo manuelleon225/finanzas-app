@@ -35,6 +35,7 @@ export type Database = {
           type: Database['public']['Enums']['account_type'];
           initial_balance: number;
           is_archived: boolean;
+          counts_as_liquid: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -45,6 +46,7 @@ export type Database = {
           type: Database['public']['Enums']['account_type'];
           initial_balance?: number;
           is_archived?: boolean;
+          counts_as_liquid?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -55,6 +57,7 @@ export type Database = {
           type?: Database['public']['Enums']['account_type'];
           initial_balance?: number;
           is_archived?: boolean;
+          counts_as_liquid?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -215,6 +218,7 @@ export type Database = {
           initial_balance: number | null;
           is_archived: boolean | null;
           balance: number | null;
+          counts_as_liquid: boolean | null;
         };
         Relationships: [];
       };

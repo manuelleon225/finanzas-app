@@ -236,6 +236,8 @@ export const es = {
     type: 'Tipo',
     initialBalance: 'Saldo inicial',
     initialBalanceHelper: 'Usa un valor negativo solo para tarjetas de crédito.',
+    countsAsLiquid: 'Cuenta para gastar',
+    countsAsLiquidHelp: 'Cuenta el saldo de esta cuenta en tu Disponible hoy.',
     saveAccount: 'Guardar cuenta',
     back: 'Volver a Ajustes',
     emptyTitle: 'Aún no tienes cuentas',
