@@ -14,7 +14,7 @@ export default function TabsLayout() {
     return <Redirect href="/login" />;
   }
 
-  const showFab = pathname === '/' || pathname === '/movements';
+  const showFab = !pathname.includes('settings');
 
   return (
     <View style={{ flex: 1 }}>
