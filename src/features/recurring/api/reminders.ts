@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 import {
@@ -7,13 +8,21 @@ import {
 } from '../utils/notifications';
 
 // expo-notifications no funciona en Expo Go (SDK 53+) y lanza un error al
-// importarlo. Se carga de forma diferida para no romper el arranque de la app
-// en Expo Go; al usarlo (activar recordatorios) el llamador captura el error.
+// importarlo. remindersSupported() detecta Expo Go para NO cargar el módulo ahí
+// y no romper el arranque. En un development build funciona normalmente.
 type NotificationsModule = typeof import('expo-notifications');
 
 let notificationsModule: NotificationsModule | null = null;
 
+export function remindersSupported(): boolean {
+  return Constants.executionEnvironment !== Constants.ExecutionEnvironment.StoreClient;
+}
+
 async function getNotifications(): Promise<NotificationsModule> {
+  if (!remindersSupported()) {
+    throw new Error('notifications-unavailable');
+  }
+
   if (!notificationsModule) {
     notificationsModule = await import('expo-notifications');
   }

@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useSession } from '@/features/auth/hooks/AuthProvider';
 import { todayISO } from '@/lib/dates';
 
-import { cancelAllReminders, scheduleReminderPlans } from '../api/reminders';
+import { cancelAllReminders, remindersSupported, scheduleReminderPlans } from '../api/reminders';
 import { useReminderPrefs } from '../store/useReminderPrefs';
 import { useRecurringRules } from './useRecurringRules';
 
@@ -16,7 +16,7 @@ export function useReminderScheduling() {
   const { data: rules } = useRecurringRules();
 
   useEffect(() => {
-    if (loading) {
+    if (loading || !remindersSupported()) {
       return;
     }
 

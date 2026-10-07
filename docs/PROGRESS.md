@@ -649,8 +649,8 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   - Se reprograma todo al cambiar config/reglas: primero se cancelan las anteriores (sin duplicar).
   - Los disparos con fecha pasada se omiten.
   - **Expo Go:** expo-notifications ya no funciona ahí (SDK 53+) y lanza un error al importarlo, por
-    lo que se carga de forma **diferida** (dynamic import solo al usarlo). En Expo Go el arranque no
-    se rompe; al intentar activar recordatorios se muestra que requiere un *development build*.
+    lo que `remindersSupported()` (expo-constants: no StoreClient) lo **detecta y NO carga el módulo**
+    en Expo Go (ni en arranque ni al togglear); el switch avisa que requiere *development build*.
 - **Prueba en el dispositivo (paso manual):** requiere un development build (fase de publicación);
   en Expo Go se deja implementado y lazzy-load para no romper la app.
 - **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (129 tests) en

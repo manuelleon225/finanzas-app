@@ -11,6 +11,7 @@ import {
   useReminderPrefs,
   type AnticipationDays,
 } from '@/features/recurring/store/useReminderPrefs';
+import { remindersSupported } from '@/features/recurring/api/reminders';
 import { es } from '@/i18n/es';
 import { useTheme } from '@/theme';
 
@@ -36,6 +37,10 @@ export default function SettingsScreen() {
 
     setTogglingReminders(true);
     try {
+      if (!remindersSupported()) {
+        Alert.alert(es.reminders.enable, es.reminders.requiresBuild);
+        return;
+      }
       const Notifications = await import('expo-notifications');
       const { status } = await Notifications.requestPermissionsAsync();
       if (status !== 'granted') {
