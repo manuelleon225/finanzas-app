@@ -2,6 +2,13 @@ import { Text as RNText, type TextProps as RNTextProps, type TextStyle } from 'r
 
 import { useTheme } from '@/theme';
 
+const MANROPE_FACE: Record<string, string> = {
+  '400': 'Manrope_400Regular',
+  '500': 'Manrope_500Medium',
+  '600': 'Manrope_600SemiBold',
+  '700': 'Manrope_700Bold',
+};
+
 export type TextVariant = 'title' | 'subtitle' | 'body' | 'caption' | 'money';
 
 export type TextProps = RNTextProps & {
@@ -17,33 +24,37 @@ export function Text({ variant = 'body', color, align, style, ...rest }: TextPro
   switch (variant) {
     case 'title':
       variantStyle = {
-        fontSize: fontSizes.xxl,
-        lineHeight: lineHeights.xxl,
+        fontSize: fontSizes.title,
+        lineHeight: lineHeights.title,
         fontWeight: fontWeights.bold,
+        fontFamily: MANROPE_FACE[fontWeights.bold],
         color: colors.textPrimary,
       };
       break;
     case 'subtitle':
       variantStyle = {
-        fontSize: fontSizes.xl,
-        lineHeight: lineHeights.xl,
+        fontSize: fontSizes.subtitle,
+        lineHeight: lineHeights.subtitle,
         fontWeight: fontWeights.semibold,
+        fontFamily: MANROPE_FACE[fontWeights.semibold],
         color: colors.textPrimary,
       };
       break;
     case 'caption':
       variantStyle = {
-        fontSize: fontSizes.sm,
-        lineHeight: lineHeights.sm,
+        fontSize: fontSizes.caption,
+        lineHeight: lineHeights.caption,
         fontWeight: fontWeights.regular,
+        fontFamily: MANROPE_FACE[fontWeights.regular],
         color: colors.textSecondary,
       };
       break;
     case 'money':
       variantStyle = {
-        fontSize: fontSizes.lg,
-        lineHeight: lineHeights.lg,
+        fontSize: fontSizes.bodyStrong,
+        lineHeight: lineHeights.bodyStrong,
         fontWeight: fontWeights.semibold,
+        fontFamily: MANROPE_FACE[fontWeights.semibold],
         color: colors.textPrimary,
         fontVariant: ['tabular-nums'],
       };
@@ -51,9 +62,10 @@ export function Text({ variant = 'body', color, align, style, ...rest }: TextPro
     case 'body':
     default:
       variantStyle = {
-        fontSize: fontSizes.md,
-        lineHeight: lineHeights.md,
+        fontSize: fontSizes.body,
+        lineHeight: lineHeights.body,
         fontWeight: fontWeights.regular,
+        fontFamily: MANROPE_FACE[fontWeights.regular],
         color: colors.textPrimary,
       };
       break;

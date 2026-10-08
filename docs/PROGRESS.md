@@ -804,3 +804,26 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   `docs/DATA_MODEL.md` y la función. Siguiente: R2.1 (sistema de diseño v2).
 - **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (158) en
   verde; bundle Android OK.
+
+### [2026-10-05] Tarea: R2.1 — Fundamentos del sistema de diseño v2
+
+- **Qué se hizo:**
+  - Fuente **Manrope** (400/500/600/700) cargada al iniciar con `useFonts` + splash visible hasta
+    que la fuente está lista (`expo-splash-screen`, `@expo-google-fonts/manrope`).
+  - `src/theme` reescrito a los valores EXACTOS de `docs/DESIGN_SYSTEM.md`: colores (oscuro/claro),
+    espaciado (4…40), radios, tipografía con lineHeight, `durations` (150/220/320 ms) y
+    `componentHeights`. Los nombres antiguos se mantienen como **aliases deprecated** (comentados).
+  - Modo de tema: `useThemeModeStore` ('system'|'dark'|'light', default **dark**, persistido);
+    `useTheme()` respeta la preferencia.
+  - `tint(color, opacity)` en `src/theme` (fondos suaves) con tests.
+  - Test de contraste **WCAG** (`contrast.test.ts`): 24 pares en ambos temas, **todos ≥ 4.5:1 sin
+    cambios de color** (se respetó el Anexo A tal cual).
+  - Regla ESLint (`no-restricted-syntax`) que prohíbe hex/rgb/rgba fuera de `src/theme` y tests.
+    Se corrigieron incumplimientos: backdrop → token `scrim`, switches sin `thumbColor` hardcodeado,
+    FAB sin sombras (prohibidas por el diseño), paleta de categorías movida a `src/theme/categoryPalette`.
+  - `Text` aplica Manrope según el peso (y conserva `allowFontScaling` por defecto de RN).
+- **Observación (req. 8):** falta validar visualmente si Manrope alinea bien
+  `fontVariant: ['tabular-nums']` en los montos (pendiente de revisión en dispositivo).
+- **Pendientes:** R2.2 (componentes base v2) — y revisar en dispositivo el estilo nuevo.
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (185) en
+  verde; bundle Android OK.

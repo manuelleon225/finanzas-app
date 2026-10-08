@@ -178,7 +178,6 @@ export default function AccountFormScreen() {
                     setLiquidTouched(true);
                   }}
                   trackColor={{ true: colors.primary, false: colors.border }}
-                  thumbColor={field.value ? '#FFFFFF' : colors.textSecondary}
                   accessibilityLabel={es.accounts.countsAsLiquid}
                 />
               </View>

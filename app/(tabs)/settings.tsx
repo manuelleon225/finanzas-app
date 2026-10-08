@@ -126,7 +126,6 @@ export default function SettingsScreen() {
               onValueChange={(value) => void toggleBiometric(value)}
               disabled={enabling}
               trackColor={{ true: colors.primary, false: colors.border }}
-              thumbColor={biometricEnabled ? '#FFFFFF' : colors.textSecondary}
               accessibilityLabel={es.biometric.enable}
             />
           </View>
@@ -155,7 +154,6 @@ export default function SettingsScreen() {
               onValueChange={(value) => void toggleReminders(value)}
               disabled={togglingReminders}
               trackColor={{ true: colors.primary, false: colors.border }}
-              thumbColor={remindersEnabled ? '#FFFFFF' : colors.textSecondary}
               accessibilityLabel={es.reminders.enable}
             />
           </View>
@@ -195,7 +193,6 @@ export default function SettingsScreen() {
               value={includeExtrasInAvailable}
               onValueChange={setIncludeExtrasInAvailable}
               trackColor={{ true: colors.primary, false: colors.border }}
-              thumbColor={includeExtrasInAvailable ? '#FFFFFF' : colors.textSecondary}
               accessibilityLabel={es.home.includeExtrasInAvailable}
             />
           </View>

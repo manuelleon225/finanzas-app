@@ -1,5 +1,13 @@
+import {
+  Manrope_400Regular,
+  Manrope_500Medium,
+  Manrope_600SemiBold,
+  Manrope_700Bold,
+} from '@expo-google-fonts/manrope';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { useFonts } from 'expo-font';
 import { Stack, useRouter } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { View } from 'react-native';
@@ -13,6 +21,8 @@ import { useRecurringGeneration } from '@/features/recurring/hooks/useRecurringG
 import { useReminderScheduling } from '@/features/recurring/hooks/useReminderScheduling';
 import { queryClient } from '@/lib/queryClient';
 import { useTheme } from '@/theme';
+
+SplashScreen.preventAutoHideAsync();
 
 function LockOverlay() {
   const isLocked = useBiometricStore((state) => state.isLocked);
@@ -60,6 +70,23 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    Manrope_400Regular,
+    Manrope_500Medium,
+    Manrope_600SemiBold,
+    Manrope_700Bold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      void SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

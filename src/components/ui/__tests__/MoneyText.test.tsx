@@ -13,12 +13,12 @@ describe('MoneyText', () => {
 
   it('uses the income color', async () => {
     const { getByText } = await render(<MoneyText amount={1000} kind="income" />);
-    expect(getByText(formatCOP(1000))).toHaveStyle({ color: colors.light.income });
+    expect(getByText(formatCOP(1000))).toHaveStyle({ color: colors.dark.income });
   });
 
   it('uses the expense color', async () => {
     const { getByText } = await render(<MoneyText amount={1000} kind="expense" />);
-    expect(getByText(formatCOP(1000))).toHaveStyle({ color: colors.light.expense });
+    expect(getByText(formatCOP(1000))).toHaveStyle({ color: colors.dark.expense });
   });
 
   it('adds an explicit sign when signed is set', async () => {

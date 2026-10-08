@@ -6,4 +6,22 @@ module.exports = defineConfig([
   globalIgnores(['dist/*', 'web-build/*', 'coverage/*', '.expo/*', 'expo-env.d.ts']),
   expoConfig,
   eslintPluginPrettierRecommended,
+  {
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'Literal[value=/^#[0-9A-Fa-f]{3,8}$/u]',
+          message:
+            'Prohibido color hexadecimal fuera de src/theme: usa los tokens (docs/DESIGN_SYSTEM.md).',
+        },
+        {
+          selector: 'Literal[value=/^rgba?\\(/u]',
+          message:
+            'Prohibido rgb()/rgba() fuera de src/theme: usa tokens como scrim o la función tint().',
+        },
+      ],
+    },
+    ignores: ['src/theme/**', '**/*.test.ts', '**/*.test.tsx'],
+  },
 ]);

@@ -119,7 +119,6 @@ export default function RecurringScreen() {
                         updateRule.mutate({ id: rule.id, input: { is_active: value } })
                       }
                       trackColor={{ true: colors.primary, false: colors.border }}
-                      thumbColor={rule.is_active ? '#FFFFFF' : colors.textSecondary}
                       accessibilityLabel={es.recurring.active}
                     />
                   </View>

@@ -3,6 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
+    "@expo-google-fonts/manrope": "^0.4.2",
     "@expo/ui": "~57.0.21",
     "@expo/vector-icons": "^15.0.2",
     "@hookform/resolvers": "^5.9.1",
@@ -66,8 +67,13 @@
   },
   "jest": {
     "preset": "jest-expo",
+    "setupFiles": [
+      "@react-native-async-storage/async-storage/jest/async-storage-mock"
+    ],
     "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/src/$1"
+      "^@/(.*)$": "<rootDir>/src/$1",
+      "@react-native-async-storage/async-storage":
+        "@react-native-async-storage/async-storage/jest/async-storage-mock"
     },
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg)"
