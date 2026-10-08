@@ -64,7 +64,7 @@ export default function HomeScreen() {
   }
 
   function showAvailableHelp() {
-    Alert.alert(es.home.helpTitle, explainAvailable(hero).join('\n'));
+    Alert.alert(es.home.helpTitle, explainAvailable(hero).join('\n'), [{ text: es.common.accept }]);
   }
 
   return (
