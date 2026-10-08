@@ -827,3 +827,29 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
 - **Pendientes:** R2.2 (componentes base v2) — y revisar en dispositivo el estilo nuevo.
 - **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (185) en
   verde; bundle Android OK.
+
+### [2026-10-05] Tarea: R2.2 — Componentes base v2
+
+- **Qué se hizo (props públicas intactas):**
+  - `Text`: variantes `displayLg`, `display`, `title`, `subtitle`, `body`, `bodyStrong`, `caption`,
+    `micro` (+ `money` como alias), todas con Manrope y `allowFontScaling`.
+  - `MoneyText`: nueva prop `size` ('displayLg'|'display'|'bodyStrong'|'caption'), cifras
+    tabulares, signo y color por tipo.
+  - `Button`: variantes primary (marca), secondary, ghost, **destructive**; alto 52, radio 14,
+    pressed con cambio de tono (sin sombras); loading/disabled (opacidad 0.4).
+  - `Input`: alto 52, fondo surfaceRaised, borde transparente→brand en foco / expense en error;
+    label y mensajes caption.
+  - `Chip`: alto 32 pill, fondo surfaceRaised; seleccionado brandSoft+brand; prop nueva `tone`
+    ('brand'|'extra') para el chip "Extra" (extraSoft+extra); hitSlop de accesibilidad.
+  - `SegmentedControl`: forma píldora (padding 3, alto 40) con **píldora activa animada** (150 ms,
+    respeta "reducir movimiento").
+  - `AppIcon` (`src/components/ui/AppIcon.tsx`): único acceso a Ionicons (outline, tamaños
+    16/20/24, color por token) + **regla ESLint** que prohíbe importar Ionicons fuera de AppIcon.
+    Se migraron Fab, lista de movimientos y `CategoryIcon`.
+  - Recreada `app/design-preview.tsx` (con switch de tema; se eliminará en R4.5).
+  - Tests de render por componente (Text, Chip, SegmentedControl, Button variantes, MoneyText
+    tamaño) — se añadió el mock de AsyncStorage y un mock mínimo de Reanimated para Jest.
+- **Pendientes:** Revisar `design-preview` en claro/oscuro en el dispositivo (paso manual, 🔍).
+  Siguiente: R2.3 (componentes nuevos de visualización).
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (202) en
+  verde; bundle Android OK.

@@ -1,6 +1,4 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
-
-const FALLBACK_ICON = 'ellipsis-horizontal-outline';
+import { AppIcon, type IconSize } from '@/components/ui/AppIcon';
 
 export type CategoryIconProps = {
   icon: string;
@@ -9,6 +7,6 @@ export type CategoryIconProps = {
 };
 
 export function CategoryIcon({ icon, color, size = 20 }: CategoryIconProps) {
-  const name = (icon in Ionicons.glyphMap ? icon : FALLBACK_ICON) as keyof typeof Ionicons.glyphMap;
-  return <Ionicons name={name} color={color} size={size} />;
+  const resolved = size <= 18 ? 16 : size <= 22 ? 20 : 24;
+  return <AppIcon name={icon} size={resolved as IconSize} color={color} />;
 }

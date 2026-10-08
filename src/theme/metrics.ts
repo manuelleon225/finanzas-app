@@ -12,6 +12,7 @@ export const componentHeights = {
   listRow: 64,
   tabBar: 64,
   iconButton: 44,
+  segmented: 40,
 } as const;
 
 export type Durations = typeof durations;

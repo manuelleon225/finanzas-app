@@ -1,4 +1,5 @@
 export { Button, type ButtonProps, type ButtonVariant } from './Button';
+export { AppIcon, type AppIconProps, type IconSize } from './AppIcon';
 export { Card, type CardProps } from './Card';
 export { Chip, type ChipProps } from './Chip';
 export { EmptyState, type EmptyStateProps } from './EmptyState';

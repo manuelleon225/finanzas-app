@@ -1,6 +1,5 @@
 import { addMonths, format, startOfMonth, subDays, subMonths } from 'date-fns';
 import { Redirect, useRouter } from 'expo-router';
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -14,6 +13,7 @@ import {
 } from 'react-native';
 
 import {
+  AppIcon,
   Button,
   Card,
   Chip,
@@ -353,9 +353,9 @@ const MovementRow = memo(function MovementRow({
             </Text>
           ) : null}
           {item.recurring_rule_id ? (
-            <Ionicons
-              name="repeat"
-              size={14}
+            <AppIcon
+              name="repeat-outline"
+              size={16}
               color={colors.textSecondary}
               accessibilityLabel={es.transactionList.recurring}
             />

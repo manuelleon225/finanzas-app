@@ -1,8 +1,17 @@
-import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, View, type LayoutChangeEvent, type ViewStyle } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { useTheme } from '@/theme';
 
 import { Text } from './Text';
+
+const PADDING = 3;
 
 export type SegmentedControlOption<T extends string> = {
   label: string;
@@ -22,22 +31,62 @@ export function SegmentedControl<T extends string>({
   onChange,
   style,
 }: SegmentedControlProps<T>) {
-  const { colors, radii, spacing } = useTheme();
+  const { colors, radii, componentHeights } = useTheme();
+  const [containerWidth, setContainerWidth] = useState(0);
+  const reduceMotion = useReducedMotion();
+
+  const activeIndex = Math.max(
+    0,
+    options.findIndex((option) => option.value === value),
+  );
+  const segmentWidth = containerWidth > 0 ? (containerWidth - PADDING * 2) / options.length : 0;
+  const left = useSharedValue(activeIndex * segmentWidth);
+
+  useEffect(() => {
+    const target = activeIndex * segmentWidth;
+    if (reduceMotion) {
+      left.value = target;
+    } else {
+      left.value = withTiming(target, { duration: 150 });
+    }
+  }, [activeIndex, segmentWidth, reduceMotion, left]);
+
+  const pillStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: left.value }],
+  }));
+
+  function onLayout(event: LayoutChangeEvent) {
+    setContainerWidth(event.nativeEvent.layout.width);
+  }
 
   return (
     <View
       accessibilityRole="radiogroup"
+      onLayout={onLayout}
       style={[
         styles.container,
         {
           backgroundColor: colors.surface,
-          borderColor: colors.border,
-          borderRadius: radii.md,
-          padding: spacing.xs,
+          borderRadius: radii.pill,
+          height: componentHeights.segmented,
+          padding: PADDING,
         },
         style,
       ]}
     >
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.pill,
+          {
+            width: segmentWidth,
+            height: componentHeights.segmented - PADDING * 2,
+            borderRadius: radii.pill,
+            backgroundColor: colors.surfaceHigh,
+          },
+          pillStyle,
+        ]}
+      />
       {options.map((option) => {
         const active = option.value === value;
 
@@ -48,15 +97,9 @@ export function SegmentedControl<T extends string>({
             accessibilityRole="radio"
             accessibilityLabel={option.label}
             accessibilityState={{ selected: active }}
-            style={[
-              styles.segment,
-              {
-                backgroundColor: active ? colors.primary : 'transparent',
-                borderRadius: radii.sm,
-              },
-            ]}
+            style={styles.segment}
           >
-            <Text variant="caption" color={active ? colors.onPrimary : colors.textSecondary}>
+            <Text variant="caption" color={active ? colors.textPrimary : colors.textSecondary}>
               {option.label}
             </Text>
           </Pressable>
@@ -69,11 +112,14 @@ export function SegmentedControl<T extends string>({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    borderWidth: StyleSheet.hairlineWidth,
+  },
+  pill: {
+    position: 'absolute',
+    top: PADDING,
+    left: PADDING,
   },
   segment: {
     flex: 1,
-    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },

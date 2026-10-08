@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { useTheme } from '@/theme';
@@ -10,8 +11,11 @@ export type InputProps = TextInputProps & {
   helperText?: string;
 };
 
-export function Input({ label, error, helperText, style, ...rest }: InputProps) {
-  const { colors, radii, spacing, fontSizes } = useTheme();
+export function Input({ label, error, helperText, style, onFocus, onBlur, ...rest }: InputProps) {
+  const { colors, radii, spacing, componentHeights } = useTheme();
+  const [focused, setFocused] = useState(false);
+
+  const borderColor = error ? colors.expense : focused ? colors.brand : 'transparent';
 
   return (
     <View style={styles.wrapper}>
@@ -25,25 +29,34 @@ export function Input({ label, error, helperText, style, ...rest }: InputProps) 
           styles.input,
           {
             color: colors.textPrimary,
-            backgroundColor: colors.surface,
-            borderColor: error ? colors.danger : colors.border,
+            backgroundColor: colors.surfaceRaised,
+            borderColor,
             borderRadius: radii.md,
+            height: componentHeights.input,
             paddingHorizontal: spacing.md,
-            fontSize: fontSizes.md,
+            fontSize: 15,
           },
           style,
         ]}
-        placeholderTextColor={colors.textSecondary}
+        placeholderTextColor={colors.textMuted}
         accessibilityLabel={label}
         accessibilityHint={error}
+        onFocus={(event) => {
+          setFocused(true);
+          onFocus?.(event);
+        }}
+        onBlur={(event) => {
+          setFocused(false);
+          onBlur?.(event);
+        }}
         {...rest}
       />
       {error ? (
-        <Text variant="caption" color={colors.danger} style={{ marginTop: spacing.xs }}>
+        <Text variant="caption" color={colors.expense} style={{ marginTop: spacing.xs }}>
           {error}
         </Text>
       ) : helperText ? (
-        <Text variant="caption" style={{ marginTop: spacing.xs }}>
+        <Text variant="caption" color={colors.textSecondary} style={{ marginTop: spacing.xs }}>
           {helperText}
         </Text>
       ) : null}
@@ -56,7 +69,6 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
   },
   input: {
-    minHeight: 44,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
   },
 });

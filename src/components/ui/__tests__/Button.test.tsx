@@ -8,6 +8,14 @@ describe('Button', () => {
     expect(getByText('Guardar')).toBeTruthy();
   });
 
+  it.each(['secondary', 'ghost', 'destructive'] as const)(
+    'renderiza la variante %s',
+    async (variant) => {
+      const { getByText } = await render(<Button title="Guardar" variant={variant} />);
+      expect(getByText('Guardar')).toBeTruthy();
+    },
+  );
+
   it('calls onPress when pressed', async () => {
     const onPress = jest.fn();
     const { getByLabelText } = await render(<Button title="Guardar" onPress={onPress} />);

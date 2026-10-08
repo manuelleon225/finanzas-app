@@ -25,4 +25,9 @@ describe('MoneyText', () => {
     const { getByText } = await render(<MoneyText amount={1000} kind="income" signed />);
     expect(getByText(`+${formatCOP(1000)}`)).toBeTruthy();
   });
+
+  it('aplica el tamaño display a las cifras grandes', async () => {
+    const { getByText } = await render(<MoneyText amount={1000} size="displayLg" />);
+    expect(getByText(formatCOP(1000))).toHaveStyle({ fontSize: 40 });
+  });
 });

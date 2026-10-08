@@ -24,4 +24,21 @@ module.exports = defineConfig([
     },
     ignores: ['src/theme/**', '**/*.test.ts', '**/*.test.tsx'],
   },
+  {
+    files: ['**/*.{ts,tsx}'],
+    ignores: ['src/components/ui/AppIcon.tsx'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@expo/vector-icons', '@expo/vector-icons/*'],
+              message: 'Prohibido importar Ionicons directamente: usa el componente AppIcon.',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]);

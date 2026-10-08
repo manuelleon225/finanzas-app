@@ -6,11 +6,11 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { useTheme } from '@/theme';
+import { tint, useTheme } from '@/theme';
 
 import { Text } from './Text';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
 
 export type ButtonProps = {
   title: string;
@@ -33,20 +33,25 @@ export function Button({
   style,
   testID,
 }: ButtonProps) {
-  const { colors, radii, spacing, fontWeights } = useTheme();
+  const { colors, radii, componentHeights, spacing } = useTheme();
   const isDisabled = disabled || loading;
 
-  let backgroundColor = colors.primary;
-  let borderColor: string | undefined;
-  let textColor = colors.onPrimary;
+  let backgroundColor = colors.brand;
+  let textColor = colors.onBrand;
+  let pressedBackground = tint(colors.brand, 0.85);
 
   if (variant === 'secondary') {
-    backgroundColor = colors.surface;
-    borderColor = colors.border;
+    backgroundColor = colors.surfaceRaised;
     textColor = colors.textPrimary;
+    pressedBackground = colors.surfaceHigh;
   } else if (variant === 'ghost') {
     backgroundColor = 'transparent';
-    textColor = colors.primary;
+    textColor = colors.brand;
+    pressedBackground = colors.surfaceHigh;
+  } else if (variant === 'destructive') {
+    backgroundColor = colors.danger;
+    textColor = colors.onBrand;
+    pressedBackground = tint(colors.danger, 0.85);
   }
 
   return (
@@ -61,12 +66,11 @@ export function Button({
         styles.base,
         {
           backgroundColor,
-          borderColor,
-          borderWidth: borderColor ? StyleSheet.hairlineWidth : 0,
-          borderRadius: radii.md,
+          borderRadius: radii.button,
+          height: componentHeights.button,
           paddingHorizontal: spacing.lg,
         },
-        pressed && !isDisabled ? styles.pressed : null,
+        pressed && !isDisabled ? { backgroundColor: pressedBackground } : null,
         isDisabled ? styles.disabled : null,
         style,
       ]}
@@ -74,7 +78,7 @@ export function Button({
       {loading ? (
         <ActivityIndicator color={textColor} />
       ) : (
-        <Text color={textColor} style={{ fontWeight: fontWeights.semibold }}>
+        <Text variant="bodyStrong" color={textColor}>
           {title}
         </Text>
       )}
@@ -84,16 +88,12 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 44,
     minWidth: 44,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
   },
-  pressed: {
-    opacity: 0.85,
-  },
   disabled: {
-    opacity: 0.5,
+    opacity: 0.4,
   },
 });

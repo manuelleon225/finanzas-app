@@ -1,7 +1,8 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { useTheme } from '@/theme';
+
+import { AppIcon } from './AppIcon';
 
 export type FabProps = {
   onPress: () => void;
@@ -16,9 +17,9 @@ export function Fab({ onPress, accessibilityLabel }: FabProps) {
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      style={[styles.fab, { backgroundColor: colors.primary }]}
+      style={[styles.fab, { backgroundColor: colors.brand }]}
     >
-      <Ionicons name="add" size={28} color={colors.onPrimary} />
+      <AppIcon name="add-outline" size={24} color={colors.onBrand} />
     </Pressable>
   );
 }

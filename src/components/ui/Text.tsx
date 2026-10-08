@@ -9,7 +9,17 @@ const MANROPE_FACE: Record<string, string> = {
   '700': 'Manrope_700Bold',
 };
 
-export type TextVariant = 'title' | 'subtitle' | 'body' | 'caption' | 'money';
+export type TextVariant =
+  | 'displayLg'
+  | 'display'
+  | 'title'
+  | 'subtitle'
+  | 'body'
+  | 'bodyStrong'
+  | 'caption'
+  | 'micro'
+  // aliases compatibles hacia atrás
+  | 'money';
 
 export type TextProps = RNTextProps & {
   variant?: TextVariant;
@@ -18,58 +28,21 @@ export type TextProps = RNTextProps & {
 };
 
 export function Text({ variant = 'body', color, align, style, ...rest }: TextProps) {
-  const { colors, fontSizes, fontWeights, lineHeights } = useTheme();
+  const { colors } = useTheme();
 
-  let variantStyle: TextStyle;
-  switch (variant) {
-    case 'title':
-      variantStyle = {
-        fontSize: fontSizes.title,
-        lineHeight: lineHeights.title,
-        fontWeight: fontWeights.bold,
-        fontFamily: MANROPE_FACE[fontWeights.bold],
-        color: colors.textPrimary,
-      };
-      break;
-    case 'subtitle':
-      variantStyle = {
-        fontSize: fontSizes.subtitle,
-        lineHeight: lineHeights.subtitle,
-        fontWeight: fontWeights.semibold,
-        fontFamily: MANROPE_FACE[fontWeights.semibold],
-        color: colors.textPrimary,
-      };
-      break;
-    case 'caption':
-      variantStyle = {
-        fontSize: fontSizes.caption,
-        lineHeight: lineHeights.caption,
-        fontWeight: fontWeights.regular,
-        fontFamily: MANROPE_FACE[fontWeights.regular],
-        color: colors.textSecondary,
-      };
-      break;
-    case 'money':
-      variantStyle = {
-        fontSize: fontSizes.bodyStrong,
-        lineHeight: lineHeights.bodyStrong,
-        fontWeight: fontWeights.semibold,
-        fontFamily: MANROPE_FACE[fontWeights.semibold],
-        color: colors.textPrimary,
-        fontVariant: ['tabular-nums'],
-      };
-      break;
-    case 'body':
-    default:
-      variantStyle = {
-        fontSize: fontSizes.body,
-        lineHeight: lineHeights.body,
-        fontWeight: fontWeights.regular,
-        fontFamily: MANROPE_FACE[fontWeights.regular],
-        color: colors.textPrimary,
-      };
-      break;
-  }
+  const base = {
+    fontSize: fontSizeFor(variant),
+    lineHeight: lineHeightFor(variant),
+    fontWeight: fontWeightFor(variant),
+    fontFamily: fontFamilyFor(variant),
+    color: colors.textPrimary,
+    fontVariant: variant === 'money' ? (['tabular-nums'] as TextStyle['fontVariant']) : undefined,
+  };
+
+  const variantStyle: TextStyle = {
+    ...base,
+    color: variant === 'caption' || variant === 'micro' ? colors.textSecondary : colors.textPrimary,
+  };
 
   return (
     <RNText
@@ -77,4 +50,70 @@ export function Text({ variant = 'body', color, align, style, ...rest }: TextPro
       {...rest}
     />
   );
+}
+
+function fontWeightFor(variant: TextVariant): TextStyle['fontWeight'] {
+  switch (variant) {
+    case 'displayLg':
+    case 'display':
+    case 'title':
+    case 'bodyStrong':
+    case 'money':
+      return '600';
+    case 'subtitle':
+    case 'micro':
+      return '500';
+    default:
+      return '400';
+  }
+}
+
+function fontSizeFor(variant: TextVariant): number {
+  switch (variant) {
+    case 'displayLg':
+      return 40;
+    case 'display':
+      return 34;
+    case 'title':
+      return 22;
+    case 'subtitle':
+      return 17;
+    case 'body':
+    case 'bodyStrong':
+    case 'money':
+      return 15;
+    case 'caption':
+      return 12;
+    case 'micro':
+      return 11;
+    default:
+      return 15;
+  }
+}
+
+function lineHeightFor(variant: TextVariant): number {
+  switch (variant) {
+    case 'displayLg':
+      return 48;
+    case 'display':
+      return 40;
+    case 'title':
+      return 28;
+    case 'subtitle':
+      return 24;
+    case 'body':
+    case 'bodyStrong':
+    case 'money':
+      return 22;
+    case 'caption':
+      return 16;
+    case 'micro':
+      return 14;
+    default:
+      return 22;
+  }
+}
+
+function fontFamilyFor(variant: TextVariant): string {
+  return MANROPE_FACE[String(fontWeightFor(variant))] ?? 'Manrope_400Regular';
 }
