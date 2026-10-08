@@ -782,3 +782,25 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
 - **Pendientes:** R1.3 (conectar a la app, aún no tocar la UI). Siguiente: R1.3.
 - **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (159) en
   verde.
+
+### [2026-10-05] Tarea: R1.3 — Conectar la nueva fórmula
+
+- **Qué se hizo:**
+  - Store `src/features/summary/store/usePreferencesStore.ts` (persistido en AsyncStorage):
+    `includeExtrasInAvailable` (default false).
+  - Hook `useAvailableToday(month)`: junta cuentas (con `counts_as_liquid`), reglas activas y
+    movimientos del mes, lee la preferencia y devuelve `calculateAvailableToday(...)` con carga/error
+    /refetch.
+  - `utils/explain.ts`: `explainAvailable(result)` → 3–4 frases cortas en español (saldo líquido,
+    comprometidos, días al ingreso o fallback, colchón extra) con tests.
+  - Inicio: la tarjeta héroe usa `remainingToday` (v2), muestra `availableBase` como secundaria y el
+    texto "Crea tu ingreso recurrente…" si `usedFallbackHorizon`; la ayuda "?" muestra las frases de
+    `explainAvailable`. Se eliminó el cálculo viejo de `disponible_mes`/`disponible_hoy`.
+  - Ajustes: switch "Incluir extras en Disponible hoy" con su ayuda.
+  - `calculateMonthSummary` quedó con solo totales/base/extra/dependencia (se quitaron
+    `availableMonth`, `availableToday`, `daysRemaining`, `pendingRecurringExpenses` y sus tests).
+- **Pendientes (✋ prueba con datos reales):** crear una regla de ingreso base quincenal y revisar que
+  "días a tu pago" y el monto tengan sentido; si la fórmula no convence, ajustar
+  `docs/DATA_MODEL.md` y la función. Siguiente: R2.1 (sistema de diseño v2).
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (158) en
+  verde; bundle Android OK.

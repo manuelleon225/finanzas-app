@@ -9,6 +9,8 @@ import { useProfile } from '@/features/auth/hooks/useProfile';
 import { useSession } from '@/features/auth/hooks/AuthProvider';
 import { CategoryIcon } from '@/features/categories/components/CategoryIcon';
 import { useMonthSummary } from '@/features/summary/hooks/useMonthSummary';
+import { useAvailableToday } from '@/features/summary/hooks/useAvailableToday';
+import { explainAvailable } from '@/features/summary/utils/explain';
 import { formatMonthLabel } from '@/features/transactions/utils/transactions';
 import { es } from '@/i18n/es';
 import { formatCOP } from '@/lib/money';
@@ -35,7 +37,11 @@ export default function HomeScreen() {
   const profile = useProfile();
   const [monthAnchor, setMonthAnchor] = useState(() => startOfMonth(new Date()));
   const { summary, transactions, isLoading, isError, refetch } = useMonthSummary(monthAnchor);
+  const availableQuery = useAvailableToday(monthAnchor);
   const accountsQuery = useAccounts();
+
+  const heroLoading = isLoading || availableQuery.isLoading;
+  const heroError = isError || availableQuery.isError;
 
   const displayName = profile.data ?? user?.email?.split('@')[0] ?? '';
   const totalBalance = (accountsQuery.data ?? []).reduce(
@@ -43,14 +49,22 @@ export default function HomeScreen() {
     0,
   );
   const lastFive = transactions.slice(0, 5);
+  const hero = availableQuery.result;
 
   const baseIncomePct =
     summary.incomeTotal > 0 ? (summary.incomeBase / summary.incomeTotal) * 100 : 0;
   const baseExpensePct =
     summary.expenseTotal > 0 ? (summary.expenseBase / summary.expenseTotal) * 100 : 0;
 
+  function refresh() {
+    void accountsQuery.refetch();
+    void profile.refetch();
+    refetch();
+    availableQuery.refetch();
+  }
+
   function showAvailableHelp() {
-    Alert.alert(es.home.helpTitle, es.home.helpBody);
+    Alert.alert(es.home.helpTitle, explainAvailable(hero).join('\n'));
   }
 
   return (
@@ -71,14 +85,7 @@ export default function HomeScreen() {
           paddingBottom: spacing.xl,
         }}
         refreshControl={
-          <RefreshControl
-            refreshing={accountsQuery.isRefetching}
-            onRefresh={() => {
-              void accountsQuery.refetch();
-              void profile.refetch();
-              refetch();
-            }}
-          />
+          <RefreshControl refreshing={accountsQuery.isRefetching} onRefresh={refresh} />
         }
       >
         <View style={{ gap: spacing.xs }}>
@@ -110,17 +117,17 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {isLoading ? (
+        {heroLoading ? (
           <>
-            <SkeletonBlock height={120} />
+            <SkeletonBlock height={140} />
             <SkeletonBlock height={96} />
             <SkeletonBlock height={96} />
             <SkeletonBlock height={110} />
           </>
-        ) : isError ? (
+        ) : heroError ? (
           <Card>
             <Text variant="body">{es.common.error}</Text>
-            <Pressable onPress={refetch} style={{ marginTop: spacing.sm }}>
+            <Pressable onPress={refresh} style={{ marginTop: spacing.sm }}>
               <Text variant="caption" color={colors.primary}>
                 {es.common.retry}
               </Text>
@@ -142,13 +149,13 @@ export default function HomeScreen() {
                   </Text>
                 </Pressable>
               </View>
-              <MoneyText
-                amount={Math.round(summary.availableToday)}
-                style={{ fontSize: 40, lineHeight: 48 }}
-              />
+              <MoneyText amount={hero.remainingToday} style={{ fontSize: 40, lineHeight: 48 }} />
               <Text variant="caption">
-                {es.home.availableThisMonth}: {formatCOP(summary.availableMonth)}
+                {es.home.availableThisMonth}: {formatCOP(hero.availableBase)}
               </Text>
+              {hero.usedFallbackHorizon ? (
+                <Text variant="caption">{es.home.availableFallback}</Text>
+              ) : null}
             </Card>
 
             <Card style={{ gap: spacing.sm }}>

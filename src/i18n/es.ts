@@ -59,6 +59,15 @@ export const es = {
     greeting: 'Hola',
     availableToday: 'Disponible hoy',
     availableThisMonth: 'Disponible este mes',
+    availableFallback: 'Crea tu ingreso recurrente para un cálculo más preciso.',
+    explainLiquid: 'Tienes {monto} en cuentas para gastar.',
+    explainCommitted: 'Hay {monto} comprometidos en pagos próximos.',
+    explainNoIncome: 'Todavía no hay un ingreso recurrente para el cálculo.',
+    explainDays: 'Tu próximo ingreso base llega en {dias} días.',
+    explainCushion: 'Los extras aportan un colchón de {monto}.',
+    includeExtrasInAvailable: 'Incluir extras en Disponible hoy',
+    includeExtrasInAvailableHelp:
+      'Si lo activas, el dinero que recibes como extra también cuenta para gastar hoy.',
     helpTitle: '¿Qué es "Disponible hoy"?',
     helpBody:
       'Es lo que puedes gastar hoy sin romper el mes: lo que queda del mes, dividido entre los días que faltan (contando hoy).',

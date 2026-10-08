@@ -1,10 +1,4 @@
-import { format, getDate, getDaysInMonth, parseISO } from 'date-fns';
-
-import type { RecurrenceSpec } from '@/features/recurring/utils/recurrence';
-import { getOccurrences } from '@/features/recurring/utils/recurrence';
 import type { TransactionWithRelations } from '@/features/transactions/api/transactions';
-
-export type RecurringRuleSpec = RecurrenceSpec & { amount: number };
 
 export type MonthSummary = {
   incomeTotal: number;
@@ -14,18 +8,10 @@ export type MonthSummary = {
   expenseBase: number;
   expenseExtra: number;
   balance: number;
-  pendingRecurringExpenses: number;
-  availableMonth: number;
-  daysRemaining: number;
-  availableToday: number;
   extraDependency: number;
 };
 
-export function calculateMonthSummary(
-  transactions: TransactionWithRelations[],
-  recurringExpenseRules: RecurringRuleSpec[],
-  todayISO: string,
-): MonthSummary {
+export function calculateMonthSummary(transactions: TransactionWithRelations[]): MonthSummary {
   let incomeBase = 0;
   let incomeExtra = 0;
   let expenseBase = 0;
@@ -50,26 +36,6 @@ export function calculateMonthSummary(
   const incomeTotal = incomeBase + incomeExtra;
   const expenseTotal = expenseBase + expenseExtra;
   const balance = incomeTotal - expenseTotal;
-
-  const today = parseISO(todayISO);
-  const afterTodayISO = format(
-    new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1),
-    'yyyy-MM-dd',
-  );
-  const endOfMonthISO = format(
-    new Date(today.getFullYear(), today.getMonth() + 1, 0),
-    'yyyy-MM-dd',
-  );
-
-  let pendingRecurringExpenses = 0;
-  for (const rule of recurringExpenseRules) {
-    pendingRecurringExpenses +=
-      getOccurrences(rule, afterTodayISO, endOfMonthISO).length * rule.amount;
-  }
-
-  const daysRemaining = getDaysInMonth(today) - getDate(today) + 1;
-  const availableMonth = incomeTotal - expenseTotal - pendingRecurringExpenses;
-  const availableToday = Math.max(0, availableMonth) / daysRemaining;
   const extraDependency = incomeTotal > 0 ? Math.round((incomeExtra / incomeTotal) * 100) : 0;
 
   return {
@@ -80,10 +46,6 @@ export function calculateMonthSummary(
     expenseBase,
     expenseExtra,
     balance,
-    pendingRecurringExpenses,
-    availableMonth,
-    daysRemaining,
-    availableToday,
     extraDependency,
   };
 }

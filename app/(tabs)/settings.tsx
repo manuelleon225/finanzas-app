@@ -12,6 +12,7 @@ import {
   type AnticipationDays,
 } from '@/features/recurring/store/useReminderPrefs';
 import { remindersSupported } from '@/features/recurring/api/reminders';
+import { usePreferencesStore } from '@/features/summary/store/usePreferencesStore';
 import { es } from '@/i18n/es';
 import { useTheme } from '@/theme';
 
@@ -27,6 +28,10 @@ export default function SettingsScreen() {
   const setRemindersEnabled = useReminderPrefs((state) => state.setRemindersEnabled);
   const anticipationDays = useReminderPrefs((state) => state.anticipationDays);
   const setAnticipationDays = useReminderPrefs((state) => state.setAnticipationDays);
+  const includeExtrasInAvailable = usePreferencesStore((state) => state.includeExtrasInAvailable);
+  const setIncludeExtrasInAvailable = usePreferencesStore(
+    (state) => state.setIncludeExtrasInAvailable,
+  );
   const [togglingReminders, setTogglingReminders] = useState(false);
 
   async function toggleReminders(value: boolean) {
@@ -171,6 +176,29 @@ export default function SettingsScreen() {
               </View>
             </View>
           ) : null}
+        </Card>
+
+        <Card style={{ gap: spacing.sm }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: spacing.md,
+            }}
+          >
+            <View style={{ flex: 1, gap: spacing.xs }}>
+              <Text variant="body">{es.home.includeExtrasInAvailable}</Text>
+              <Text variant="caption">{es.home.includeExtrasInAvailableHelp}</Text>
+            </View>
+            <Switch
+              value={includeExtrasInAvailable}
+              onValueChange={setIncludeExtrasInAvailable}
+              trackColor={{ true: colors.primary, false: colors.border }}
+              thumbColor={includeExtrasInAvailable ? '#FFFFFF' : colors.textSecondary}
+              accessibilityLabel={es.home.includeExtrasInAvailable}
+            />
+          </View>
         </Card>
 
         <Button
