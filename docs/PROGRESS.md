@@ -766,3 +766,19 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   ahorros quedó con el switch apagado (y que las tarjetas de crédito también). Siguiente: R1.2.
 - **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (139) en
   verde; bundle Android OK.
+
+### [2026-10-05] Tarea: R1.2 — Función pura "Disponible hoy" v2
+
+- **Qué se hizo:** `src/features/summary/utils/availableToday.ts` con `calculateAvailableToday(input)`
+  implementando **exactamente** la fórmula v2 de `docs/DATA_MODEL.md` (saldo líquido, horizonte =
+  próximo ingreso base, días al pago, comprometidos, colchón extra, disponible base con/ sin extras,
+  gastado hoy, allowance y remaining). Reutiliza `getOccurrences`/`getNextOccurrence` (esta última ya
+  es estrictamente posterior, documentado en comentario). Sin UI ni Supabase.
+- **Tests:** 21 casos (≥18 pedidos): sin reglas (fallback mes siguiente), quincenal en días 14/15/29,
+  mensual, cuentas no líquidas ignoradas, comprometidos, negativo → 0, includeExtras true/false,
+  colchón mayor que el disponible, gasto de hoy (remaining vs allowance), último día del mes
+  (days=1), regla inactiva, end_date vencida, pendingExpenses, transferencias ignoradas, varias
+  reglas de ingreso (la más cercana) y caso integrado.
+- **Pendientes:** R1.3 (conectar a la app, aún no tocar la UI). Siguiente: R1.3.
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (159) en
+  verde.
