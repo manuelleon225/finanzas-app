@@ -1,4 +1,9 @@
-import { computeMissingOccurrences, maxOfDates, retroactiveStart } from '../generation';
+import {
+  buildGeneratedRows,
+  computeMissingOccurrences,
+  maxOfDates,
+  retroactiveStart,
+} from '../generation';
 
 describe('retroactiveStart', () => {
   it('retrocede 12 meses', () => {
@@ -66,5 +71,33 @@ describe('computeMissingOccurrences', () => {
       '2026-04-15',
       '2026-05-15',
     ]);
+  });
+});
+
+describe('buildGeneratedRows', () => {
+  const baseRule = {
+    id: 'r1',
+    type: 'expense' as const,
+    nature: 'base' as const,
+    amount: 90000,
+    account_id: 'acc',
+    category_id: 'cat',
+    note: 'Luz',
+  };
+
+  it('regla auto genera movimientos posted', () => {
+    const rows = buildGeneratedRows({ ...baseRule, confirmation_mode: 'auto' }, ['2026-10-05']);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].status).toBe('posted');
+    expect(rows[0].occurrence_date).toBe('2026-10-05');
+  });
+
+  it('regla confirm genera movimientos pending', () => {
+    const rows = buildGeneratedRows({ ...baseRule, confirmation_mode: 'confirm' }, [
+      '2026-10-05',
+      '2026-11-05',
+    ]);
+    expect(rows.every((row) => row.status === 'pending')).toBe(true);
+    expect(rows.map((row) => row.occurrence_date)).toEqual(['2026-10-05', '2026-11-05']);
   });
 });

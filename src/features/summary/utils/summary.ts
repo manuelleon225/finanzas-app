@@ -1,5 +1,3 @@
-import type { TransactionWithRelations } from '@/features/transactions/api/transactions';
-
 export type MonthSummary = {
   incomeTotal: number;
   incomeBase: number;
@@ -11,13 +9,25 @@ export type MonthSummary = {
   extraDependency: number;
 };
 
-export function calculateMonthSummary(transactions: TransactionWithRelations[]): MonthSummary {
+type SummaryTransaction = {
+  type: 'income' | 'expense' | 'transfer';
+  nature: 'base' | 'extra' | null;
+  amount: number;
+  status?: 'posted' | 'pending';
+};
+
+export function calculateMonthSummary(transactions: SummaryTransaction[]): MonthSummary {
   let incomeBase = 0;
   let incomeExtra = 0;
   let expenseBase = 0;
   let expenseExtra = 0;
 
   for (const transaction of transactions) {
+    // Los movimientos pendientes de confirmar no cuentan en ningún total.
+    if (transaction.status === 'pending') {
+      continue;
+    }
+
     if (transaction.type === 'income') {
       if (transaction.nature === 'extra') {
         incomeExtra += transaction.amount;
@@ -48,8 +58,4 @@ export function calculateMonthSummary(transactions: TransactionWithRelations[]):
     balance,
     extraDependency,
   };
-}
-
-export function calculateExtraDependency(summary: MonthSummary): number {
-  return summary.extraDependency;
 }

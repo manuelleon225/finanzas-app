@@ -1,11 +1,14 @@
 import { Pressable, StyleSheet, type ViewStyle } from 'react-native';
 
+import { select } from '@/lib/haptics';
 import { useTheme } from '@/theme';
 
+import { AppIcon } from './AppIcon';
 import { Text } from './Text';
 
 export type ChipProps = {
   label: string;
+  icon?: string;
   selected?: boolean;
   onPress?: () => void;
   disabled?: boolean;
@@ -15,6 +18,7 @@ export type ChipProps = {
 
 export function Chip({
   label,
+  icon,
   selected = false,
   onPress,
   disabled = false,
@@ -26,9 +30,14 @@ export function Chip({
   const selectedBg = tone === 'extra' ? colors.extraSoft : colors.brandSoft;
   const selectedText = tone === 'extra' ? colors.extra : colors.brand;
 
+  function handlePress() {
+    select();
+    onPress?.();
+  }
+
   return (
     <Pressable
-      onPress={onPress}
+      onPress={onPress ? handlePress : undefined}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={label}
@@ -46,6 +55,9 @@ export function Chip({
         style,
       ]}
     >
+      {icon ? (
+        <AppIcon name={icon} size={16} color={selected ? selectedText : colors.textPrimary} />
+      ) : null}
       <Text variant="caption" color={selected ? selectedText : colors.textPrimary}>
         {label}
       </Text>
@@ -58,6 +70,8 @@ const styles = StyleSheet.create({
     minWidth: 44,
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 6,
   },
   disabled: {
     opacity: 0.4,

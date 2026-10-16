@@ -101,16 +101,3 @@ export async function restoreCategory(id: string) {
 
   return data;
 }
-
-export async function reorderCategories(items: { id: string; sort_order: number }[]) {
-  for (const item of items) {
-    const { error } = await supabase
-      .from('categories')
-      .update({ sort_order: item.sort_order })
-      .eq('id', item.id);
-
-    if (error) {
-      throw error;
-    }
-  }
-}

@@ -69,6 +69,7 @@ frequency         ('weekly', 'biweekly', 'semimonthly', 'monthly')
 | user_id | uuid | NOT NULL, default `auth.uid()`, referencia `auth.users(id)` `on delete cascade` |
 | type | transaction_type | |
 | nature | nature | nullable |
+| status | transaction_status | `'posted'` o `'pending'`; default `'posted'`. Los `pending` no cuentan en saldos/totales/presupuestos/análisis |
 | amount | bigint | `> 0` |
 | account_id | uuid | referencia `accounts(id)` `on delete restrict` |
 | transfer_account_id | uuid | nullable, referencia `accounts(id)` `on delete restrict` |
@@ -119,6 +120,7 @@ frequency         ('weekly', 'biweekly', 'semimonthly', 'monthly')
 | start_date | date | |
 | end_date | date | nullable |
 | is_active | boolean | default `true` |
+| confirmation_mode | recurring_confirmation_mode | `'auto'` o `'confirm'`; default `'auto'`. En `confirm`, la generación crea movimientos `pending` |
 | created_at | timestamptz | |
 | updated_at | timestamptz | |
 
@@ -137,6 +139,8 @@ saldo = initial_balance
 ```
 
 Las transferencias salientes usan `account_id`; las entrantes usan `transfer_account_id`.
+
+Solo se suman movimientos con `status = 'posted'`; los `pending` no afectan el saldo.
 
 ## 4. Seguridad (RLS)
 
@@ -197,13 +201,11 @@ Supuestos (v1 editable):
 - Las **transferencias** nunca cuentan como gasto ni ingreso.
 - Los gastos **pendientes de confirmar** reducen el disponible aunque aún no estén publicados.
 
-## 7. Cambios planificados (aún no implementados)
+## 7. Cambios implementados
 
-| Campo / tabla | Descripción |
+| Campo / tabla | Migración |
 |---|---|
-| `accounts.counts_as_liquid` | `boolean` (default `true`). Marca cuentas cuyo saldo cuenta en "Disponible hoy". |
-| tabla `budgets` | Presupuesto mensual por categoría principal de gasto (monto, `is_active`). |
-| `transactions.status` | `enum 'posted'` \| `'pending'` (default `'posted'`). Los `pending` no cuentan en saldos/totales/presupuestos/análisis; sí en `committed`. |
-| `recurring_rules.confirmation_mode` | `enum 'auto'` \| `'confirm'` (default `'auto'`). En `confirm`, la generación crea movimientos `pending`. |
-
-Se implementarán con las migraciones 005 (líquidas), 006 (budgets) y 007 (status/pending).
+| `accounts.counts_as_liquid` (`boolean`, default `true`) | 005 |
+| tabla `budgets` (presupuesto mensual por categoría principal de gasto) | 006 |
+| `transactions.status` (`enum 'posted' \| 'pending'`, default `'posted'`) | 007 |
+| `recurring_rules.confirmation_mode` (`enum 'auto' \| 'confirm'`, default `'auto'`) | 007 |

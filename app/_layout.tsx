@@ -4,25 +4,53 @@ import {
   Manrope_600SemiBold,
   Manrope_700Bold,
 } from '@expo-google-fonts/manrope';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import type { PersistQueryClientOptions } from '@tanstack/react-query-persist-client';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import { LoadingState } from '@/components/ui';
+import { LoadingState, SnackbarHost } from '@/components/ui';
 import { LockScreen } from '@/features/auth/components/LockScreen';
 import { AuthProvider, useSession } from '@/features/auth/hooks/AuthProvider';
+import { useAuthDeepLink } from '@/features/auth/hooks/useAuthDeepLink';
 import { useBiometricLock } from '@/features/auth/hooks/useBiometricLock';
 import { useBiometricStore } from '@/features/auth/store/useBiometricStore';
 import { useRecurringGeneration } from '@/features/recurring/hooks/useRecurringGeneration';
 import { useReminderScheduling } from '@/features/recurring/hooks/useReminderScheduling';
-import { queryClient } from '@/lib/queryClient';
+import { registerTransactionMutationDefaults } from '@/features/transactions/offline';
+import { useOfflineSync } from '@/features/transactions/hooks/useOfflineSync';
+import { setupOnlineManager } from '@/lib/netinfo';
+import { persister } from '@/lib/persister';
+import { SEVEN_DAYS_MS, queryClient } from '@/lib/queryClient';
 import { useTheme } from '@/theme';
 
 SplashScreen.preventAutoHideAsync();
+
+// Infraestructura offline: conecta onlineManager con NetInfo y declara la
+// mutación de creación para poder reanudarla tras reiniciar la app.
+setupOnlineManager();
+registerTransactionMutationDefaults();
+
+const persistOptions: Omit<PersistQueryClientOptions, 'queryClient'> = {
+  persister,
+  maxAge: SEVEN_DAYS_MS,
+  buster: 'v1',
+  dehydrateOptions: {
+    // Solo se persisten las creaciones de movimientos que quedaron pausadas
+    // (offline). Editar y eliminar requieren conexión.
+    shouldDehydrateMutation: (mutation) =>
+      mutation.state.isPaused &&
+      mutation.options.mutationKey?.[0] === 'transactions' &&
+      mutation.options.mutationKey?.[1] === 'create',
+    // Solo datos de lectura ya resueltos.
+    shouldDehydrateQuery: (query) => query.state.status === 'success',
+  },
+};
 
 function LockOverlay() {
   const isLocked = useBiometricStore((state) => state.isLocked);
@@ -44,6 +72,8 @@ function RootNavigator() {
   useBiometricLock();
   useRecurringGeneration();
   useReminderScheduling();
+  useOfflineSync();
+  useAuthDeepLink();
 
   useEffect(() => {
     if (isLocked && router.canDismiss()) {
@@ -62,8 +92,9 @@ function RootNavigator() {
   return (
     <View style={{ flex: 1 }}>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="transaction-form" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="transaction-form" options={{ presentation: 'fullScreenModal' }} />
       </Stack>
+      <SnackbarHost />
       <LockOverlay />
     </View>
   );
@@ -88,11 +119,19 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <RootNavigator />
-        <StatusBar style="auto" />
-      </AuthProvider>
-    </QueryClientProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={persistOptions}
+        onSuccess={() => {
+          void queryClient.resumePausedMutations();
+        }}
+      >
+        <AuthProvider>
+          <RootNavigator />
+          <StatusBar style="auto" />
+        </AuthProvider>
+      </PersistQueryClientProvider>
+    </GestureHandlerRootView>
   );
 }

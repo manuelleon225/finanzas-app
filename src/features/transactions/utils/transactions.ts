@@ -18,11 +18,20 @@ export type TransactionTotals = {
   balance: number;
 };
 
-export function calculateTotals(transactions: TransactionWithRelations[]): TransactionTotals {
+export type TallyTransaction = {
+  type: 'income' | 'expense' | 'transfer';
+  amount: number;
+  status?: 'posted' | 'pending';
+};
+
+export function calculateTotals(transactions: TallyTransaction[]): TransactionTotals {
   let income = 0;
   let expense = 0;
 
   for (const transaction of transactions) {
+    if (transaction.status === 'pending') {
+      continue;
+    }
     if (transaction.type === 'income') {
       income += transaction.amount;
     } else if (transaction.type === 'expense') {

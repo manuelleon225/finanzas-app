@@ -81,7 +81,7 @@ Pantalla (app/)  →  hook de feature  →  api de feature  →  Supabase
 | Fuente **Manrope** (400–700) | Tipografía del sistema de diseño v2; los montos usan números tabulares. |
 | Modo de tema (`system \| dark \| light`) | Preferencia persistida (Zustand); por defecto **oscuro**. |
 | Gráficos propios con `react-native-svg` | Sin librerías de gráficos externas; los charts se auditan y son accesibles. |
-| Cola offline (TanStack Query persistido) | **Planificado (Fase R5)**: solo creación de movimientos; edición/eliminación requieren red. |
+| Cola offline (TanStack Query persistido) | **Implementado (R5.3)**: solo creación de movimientos; edición/eliminación requieren red. |
 | Haptics (`expo-haptics`) | Feedback táctil acotado a acciones convencionales (tap/select/success/error/warning). |
 
 ## 6. Entornos y configuración
@@ -103,3 +103,85 @@ npm test            # jest-expo
 ```
 
 Antes de cerrar cualquier tarea se ejecutan `typecheck`, `lint` y `test`.
+
+## 8. Offline: creación de movimientos (R5.3)
+
+**Objetivo:** registrar movimientos sin conexión y sincronizarlos al volver la red, sin duplicados.
+
+### Diseño
+
+- **Conectividad:** `onlineManager` de TanStack Query se conecta a NetInfo
+  (`src/lib/netinfo.ts`). Queries y mutaciones se pausan/reanudan según la red real.
+- **Persistencia:** `PersistQueryClientProvider` con
+  `createAsyncStoragePersister` en AsyncStorage (`src/lib/persister.ts`).
+  `gcTime` y `maxAge` = **7 días**. Solo se dehydrata:
+  - las **mutaciones de creación de movimientos** que quedaron `paused` (offline), y
+  - las **queries de lectura** ya resueltas (`status === 'success'`).
+  Nunca se persisten tokens: la sesión sigue en el storage de Supabase (fuera de React Query).
+- **Identidad e idempotencia:** el `id` del movimiento se genera en el cliente con
+  `expo-crypto` (`randomUUID`) y viaja en las **variables** de la mutación (así sobrevive al
+  reinicio). El insert envía ese id; ante conflicto de id (`23505`, reintento tras un corte) la
+  mutación se trata como **éxito** (se devuelve la fila existente).
+- **Reanudación:** `queryClient.setMutationDefaults(['transactions', 'create'], …)` declara la
+  `mutationFn` y `networkMode: 'offlineFirst'` para que las mutaciones restauradas puedan correr.
+  `resumePausedMutations()` se llama al restaurar el caché (Provider `onSuccess`), al iniciar con
+  sesión y al recuperar la conexión (`useOfflineSync`). Al terminar cada mutación se invalidan
+  `transactions`, `accounts` y `summary`.
+
+### Límites (documentados)
+
+- **Solo creaciones.** Editar y eliminar usan `networkMode: 'online'`: sin red no se ejecutan (no
+  se encolan).
+- **Antigüedad de 7 días.** Una creación pendiente más vieja que `maxAge` se descarta junto con el
+  resto del caché.
+- **Cerrar sesión limpia la cola.** `signOut()` hace `queryClient.clear()` y
+  `persister.removeClient()`, de modo que ni el caché ni las mutaciones pendientes sobreviven para
+  otro usuario.
+- La clasificación de errores de mutación (`classifyMutationError`) queda disponible para la UI de
+  estados offline (R5.4); esta fase no agrega UI.
+
+## 9. Deep links de autenticación (R6.2)
+
+**Objetivo:** que los enlaces de correo (recuperación de contraseña y confirmación de correo) abran
+la app en la pantalla correcta, sin que el guardia de rutas mande a las pestañas antes de tiempo.
+
+### Flujo PKCE
+
+- El cliente usa `flowType: 'pkce'` (`src/lib/supabase.ts`). Al pedir el correo, Supabase guarda el
+  verifier en el storage del cliente (AsyncStorage) y el enlace vuelve a la app con `?code=...`.
+- `src/features/auth/api/auth.ts` arma las URLs de vuelta con `Linking.createURL(...)`:
+  - recuperación → `Linking.createURL('/reset-password')`
+  - confirmación → `Linking.createURL('/confirm-email')`
+- `useAuthDeepLink` (montado en `app/_layout.tsx`) escucha `Linking.getInitialURL()` y
+  `Linking.addEventListener('url')`, parsea la URL con `parseAuthLink` (función pura) y canja el
+  código con `supabase.auth.exchangeCodeForSession(code)`. Si la URL trae tokens (flujo implícito),
+  usa `supabase.auth.setSession(...)` como respaldo.
+- `parseAuthLink` clasifica: `session` (recuperación o confirmación), `error` (vencido, inválido o
+  mal formado) o `none` (no es un enlace de auth).
+
+### Estado y guardias
+
+- `useAuthLinkStore` (Zustand, **en memoria, no persistido**) guarda `isRecoverySession` y el error
+  del enlace. En un enlace de recuperación la bandera se activa **antes** de crear la sesión.
+- `app/(auth)/_layout.tsx` no redirige a las pestañas si `isRecoverySession` es true.
+- `app/(tabs)/_layout.tsx` redirige a `/reset-password` si `isRecoverySession` es true.
+- La pantalla `app/(auth)/reset-password.tsx` pide la nueva contraseña (zod, mínimo 8), llama a
+  `supabase.auth.updateUser({ password })`, desactiva la bandera y entra con el Snackbar
+  "Contraseña actualizada".
+- Tras registrarse sin sesión, `app/(auth)/register.tsx` lleva a `app/(auth)/verify-email.tsx`
+  ("Revisa tu correo") con el correo; incluye "Reenviar correo" con enfriamiento de 60 s.
+- Enlaces vencidos o inválidos muestran `AuthLinkErrorView` con un botón para pedir un enlace nuevo.
+
+### URLs por permitir en Supabase (Authentication → URL Configuration)
+
+- Redirect URLs: `finanzas://**` y `exp://**`.
+- Reactivar "Confirm email" y probar los dos flujos con un correo real.
+
+### Limitación en Expo Go (documentada)
+
+- El scheme propio (`finanzas://`) solo funciona completo en un **development build** o app
+  compilada. En Expo Go el enlace sale como `exp://<host>/--/<ruta>` y depende de que el dev server
+  esté corriendo. `Linking.createURL` resuelve la URL correcta en cada caso; para probar el flujo
+  completo conviene un development build.
+
+

@@ -30,6 +30,7 @@ export type AvailableTodayTransaction = {
   nature: 'base' | 'extra' | null;
   amount: number;
   occurred_on: string;
+  status?: 'posted' | 'pending';
 };
 
 export type AvailableTodayInput = {
@@ -118,6 +119,12 @@ export function calculateAvailableToday(input: AvailableTodayInput): AvailableTo
   let expenseExtra = 0;
   let spentToday = 0;
   for (const tx of monthTransactions) {
+    // Los pendientes de confirmar no cuentan como gasto/ingreso del mes; su
+    // efecto entra por `pendingExpenses`.
+    if (tx.status === 'pending') {
+      continue;
+    }
+
     if (tx.type === 'income' && tx.nature === 'extra') {
       incomeExtra += tx.amount;
     } else if (tx.type === 'expense' && tx.nature === 'extra') {

@@ -5,8 +5,17 @@ const COP_FORMATTER = new Intl.NumberFormat('es-CO', {
   maximumFractionDigits: 0,
 });
 
+const COP_NUMBER_FORMATTER = new Intl.NumberFormat('es-CO', {
+  maximumFractionDigits: 0,
+});
+
 export function formatCOP(amount: number): string {
   return COP_FORMATTER.format(amount);
+}
+
+/** Formato en palabras para etiquetas accesibles: `87.500 pesos`. */
+export function formatPesos(amount: number): string {
+  return `${COP_NUMBER_FORMATTER.format(amount)} pesos`;
 }
 
 export function parseMoneyInput(text: string): number {

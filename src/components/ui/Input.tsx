@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { useTheme } from '@/theme';
@@ -9,9 +9,19 @@ export type InputProps = TextInputProps & {
   label?: string;
   error?: string;
   helperText?: string;
+  rightAccessory?: ReactNode;
 };
 
-export function Input({ label, error, helperText, style, onFocus, onBlur, ...rest }: InputProps) {
+export function Input({
+  label,
+  error,
+  helperText,
+  rightAccessory,
+  style,
+  onFocus,
+  onBlur,
+  ...rest
+}: InputProps) {
   const { colors, radii, spacing, componentHeights } = useTheme();
   const [focused, setFocused] = useState(false);
 
@@ -24,33 +34,35 @@ export function Input({ label, error, helperText, style, onFocus, onBlur, ...res
           {label}
         </Text>
       ) : null}
-      <TextInput
+      <View
         style={[
-          styles.input,
+          styles.field,
           {
-            color: colors.textPrimary,
             backgroundColor: colors.surfaceRaised,
             borderColor,
             borderRadius: radii.md,
             height: componentHeights.input,
             paddingHorizontal: spacing.md,
-            fontSize: 15,
           },
-          style,
         ]}
-        placeholderTextColor={colors.textMuted}
-        accessibilityLabel={label}
-        accessibilityHint={error}
-        onFocus={(event) => {
-          setFocused(true);
-          onFocus?.(event);
-        }}
-        onBlur={(event) => {
-          setFocused(false);
-          onBlur?.(event);
-        }}
-        {...rest}
-      />
+      >
+        <TextInput
+          style={[styles.input, { color: colors.textPrimary }, style]}
+          placeholderTextColor={colors.textMuted}
+          accessibilityLabel={label}
+          accessibilityHint={error}
+          onFocus={(event) => {
+            setFocused(true);
+            onFocus?.(event);
+          }}
+          onBlur={(event) => {
+            setFocused(false);
+            onBlur?.(event);
+          }}
+          {...rest}
+        />
+        {rightAccessory}
+      </View>
       {error ? (
         <Text variant="caption" color={colors.expense} style={{ marginTop: spacing.xs }}>
           {error}
@@ -68,7 +80,15 @@ const styles = StyleSheet.create({
   wrapper: {
     alignSelf: 'stretch',
   },
-  input: {
+  field: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
+  },
+  input: {
+    flex: 1,
+    height: '100%',
+    paddingVertical: 0,
+    fontSize: 15,
   },
 });

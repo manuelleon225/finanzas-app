@@ -7,11 +7,13 @@ Reglas permanentes para cualquier agente de IA que trabaje en este proyecto.
 Lee, en este orden:
 
 1. `AGENTS.md` (este archivo).
-2. `docs/ARCHITECTURE.md`
-3. `docs/DATA_MODEL.md`
-4. `docs/PROGRESS.md`
+2. `CLAUDE.md` (contexto maestro autosuficiente del proyecto: estado real, historial de prompts,
+   pendientes, problemas conocidos y recomendaciones).
+3. `docs/ARCHITECTURE.md`
+4. `docs/DATA_MODEL.md`
+5. `docs/PROGRESS.md`
 
-No empieces a escribir código sin haber leído los cuatro.
+No empieces a escribir código sin haber leído estos cinco documentos.
 
 ## 1. Resumen del proyecto
 

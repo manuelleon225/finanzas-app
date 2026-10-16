@@ -1,9 +1,12 @@
+import * as Crypto from 'expo-crypto';
+
 import { supabase } from '@/lib/supabase';
 import type { Enums, Tables, TablesInsert, TablesUpdate } from '@/types/database';
 
 export type Transaction = Tables<'transactions'>;
 export type TransactionType = Enums<'transaction_type'>;
 export type Nature = Enums<'nature'>;
+export type TransactionStatus = Enums<'transaction_status'>;
 export type Category = Tables<'categories'>;
 export type Account = Tables<'accounts'>;
 
@@ -22,6 +25,7 @@ export type TransactionFilters = {
   categoryId?: string;
   type?: TransactionType;
   nature?: Nature;
+  status?: TransactionStatus;
   search?: string;
 };
 
@@ -80,6 +84,10 @@ export async function listTransactions(
     query = query.eq('nature', filters.nature);
   }
 
+  if (filters.status) {
+    query = query.eq('status', filters.status);
+  }
+
   if (filters.search) {
     query = query.ilike('note', `%${filters.search}%`);
   }
@@ -121,6 +129,28 @@ export async function getTransactionsInRange(
   const { data, error } = await supabase
     .from('transactions')
     .select(TRANSACTIONS_SELECT)
+    .eq('status', 'posted')
+    .gte('occurred_on', from)
+    .lte('occurred_on', to)
+    .order('occurred_on', { ascending: false })
+    .order('id', { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []) as unknown as TransactionWithRelations[];
+}
+
+/** Movimientos pendientes de confirmar (status 'pending') en un rango. */
+export async function getPendingConfirmations(
+  from: string,
+  to: string,
+): Promise<TransactionWithRelations[]> {
+  const { data, error } = await supabase
+    .from('transactions')
+    .select(TRANSACTIONS_SELECT)
+    .eq('status', 'pending')
     .gte('occurred_on', from)
     .lte('occurred_on', to)
     .order('occurred_on', { ascending: false })
@@ -134,9 +164,32 @@ export async function getTransactionsInRange(
 }
 
 export async function createTransaction(input: TablesInsert<'transactions'>) {
-  const { data, error } = await supabase.from('transactions').insert(input).select().single();
+  // Id generado en el cliente (idempotencia offline): el mismo id viaja en las
+  // variables de la mutación, así un reintento tras un corte no duplica la fila.
+  const id = input.id ?? Crypto.randomUUID();
+  const { data, error } = await supabase
+    .from('transactions')
+    .insert({ ...input, id })
+    .select()
+    .single();
 
   if (error) {
+    if (error.code === '23505') {
+      // El id ya existe (reintento tras un corte): se trata como éxito.
+      const { data: existing, error: fetchError } = await supabase
+        .from('transactions')
+        .select()
+        .eq('id', id)
+        .maybeSingle();
+
+      if (fetchError) {
+        throw fetchError;
+      }
+      if (existing) {
+        return existing;
+      }
+    }
+
     throw error;
   }
 

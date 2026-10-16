@@ -16,7 +16,7 @@ export type SnackbarProps = {
 export function Snackbar({
   message,
   onDismiss,
-  durationMs = 3500,
+  durationMs = 4000,
   actionLabel,
   onAction,
 }: SnackbarProps) {
@@ -40,20 +40,19 @@ export function Snackbar({
       style={[
         styles.snackbar,
         {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
+          backgroundColor: colors.surfaceHigh,
           borderRadius: radii.md,
           padding: spacing.md,
           gap: spacing.sm,
         },
       ]}
     >
-      <Text variant="caption" style={{ flex: 1 }}>
+      <Text variant="caption" color={colors.textPrimary} style={{ flex: 1 }}>
         {message}
       </Text>
       {actionLabel && onAction ? (
         <Pressable onPress={onAction} accessibilityRole="button" hitSlop={8}>
-          <Text variant="caption" color={colors.primary}>
+          <Text variant="caption" color={colors.brand}>
             {actionLabel}
           </Text>
         </Pressable>
@@ -69,9 +68,7 @@ const styles = StyleSheet.create({
     right: 16,
     bottom: 24,
     zIndex: 1100,
-    elevation: 1100,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
   },
 });

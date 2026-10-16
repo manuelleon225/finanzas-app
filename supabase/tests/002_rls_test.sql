@@ -20,6 +20,7 @@ declare
   a_account uuid;
   a_category uuid;
   a_tx uuid;
+  a_budget uuid;
   cnt integer;
 begin
   select id into u_a from auth.users order by created_at asc limit 1;
@@ -39,8 +40,10 @@ begin
     values ('Cat A test', 'expense', 'accessibility-outline', '#000000') returning id into a_category;
   insert into public.transactions (type, nature, amount, account_id, category_id, occurred_on)
     values ('expense', 'base', 10000, a_account, a_category, '2026-01-01') returning id into a_tx;
+  insert into public.budgets (category_id, amount)
+    values (a_category, 50000) returning id into a_budget;
 
-  insert into _rls_results values ('A crea cuenta, categoría y movimiento', true, a_account::text);
+  insert into _rls_results values ('A crea cuenta, categoría, movimiento y presupuesto', true, a_account::text);
 
   -- 2) B no ve nada de A
   perform set_config('request.jwt.claims', jsonb_build_object('sub', u_b::text)::text, true);
@@ -51,6 +54,9 @@ begin
   select count(*) into cnt from public.transactions where id = a_tx;
   insert into _rls_results values ('B no ve el movimiento de A', cnt = 0, 'filas=' || cnt::text);
 
+  select count(*) into cnt from public.budgets where id = a_budget;
+  insert into _rls_results values ('B no ve el presupuesto de A', cnt = 0, 'filas=' || cnt::text);
+
   -- 3) B intenta usar recursos de A (debe bloquearse)
   begin
     insert into public.transactions (type, nature, amount, account_id, category_id, occurred_on)
@@ -60,10 +66,21 @@ begin
     insert into _rls_results values ('B bloqueado al insertar con recursos de A', true, 'rechazado por RLS');
   end;
 
-  -- 4) B intenta modificar la cuenta de A (0 filas)
+  begin
+    insert into public.budgets (category_id, amount) values (a_category, 1);
+    insert into _rls_results values ('B bloqueado al crear presupuesto con categoría de A', false, 'NO fue bloqueado');
+  exception when others then
+    insert into _rls_results values ('B bloqueado al crear presupuesto con categoría de A', true, 'rechazado por RLS');
+  end;
+
+  -- 4) B intenta modificar filas de A (0 filas)
   update public.accounts set name = 'HACK' where id = a_account;
   get diagnostics cnt = row_count;
   insert into _rls_results values ('B no modifica filas de A', cnt = 0, 'filas=' || cnt::text);
+
+  update public.budgets set amount = 1 where id = a_budget;
+  get diagnostics cnt = row_count;
+  insert into _rls_results values ('B no modifica presupuestos de A', cnt = 0, 'filas=' || cnt::text);
 
   -- 5) anon no ve nada
   set role anon;
@@ -74,6 +91,7 @@ begin
   -- 6) Limpieza
   set role postgres;
   delete from public.transactions where id = a_tx;
+  delete from public.budgets where id = a_budget;
   delete from public.accounts where id = a_account;
   delete from public.categories where id = a_category;
   insert into _rls_results values ('Limpieza', true, 'ok');

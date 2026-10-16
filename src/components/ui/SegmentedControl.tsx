@@ -7,6 +7,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { select } from '@/lib/haptics';
 import { useTheme } from '@/theme';
 
 import { Text } from './Text';
@@ -93,7 +94,10 @@ export function SegmentedControl<T extends string>({
         return (
           <Pressable
             key={option.value}
-            onPress={() => onChange(option.value)}
+            onPress={() => {
+              select();
+              onChange(option.value);
+            }}
             accessibilityRole="radio"
             accessibilityLabel={option.label}
             accessibilityState={{ selected: active }}

@@ -36,7 +36,9 @@
         {
           "faceIDPermission": "Permite que Finanzas use Face ID para desbloquear la aplicación."
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,

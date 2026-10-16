@@ -2,10 +2,12 @@ import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
+  type GestureResponderEvent,
   type PressableProps,
   type ViewStyle,
 } from 'react-native';
 
+import { tap } from '@/lib/haptics';
 import { tint, useTheme } from '@/theme';
 
 import { Text } from './Text';
@@ -36,6 +38,11 @@ export function Button({
   const { colors, radii, componentHeights, spacing } = useTheme();
   const isDisabled = disabled || loading;
 
+  function handlePress(event: GestureResponderEvent) {
+    tap();
+    onPress?.(event);
+  }
+
   let backgroundColor = colors.brand;
   let textColor = colors.onBrand;
   let pressedBackground = tint(colors.brand, 0.85);
@@ -56,7 +63,7 @@ export function Button({
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={onPress ? handlePress : undefined}
       disabled={isDisabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? title}

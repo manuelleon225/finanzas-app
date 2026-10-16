@@ -22,8 +22,6 @@ export type ThemeColors = {
   primary: string;
   // deprecated: migrar a onBrand
   onPrimary: string;
-  // deprecated: migrar a extra
-  warning: string;
 };
 
 const dark = {
@@ -47,7 +45,6 @@ const dark = {
   background: '#0F1115',
   primary: '#7C86FF',
   onPrimary: '#0F1115',
-  warning: '#F5B544',
 } as const;
 
 const light = {
@@ -71,7 +68,6 @@ const light = {
   background: '#F6F7F9',
   primary: '#4F5BFF',
   onPrimary: '#FFFFFF',
-  warning: '#9A5B00',
 } as const;
 
 export const colors: Record<'dark' | 'light', ThemeColors> = { dark, light };

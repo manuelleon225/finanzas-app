@@ -853,3 +853,633 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   Siguiente: R2.3 (componentes nuevos de visualización).
 - **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos) y `npm test` (202) en
   verde; bundle Android OK.
+
+### [2026-10-07] Tarea: R2.3 — Componentes nuevos, parte 1 (visualización)
+
+- **Qué se hizo:** Componentes de visualización en `src/components/ui`:
+  - `ListRow`: círculo de ícono de 40 con `tint(color, 0.16)`, título + `Tag` opcional, subtítulo,
+    `trailing`, altura mínima 64 y estado presionado (`surfaceRaised`).
+  - `Tag`: píldora de alto 20 (`componentHeights.tag`) con variantes `extra` (extraSoft/extra),
+    `base` (brandSoft/brand), `neutral` y `pending` (surfaceRaised/textSecondary), texto `micro`.
+  - `ProgressBar`: alto 6, radio pill, fondo `surfaceRaised`, relleno animado 200 ms (tolera
+    "reducir movimiento"), color configurable y `clampProgress` entre 0 y 1.
+  - `StackedBar`: alto 8, segmentos proporcionales con separación de 2, radio pill, leyenda
+    opcional y resumen accesible; total 0 → solo el fondo.
+  - `Skeleton`: pulso suave (respeta reducir movimiento) con variantes `line`, `circle` y `card`.
+  - `EmptyState` v2 (ícono en círculo suave + título + descripción + botón opcional),
+    `LoadingState` y `ErrorState` al mismo estilo (con botón "Reintentar").
+  - `Snackbar` reestilizado al sistema (`surfaceHigh`, sin sombra, acción en `brand`); misma API.
+  - `BottomSheet` propio con `react-native-reanimated` + `react-native-gesture-handler`: scrim,
+    handle, cierre al deslizar o tocar fuera, altura por contenido con máximo del 85 % y safe area.
+    Se envolvió la app en `GestureHandlerRootView`.
+  - `app/design-preview.tsx` muestra todos los componentes nuevos (switch de tema).
+- **Tests:** `ProgressBar` (clamp), `StackedBar` (proporciones y total 0), `Tag` y `ListRow`.
+- **Decisiones tomadas:**
+  - Los `Animated.Value` de `ProgressBar`/`Skeleton` se guardan con `useState` (no
+    `useRef(...).current`) para cumplir la regla `react-hooks/refs` del React Compiler.
+  - En `BottomSheet`, el gesto se define antes del `useEffect` que anima `translateY` para
+    satisfacer `react-hooks/immutability` (falso positivo con shared values de reanimated).
+  - Accesibilidad: `ProgressBar` con role `progressbar` + `accessibilityValue`; `StackedBar` con
+    resumen accesible; `Tag` con label; `ListRow` con `button` solo si es presionable.
+  - `ListRow` usa `tint(..., 0.16)` tal como indica el prompt R2.3 (el Anexo A usa 0.12 en claro).
+- **Archivos:** `ProgressBar.tsx`, `StackedBar.tsx`, `Skeleton.tsx`, `Tag.tsx`, `ListRow.tsx`,
+  `BottomSheet.tsx` (nuevos), `EmptyState.tsx`, `ErrorState.tsx`, `LoadingState.tsx`,
+  `Snackbar.tsx`, `index.ts` (modificados), `app/_layout.tsx` (GestureHandlerRootView),
+  `app/design-preview.tsx`, tests en `src/components/ui/__tests__/`.
+- **Pendientes:** Revisar `design-preview` en claro/oscuro en el dispositivo (paso manual, 🔍).
+  Siguiente: R2.4 (parte 2 de componentes).
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos preexistentes) y
+  `npm test` (218) en verde.
+
+### [2026-10-07] Tarea: R2.4 — Componentes nuevos, parte 2 (interacción)
+
+- **Qué se hizo:** Componentes y utilidades de interacción:
+  - `expo-haptics` + `src/lib/haptics.ts` (`tap`, `select`, `success`, `warning`, `error`), todas
+    envueltas en `try/catch` y desactivables con `setHapticsEnabled`. Se integró `tap()` en
+    `Button`, `select()` en `Chip`/`SegmentedControl` y en las teclas del teclado.
+  - `NumericKeypad` (3×4, teclas de 52 px, radio md): `onDigit`/`onBackspace`/`onClear`, mantener
+    presionado "borrar" limpia todo, label por tecla. Lógica pura `applyKey(current, key, maxDigits)`
+    en `src/components/ui/utils/numericKeypad.ts` (sin ceros a la izquierda; "000" respeta el máximo).
+  - `AnimatedNumber`: conteo animado 300–600 ms con Reanimated, respeta "reducir movimiento",
+    formatea con `formatCOP`.
+  - `SwipeableRow` (+ `SwipeableRowGroup`): fila deslizable a la izquierda que revela una acción
+    destructiva "Eliminar"; cierra la fila abierta al tocar otra; acción alternativa por
+    `accessibilityActions`.
+  - `MonthSelector` (chevrones + etiqueta con `formatMonthLabel`, no permite mes futuro),
+    `ScreenHeader` (título/subtítulo + slot de acciones) e `IconButton` (44 px, pressed, badge opcional).
+  - Todo agregado a `app/design-preview.tsx`.
+- **Dependencia agregada:** `expo-haptics` (pedida por el prompt; instalada con `npx expo install`).
+- **Decisiones tomadas:**
+  - Haptics como funciones "fire-and-forget": el fallo del módulo nunca rompe la UI.
+  - El registro "una sola fila abierta" usa un `Context` con `useRef`: el React Compiler prohíbe
+    mutar estado a nivel de módulo (`react-hooks/immutability` / `globals`).
+  - Los tests de `AnimatedNumber`/`SwipeableRow` mockean Reanimated y `react-native-gesture-handler`
+    (mismo patrón que `SegmentedControl`). Los `fireEvent` se `await`ean (RNTL v14) para evitar
+    `act()` solapados.
+  - `MonthSelector` importa `formatMonthLabel` de la feature de movimientos (función existente).
+- **Archivos:** `src/lib/haptics.ts` (+ test), `src/components/ui/{NumericKeypad,AnimatedNumber,
+  SwipeableRow,MonthSelector,ScreenHeader,IconButton}.tsx`, `src/components/ui/utils/numericKeypad.ts`,
+  `Button.tsx`/`Chip.tsx`/`SegmentedControl.tsx` (haptics), `index.ts`, `src/i18n/es.ts` (`keypad`),
+  `app/design-preview.tsx`, tests en `src/components/ui/__tests__/`.
+- **Pendientes (✋ manual):** revisar el teclado (haptics, mantener presionado borrar), deslizar una
+  fila y cambiar de mes en el dispositivo. Siguiente: R2.5 (parte 3, si aplica).
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos preexistentes) y
+  `npm test` (251) en verde.
+
+### [2026-10-07] Tarea: R3.1 — Nueva barra de pestañas
+
+- **Qué se hizo:**
+  - `src/components/ui/TabBar.tsx`: custom `tabBar` de Expo Router con 5 elementos (Inicio,
+    Movimientos, (+), Planificar, Más). Alto 64 + safe area, línea superior de 1 px, etiqueta
+    `micro`, activo en `brand`, inactivo en `textSecondary`. El (+) es un botón de 52 px en `brand`
+    elevado por posición (`translateY: -14`, sin sombra) que abre el modal `/transaction-form`
+    (con haptic `tap`).
+  - `app/(tabs)/_layout.tsx`: usa `Tabs` de `expo-router/js-tabs` con `tabBar={<TabBar/>}` y las 4
+    pestañas; se eliminó Ajustes. Se mantiene la guarda de sesión.
+  - `app/(tabs)/plan.tsx`: Planificar con la fila "Pagos e ingresos recurrentes" (→ `/recurring`);
+    la fila "Análisis" queda tras un flag y no se muestra hasta que exista la ruta (R5.2).
+  - `app/(tabs)/more.tsx`: Más con grupos Organización (Cuentas, Categorías), Preferencias
+    (Apariencia Sistema/Oscuro/Claro conectado al store de tema, Incluir extras, Bloqueo biométrico,
+    Recordatorios con anticipación), Cuenta (Cerrar sesión) y pie con la versión (`expo-constants`).
+    Se movió aquí toda la lógica que estaba en Ajustes y se eliminó `settings.tsx`.
+  - Se eliminaron los `Fab` de Inicio y Movimientos y el componente `Fab` (+ su export).
+  - `ScreenHeader` ganó un slot `left`; los hijos (accounts, categories, recurring y sus
+    formularios) ahora usan `ScreenHeader` con botón atrás de 44 px (`IconButton` chevron).
+- **Decisiones tomadas:**
+  - Se usa `Tabs` de `expo-router/js-tabs` (el `Tabs` de `expo-router` está deprecado) para poder
+    pasar un `tabBar` personalizado.
+  - Íconos de la barra solo en estilo contorno (`AppIcon`), como exige el sistema de diseño; el
+    estado activo se distingue por color `brand` + etiqueta, no por relleno.
+  - El (+) ocupa un slot central (5 columnas) y se eleva por posición, no por sombra.
+- **Archivos:** `src/components/ui/TabBar.tsx`, `app/(tabs)/{_layout,plan,more}.tsx`,
+  `app/(tabs)/{index,movements}.tsx` (sin Fab), `app/{accounts,categories,recurring,
+  account-form,category-form,recurring-form}.tsx` (ScreenHeader), `src/components/ui/ScreenHeader.tsx`,
+  `src/components/ui/index.ts`, `src/i18n/es.ts`; eliminados `app/(tabs)/settings.tsx` y
+  `src/components/ui/Fab.tsx`.
+- **Pendientes (✋ manual):** capturas de la barra en Inicio, Planificar y Más; probar que el (+)
+  abre el modal y que la barra respeta el safe area. Siguiente: R3.2.
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos preexistentes),
+  `npm test` (251) y `npx expo export --platform android` en verde.
+
+### [2026-10-07] Tarea: R4.1 — Inicio
+
+- **Qué se hizo:** Rediseño de la pestaña Inicio según `docs/UX_SPEC.md` (sección "Inicio"),
+  sin tocar la lógica de datos (mismos hooks):
+  - Encabezado: saludo (caption) + `MonthSelector` (variante `title`) y, a la derecha, acceso a
+    análisis tras un flag (oculto hasta que exista la ruta, R5.2).
+  - Tarjeta héroe (Card xl, padding 20): `AnimatedNumber` con `remainingToday`, `ProgressBar` de
+    `spentToday/allowanceToday` (brand; expense si se superó), pie "Gastaste X de Y" + "N días a tu
+    pago" (o "para fin de mes" con `usedFallbackHorizon`), fila de colchón extra con `Tag extra`, y
+    ayuda "?" que abre un `BottomSheet` con `explainAvailable()` + desglose (saldo líquido,
+    comprometido, colchón, días).
+  - Estado sin margen (`availableBase <= 0`): monto en `expense`, "Sin margen hoy" y línea de ayuda.
+  - Tarjeta "Este mes" con bloques Ingresos/Gastos (`MoneyText` + `StackedBar` base/extra con
+    leyenda) y pie "Los extras son el {P}% de tus ingresos.".
+  - "Cuentas" con saldo total y fila horizontal de tarjetas; "Recientes" con "Ver todos" y hasta 5
+    `ListRow` (toque abre la edición).
+  - Estados: Skeleton con la forma de cada bloque, vacío de primer uso (EmptyState con "Agregar
+    movimiento"), error con reintento y pull-to-refresh.
+- **Funciones puras de presentación:** `src/features/summary/utils/home.ts`
+  (`heroProgress`, `isOverAllowance`, `isNoMargin`, `heroSpentText`, `daysToPaymentText`,
+  `cushionText`, `extraDependencyText`, `heroAccessibilityLabel`) con tests. Se agregó
+  `formatPesos` a `src/lib/money.ts` para la etiqueta accesible ("87.500 pesos").
+- **Ajustes de componentes:** `AnimatedNumber` acepta `accessibilityLabel`; `MonthSelector` acepta
+  `labelVariant`.
+- **Accesibilidad:** el monto héroe tiene label completo ("Disponible hoy: 87.500 pesos, de
+  108.500 pesos").
+- **Archivos:** `app/(tabs)/index.tsx`, `src/features/summary/utils/home.ts` (+ test),
+  `src/lib/money.ts` (+ test), `src/components/ui/AnimatedNumber.tsx`,
+  `src/components/ui/MonthSelector.tsx`, `src/i18n/es.ts`.
+- **Pendientes (✋ manual):** capturas de Inicio con datos reales (oscuro y claro) y con una cuenta
+  nueva (estado vacío). Siguiente: R4.2.
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos preexistentes),
+  `npm test` (262) y `npx expo export --platform android` en verde.
+
+### [2026-10-07] Tarea: R4.2 — Registro rápido
+
+- **Qué se hizo:** Rediseño de `app/transaction-form.tsx` (alta rápida) conservando la capa de
+  datos y la validación (esquema zod discriminado, hooks, invalidaciones):
+  - Estructura vertical: encabezado ("Cancelar" + título), `SegmentedControl`
+    Gasto|Ingreso|Transferencia, monto `displayLg` ("$ 0" atenuado cuando está vacío), fila de chips
+    (Cuenta/Desde, Fecha, Base|Extra, Nota), guía "Toca una categoría para guardar", cuadrícula de
+    categorías y `NumericKeypad` fijo al pie.
+  - Monto con `NumericKeypad` + `applyKey` (máx. 12 dígitos), formateado con `MoneyText`; sin teclado
+    nativo. Cambiar de tipo conserva el monto.
+  - Cuadrícula 3×: 5 categorías + mosaico "Más". Orden por uso en 60 días con la función pura
+    `rankCategoriesByUsage` (empates y sin uso por `sort_order`). "Más" abre un `BottomSheet` con el
+    `CategoryPicker` completo.
+  - Tocar categoría: si el monto es 0 → `error()` + sacudida del monto (sin guardar); si es válido →
+    guarda, `success()`, cierra y muestra Snackbar "Guardado" con "Deshacer" (elimina lo creado).
+  - Chips: Cuenta abre `BottomSheet` (por defecto la última usada, persistida); Fecha abre
+    `BottomSheet` Hoy/Ayer/Elegir fecha (`@react-native-community/datetimepicker`); Base/Extra
+    excluyentes (por defecto Base, no se recuerda); Nota expande un campo de una línea.
+  - Transferencia: oculta categoría y Base/Extra; chips Desde/Hacia y `Button` primary "Guardar
+    transferencia" en lugar de la cuadrícula; valida cuentas distintas en línea.
+  - Edición: mismo lenguaje, datos cargados, categoría resaltada, "Guardar cambios" (primary) y
+    "Eliminar" (destructive, con confirmación); tocar categoría solo selecciona.
+  - Modal a pantalla completa (`presentation: 'fullScreenModal'`) con `KeyboardAvoidingView` y safe
+    areas.
+- **Snackbar global:** `src/lib/snackbar.ts` (Zustand de UI) + `SnackbarHost` en el layout raíz, para
+  mostrar el "Guardado"/"Deshacer" después de cerrar el modal. `undoCreatedTransaction` en los hooks
+  de movimientos elimina y refresca consultas desde fuera de React.
+- **Componentes:** `Chip` ahora acepta `icon`; `SnackbarHost` exportado.
+- **Funciones puras:** `rankCategoriesByUsage` (`src/features/transactions/utils/ranking.ts`) con
+  tests (orden por uso, desempate, ventana de 60 días, sin categoría).
+- **Dependencia agregada:** `@react-native-community/datetimepicker` (instalada con `npx expo install`;
+  añadió su config plugin a `app.json`).
+- **Archivos:** `app/transaction-form.tsx`, `app/_layout.tsx`, `src/lib/snackbar.ts`,
+  `src/components/ui/SnackbarHost.tsx`, `src/components/ui/Chip.tsx`, `src/components/ui/index.ts`,
+  `src/features/transactions/hooks/useTransactions.ts`,
+  `src/features/transactions/utils/ranking.ts` (+ test), `src/i18n/es.ts`.
+- **Pendientes (✋ manual):** capturas del modal (gasto, ingreso, transferencia y edición) y medir a
+  mano cuántos toques toma registrar un gasto base. Siguiente: R4.3.
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos preexistentes),
+  `npm test` (266) y `npx expo export --platform android` en verde.
+
+### [2026-10-07] Tarea: R4.3 — Movimientos
+
+- **Qué se hizo:** Rediseño de la pestaña Movimientos según el Anexo B, conservando paginación,
+  filtros y datos:
+  - Encabezado con `ScreenHeader` (título "Movimientos"), `MonthSelector` y `IconButton` de búsqueda
+    y de filtros (con badge cuando hay filtros activos). Al tocar buscar, el encabezado se transforma
+    en un campo de búsqueda con botón de cerrar.
+  - Franja resumen del mes: Ingresos, Gastos y Balance (coloreado según el signo).
+  - `SectionList` con encabezados de día pegajosos ("Hoy"/"Ayer"/fecha y total del día) y filas con
+    `ListRow`: ícono y color de categoría, título (nota o categoría), subtítulo "Categoría · Cuenta",
+    monto con signo y color, `Tag` "Extra" y marcador de recurrente; transferencias con ícono propio
+    y color neutro.
+  - Eliminar con `SwipeableRow` (acción "Eliminar", reemplaza el mantener presionado) y Snackbar
+    "Movimiento eliminado" con "Deshacer" (reinserta). Tocar la fila abre la edición.
+  - Filtros en `BottomSheet` (cuenta, categoría, tipo, naturaleza) con "Limpiar" y "Aplicar".
+  - Estados: Skeleton de filas, vacío con CTA "Agregar movimiento", vacío por filtros ("Nada con
+    estos filtros" + "Limpiar filtros"), error con reintento, pull-to-refresh y paginación infinita.
+  - Rendimiento: filas memoizadas con `keyExtractor` estable, `getItemLayout` precomputado (filas de
+    64, encabezados de 40), `initialNumToRender`/`maxToRenderPerBatch`/`windowSize` y contexto de
+    swipe estabilizado (`useMemo`). `ListRow` trunca a una línea.
+- **Componentes:** `SwipeableRow` expone `useSwipeableRowGroup` (para cerrar la fila abierta al tocar
+  otra); `SwipeableRowGroup` estabiliza su valor con `useMemo`.
+- **Seed local:** `scripts/seed-movements.mjs` (300 movimientos de prueba; usa la anon key + un
+  usuario real y respeta RLS). **No versionado** (añadido a `.gitignore`); ESLint ignora `scripts/**`.
+- **Archivos:** `app/(tabs)/movements.tsx`, `src/components/ui/{ListRow,SwipeableRow,index}.ts(x)`,
+  `src/i18n/es.ts`, `eslint.config.js`, `.gitignore`, `scripts/seed-movements.mjs` (local).
+- **Pendientes (✋ manual):** capturas de la lista con datos, el menú de filtros y una fila deslizada;
+  correr el seed y comprobar fluidez con ~300 movimientos. Siguiente: R4.4.
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos preexistentes),
+  `npm test` (266) y `npx expo export --platform android` en verde.
+
+### [2026-10-07] Tarea: R4.4 — Autenticación y estados con personalidad
+
+- **Qué se hizo:**
+  - Rediseño de las tres pantallas de auth (login, registro, recuperar contraseña) con un layout
+    compartido `AuthScaffold`: wordmark tipográfico "Finanzas" (Manrope, color `brand`), título y
+    línea de apoyo cortos, formulario con `Input` v2, `Button` primary de ancho completo y enlaces
+    secundarios como `Button` ghost. `KeyboardAvoidingView` + `ScrollView` para que el formulario no
+    quede tapado.
+  - Mostrar/ocultar contraseña con `IconButton`: nuevo `PasswordInput` (login/registro) que usa el
+    nuevo accesorio derecho del `Input`.
+  - `Input` v2 ahora acepta `rightAccessory` (contenedor con el campo + accesorio), conservando
+    altura 52, label superior y estados de foco/error.
+  - Se mantiene la lógica (react-hook-form + zod y errores traducidos).
+  - **Estados v2 (revisión completa):** todas las pantallas ya usan `EmptyState`/`LoadingState`/
+    `ErrorState` v2 con el microcopy del UX_SPEC. Verificadas y sin cambios pendientes:
+    Inicio, Movimientos, Planificar, Más, Cuentas, Categorías, Recurrentes, sus formularios,
+    `CategoryPicker`, layout raíz (carga de sesión) y design-preview. Ajustes de microcopy ya hechos
+    en tareas previas (p. ej. "Aún no hay movimientos este mes", "Nada con estos filtros",
+    "Empieza registrando tu primer movimiento").
+- **Textos:** `es.auth.loginSupport`, `es.auth.showPassword`, `es.auth.hidePassword` (tono tuteo,
+  frases cortas, sin signos de exclamación).
+- **Archivos:** `app/(auth)/{login,register,forgot-password}.tsx`,
+  `src/features/auth/components/{AuthScaffold,PasswordInput}.tsx`, `src/components/ui/Input.tsx`,
+  `src/i18n/es.ts`.
+- **Pendientes (✋ manual):** capturas de login, registro y un estado vacío; probar con teclado
+  abierto que el botón siga visible. Siguiente: R4.5.
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos preexistentes),
+  `npm test` (266) y `npx expo export --platform android` en verde.
+
+### [2026-10-07] Tarea: R4.5 — Pulido de interacción y accesibilidad
+
+- **Haptics (auditoría, solo lo que faltaba):**
+  - `success` también al guardar transferencia y al guardar cambios en edición.
+  - `error` cuando falla la validación al guardar (además del monto en 0).
+  - `warning` al eliminar desde la edición.
+  - Ya existían: `success` en guardado rápido, `select` en chips/segmentado/teclas, `warning` al
+    eliminar con deslizar, `tap` en el botón (+).
+- **Animaciones:** nuevo `AnimatedEntrance` (fade + desplazamiento de 8 px, 220 ms) que **desactiva**
+  la animación con "reducir movimiento". Se aplica a las tarjetas de Inicio con escalonado de 40 ms
+  (héroe, Este mes, Cuentas, Recientes) y a las filas de Movimientos. El `BottomSheet` también respeta
+  "reducir movimiento".
+- **Accesibilidad:** se añadieron `accessibilityLabel` contextuales a las acciones de editar/archivar/
+  restaurar (cuentas, categorías, recurrentes), a los selectores de ícono/color del formulario de
+  categoría, y al enlace "Ver todos" de Inicio; se ampliaron las áreas táctiles de los enlaces de
+  texto con `hitSlop` vertical (≈44) y `hitSlop` en los colores (32→44). Los estados ya dependen de
+  texto/forma además del color (montos con signo, Tags con texto, `accessibilityState`).
+- **Limpieza:** eliminado `app/design-preview.tsx`; removidas claves de i18n sin uso (`screens`,
+  `auth.welcome`, `home.{availableThisMonth,extraDependency,extraDependencyHint,recentMovements,
+  totalBalance}`, `transactionForm.{amount,accountOrigin,accountDestination,nature,natureHelp,save,
+  saveAndAdd,deleted}`, `transactionList.{activeFilters,close,deleteTitle,deleteMessage,summaryOf}`);
+  eliminado el alias deprecated `colors.warning` (sin uso). Sin hex/estilos sueltos (lint verde).
+- **Alias deprecated que AÚN se usan (requisito 5):**
+  - `colors.primary` → migrar a `colors.brand`: `app/accounts.tsx`, `app/account-form.tsx`,
+    `app/recurring.tsx`, `app/categories.tsx`, `app/category-form.tsx`,
+    `src/features/categories/components/CategoryPicker.tsx`.
+  - `colors.onPrimary` → migrar a `colors.onBrand`: `app/category-form.tsx`,
+    `src/features/categories/components/CategoryPicker.tsx`.
+  - `colors.background` → migrar a `colors.bg`: `app/_layout.tsx`, `app/(tabs)/movements.tsx`,
+    `src/components/ui/Screen.tsx`, `src/components/ui/TabBar.tsx`,
+    `src/features/auth/components/LockScreen.tsx`.
+- **Archivos:** `src/components/ui/AnimatedEntrance.tsx` (nuevo), `app/(tabs)/{index,movements}.tsx`,
+  `app/{accounts,categories,recurring,category-form,transaction-form}.tsx`,
+  `src/components/ui/{BottomSheet,index}.ts(x)`, `src/theme/colors.ts`, `src/i18n/es.ts`; eliminado
+  `app/design-preview.tsx`.
+- **Pendientes (✋ manual):** recorrer la app en oscuro/claro, con letra grande y "reducir movimiento";
+  capturas de Inicio, Movimientos, Registro rápido y Planificar.
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos preexistentes),
+  `npm test` (266) y `npx expo export --platform android` en verde.
+
+### [2026-10-07] Tarea: R5.1 — Presupuestos
+
+- **Qué se hizo:** Presupuestos mensuales por categoría principal de gasto.
+  - **Migración `006_budgets.sql`:** tabla `budgets` (id, `user_id` default `auth.uid()` →
+    `auth.users on delete cascade`, `category_id` → `categories on delete cascade`, `amount bigint
+    > 0`, `is_active` default true, timestamps, `unique (user_id, category_id)`), índices, trigger
+    `updated_at` y RLS con políticas separadas por operación; el `WITH CHECK` verifica con `EXISTS`
+    que la categoría es del usuario, de tipo `expense` y con `parent_id` nulo.
+  - `src/types/database.ts`: tabla `budgets` (Row/Insert/Update).
+  - `supabase/tests/002_rls_test.sql`: cubre budgets (A crea; B no ve; B bloqueado al crear con
+    categoría de A; B no modifica filas de A; limpieza).
+  - **Capa de datos `src/features/budgets`:** api (listar con categoría, crear, editar, eliminar),
+    hooks con invalidación de `['budgets']`, y `useBudgetProgress(month)` que junta presupuestos +
+    categorías + movimientos del mes.
+  - **Función pura `calculateBudgetProgress(budgets, categories, transactions)`:** devuelve por
+    presupuesto `{ spent, remaining, ratio, status }` y los totales. El gasto de subcategorías se
+    acumula en la madre; transferencias e ingresos no cuentan; umbrales ok/near/over
+    (<85%, 85–100%, >100%). Tests exhaustivos (subcategorías, transferencias, ratio>1, sin gasto,
+    categoría archivada, inactivos y totales).
+  - **Pantalla `app/budgets.tsx`:** MonthSelector, lista con `ListRow` + `ProgressBar` +
+    "$ gastado de $ presupuesto" y "te quedan/te pasaste $ X" (colores: ok brand, near expense 0.65,
+    over expense), botón agregar, estados de carga/vacío/error. Crear/editar en `BottomSheet`
+    (categoría principal sin presupuesto, monto con `NumericKeypad`, "Guardar" y "Eliminar").
+  - **Planificar:** tarjeta "Presupuestos" con el resumen (total gastado de total presupuestado con
+    `ProgressBar`) que abre `/budgets`; sin presupuestos muestra la invitación.
+- **Textos:** bloque `budgets` y `plan.budgets` en `src/i18n/es.ts`.
+- **Archivos:** `supabase/migrations/006_budgets.sql`, `supabase/tests/002_rls_test.sql`,
+  `src/types/database.ts`, `src/features/budgets/{api,hooks,utils}/*` (+ test), `app/budgets.tsx`,
+  `app/(tabs)/plan.tsx`, `src/i18n/es.ts`.
+- **Pendientes (✋ manual):** ejecutar `006_budgets.sql` en Supabase y luego el script RLS con dos
+  usuarios (confirmar que ninguno ve presupuestos del otro). Capturas de Planificar con presupuestos
+  y de la pantalla de presupuestos. Siguiente: R5.2.
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos preexistentes),
+  `npm test` (276) y `npx expo export --platform android` en verde.
+
+### [2026-10-07] Tarea: R5.2 — Análisis
+
+- **Qué se hizo:** Pantalla de análisis con gráficos propios (sin librerías de gráficos).
+  - **Dependencia:** `react-native-svg` (instalada con `npx expo install`).
+  - **Funciones puras `src/features/analysis/utils`:** `spendingByCategory` (agrupa subcategorías en
+    la madre y el resto en "Otros"; monto y porcentaje; soporta `kind`), `monthlyTrend` (6 meses con
+    ingresos, gastos y base/extra de ingresos), `extraShareByMonth` y `buildInsights` (2–3 frases
+    según reglas: variación vs mes anterior, categoría que más pesa, dependencia de extras; sin
+    comparar si faltan datos). `pagination.ts` (`hasMorePages`, `nextOffset`) con tests.
+  - **Componentes `src/components/charts`:** `DonutChart` (monto central + leyenda/tabla),
+    `GroupedBarChart` (ingresos vs gastos por mes) y se reutiliza `StackedBar`. Colores solo de
+    tokens/paleta; cada gráfico con `accessibilityLabel` resumen y tabla de datos en texto.
+  - **Capa de datos:** `getTransactionsForRange` pagina en bloques de 1000 filas (límite de
+    PostgREST) para no truncar los 6 meses; `useAnalysis(month, kind)` junta la consulta de 6 meses +
+    categorías y calcula todo.
+  - **Pantalla `app/analysis.tsx`:** MonthSelector, bloque de insights, SegmentedControl
+    Gastos | Ingresos con `DonutChart` y lista de categorías, "Últimos 6 meses" con
+    `GroupedBarChart` y "Base y extras" (porcentaje de extras por mes con `ProgressBar`). Estados de
+    carga (Skeleton), vacío ("Registra movimientos para ver tu análisis") y error.
+  - **Enlaces:** Planificar (fila "Análisis") e Inicio (IconButton de análisis en el encabezado).
+- **Textos:** bloque `analysis` en `src/i18n/es.ts`.
+- **Archivos:** `src/features/analysis/{api,hooks,utils}/*` (+ tests), `src/components/charts/*`,
+  `app/analysis.tsx`, `app/(tabs)/{plan,index}.tsx`, `src/i18n/es.ts`, `package.json`.
+- **Pendientes (✋ manual):** captura completa de Análisis (modo oscuro); confirmar que los totales
+  del donut coinciden con los de Movimientos del mismo mes. Siguiente: R5.3.
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos preexistentes),
+  `npm test` (290) y `npx expo export --platform android` en verde.
+
+### [2026-10-07] Tarea: R5.3 — Registro sin conexión (infraestructura)
+
+- **Qué se hizo (solo creación offline; sin UI nueva):**
+  - **Dependencias:** `@tanstack/react-query-persist-client`,
+    `@tanstack/query-async-storage-persister`, `@react-native-community/netinfo` y `expo-crypto`.
+  - **Conectividad:** `setupOnlineManager()` conecta `onlineManager` con NetInfo (`src/lib/netinfo.ts`).
+  - **Persistencia:** `src/lib/persister.ts` (AsyncStorage) y `PersistQueryClientProvider` en el
+    layout raíz con `gcTime`/`maxAge` de 7 días. Dehydrate solo de mutaciones de creación de
+    movimientos `paused` y de queries de lectura `success`; nunca tokens (la sesión sigue en su
+    storage de Supabase).
+  - **Idempotencia:** `createTransaction` usa `expo-crypto` (`randomUUID`) y trata el conflicto de id
+    (`23505`) como éxito. El id viaja en las variables de la mutación (se genera en el formulario),
+    así un reintento tras reiniciar no duplica.
+  - **Reanudación:** `setMutationDefaults(['transactions','create'], { mutationFn, networkMode:
+    'offlineFirst', onSuccess: invalidar transactions/accounts/summary })`; `resumePausedMutations`
+    al restaurar (Provider `onSuccess`), al iniciar con sesión y al reconectar (`useOfflineSync`).
+    `useCreateTransaction` ahora usa `mutationKey: ['transactions','create']` y `offlineFirst`.
+  - **Cierre de sesión:** `signOut()` limpia el caché en memoria (`queryClient.clear()`) y el
+    persistido (`persister.removeClient()`), incluidas las mutaciones pendientes.
+  - **`classifyMutationError(error)`** puro (`network` | `server` | `validation`) con tests (red
+    caída, 4xx, 5xx, constraint).
+  - **Formulario:** el payload de creación incluye `id` de cliente; un `mountedRef` evita navegar o
+    mostrar Snackbar si la pantalla ya se cerró al reanudarse una mutación.
+  - **Documentación:** nueva sección "8. Offline" en `docs/ARCHITECTURE.md` con diseño y límites.
+- **Archivos:** `src/lib/{queryClient,netinfo,persister}.ts`, `app/_layout.tsx`,
+  `src/features/transactions/{api/transactions.ts, offline.ts, hooks/useTransactions.ts,
+  hooks/useOfflineSync.ts, utils/mutationError.ts (+ test)}`, `src/features/auth/api/auth.ts`,
+  `app/transaction-form.tsx`, `docs/ARCHITECTURE.md`, `package.json`.
+- **Pendientes (✋ manual):** modo avión → crear 2 gastos → reiniciar → quitar modo avión → verificar
+  en Supabase que llegan **2 filas** (no 4). Nota: la UI de estados offline (banner, "Por
+  sincronizar", etc. del UX_SPEC) queda para una tarea de UI posterior; esta fase no cambia pantallas.
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos preexistentes),
+  `npm test` (295) y `npx expo export --platform android` en verde.
+
+### [2026-10-07] Tarea: R5.4 — Registro sin conexión (experiencia de usuario)
+
+- **Qué se hizo:** Se hizo visible el estado de conexión y la cola de pendientes.
+  - `useConnectivity()` (vía `useSyncExternalStore` sobre `onlineManager`).
+  - `ConnectivityPill` (píldora discreta) en Inicio y Movimientos: "Sin conexión" o
+    "Sin conexión · N por sincronizar"; con conexión y pendientes, "Sincronizando…"; luego desaparece.
+  - **Cola visible en Movimientos** con `useMutationState` (filtro `mutationKey: ['transactions',
+    'create']`, sin tocar el caché de la lista): las creaciones pendientes aparecen como filas con Tag
+    "Sin sincronizar" al inicio del día correspondiente (la función pura `mergePendingByDay` inserta
+    los pendientes y crea el día si hace falta).
+  - **Errores no transitorios** (`classifyMutationError !== 'network'`): la fila pasa a "No se guardó"
+    y al tocarla abre un `BottomSheet` con "Reintentar" (reencola con el mismo id) y "Descartar"
+    (quita la mutación de la cola).
+  - **Registro rápido offline:** guarda y cierra de inmediato (encola) con Snackbar "Guardado. Se
+    sincronizará cuando haya conexión.".
+  - **Editar/eliminar offline:** se bloquea con Snackbar "Necesitas conexión para esto." (lista de
+    Movimientos, recientes de Inicio y formulario de edición).
+  - **Inicio:** bajo la tarjeta héroe, si hay pendientes, "Hay N movimientos sin sincronizar; tus
+    saldos se actualizarán al conectarte.". Los saldos y totales no cambian hasta sincronizar.
+- **Funciones puras de presentación:** `src/features/transactions/utils/offlinePresentation.ts`
+  (`connectivityText`, `pendingNoticeText`, `mergePendingByDay`) con tests.
+- **Archivos:** `src/lib/useConnectivity.ts`, `src/components/ui/ConnectivityPill.tsx` (+ export),
+  `src/features/transactions/hooks/usePendingTransactions.ts`,
+  `src/features/transactions/utils/offlinePresentation.ts` (+ test), `app/(tabs)/{movements,index}.tsx`,
+  `app/transaction-form.tsx`, `src/i18n/es.ts`.
+- **Pendientes (✋ manual):** captura de Movimientos con una fila pendiente y la píldora; probar los
+  cuatro estados (sin conexión, con pendientes, sincronizando, error) en un development build.
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos preexistentes),
+  `npm test` (303) y `npx expo export --platform android` en verde.
+
+### [2026-10-07] Tarea: R5.5 — Recurrentes con confirmación
+
+- **Qué se hizo:**
+  - **Migración `007_pending_transactions.sql`:** enum `transaction_status` ('posted','pending'),
+    `transactions.status` (not null default 'posted'), enum
+    `recurring_confirmation_mode` ('auto','confirm'), `recurring_rules.confirmation_mode` (not null
+    default 'auto'), índice `(user_id, status)` y vista `account_balances` recreada sumando **solo**
+    `status = 'posted'` (mismo orden de columnas, `security_invoker = true`).
+  - `src/types/database.ts` (enums + columnas) y `recurringRuleSchema` (`confirmation_mode`).
+  - **Auditoría de agregaciones (todas filtran `posted`):**
+    1. Vista `account_balances` (SQL).
+    2. `getTransactionsInRange` (resumen, presupuestos, disponible) → `.eq('status','posted')`.
+    3. `getTransactionsForRange` (análisis) → `.eq('status','posted')`.
+    4. `listTransactions` (Movimientos) → filtro `status: 'posted'`; los pendientes van en su sección.
+    5. `calculateTotals` (y por tanto `groupTransactionsByDay`) ignora `pending`.
+    6. `calculateMonthSummary` ignora `pending`.
+    7. `calculateBudgetProgress` ignora `pending`.
+    8. `spendingByCategory` y `monthlyTrend` (análisis) ignoran `pending`.
+    9. `calculateAvailableToday` ignora `pending` en `monthTransactions`; su efecto entra por
+       `pendingExpenses`.
+    10. (Exportación futura: pendiente de implementar; deberá filtrar `posted`.)
+  - **Generación:** `buildGeneratedRows(rule, dates)` (puro) crea `status 'pending'` para reglas
+    `confirm` y `'posted'` para `auto`; `generateDueTransactions` lo usa (sigue idempotente por el
+    índice único).
+  - **Formulario de reglas:** switch "Pedir confirmación cada vez" (solo gastos) con su ayuda.
+  - **Inicio:** banner "N pagos por confirmar" bajo la tarjeta héroe → `BottomSheet` con la lista;
+    cada ítem abre un `BottomSheet` con `NumericKeypad` para ajustar el monto y "Confirmar"
+    (`status 'posted'` + monto) o "Descartar" (elimina).
+  - **Movimientos:** sección "Por confirmar" al inicio con Tag 'Por confirmar' (`status 'pending'`).
+  - **Disponible hoy:** `pendingExpenses` = suma de gastos pendientes del mes.
+- **Tests:** `buildGeneratedRows` (auto/confirm), `confirmationUpdate`, y `pendingTotals.test.ts`
+  (un `pending` no altera `calculateTotals`, `calculateMonthSummary`, `calculateBudgetProgress`,
+  `spendingByCategory`, `monthlyTrend` ni `calculateAvailableToday`).
+- **Archivos:** `supabase/migrations/007_pending_transactions.sql`, `src/types/database.ts`,
+  `src/features/{transactions,summary,budgets,analysis,recurring}/**`,
+  `app/recurring-form.tsx`, `app/(tabs)/{index,movements}.tsx`, `src/i18n/es.ts`,
+  `docs/DATA_MODEL.md`.
+- **Pendientes (✋ manual):** ejecutar `007_pending_transactions.sql` y el script de RLS; comparar el
+  saldo de las cuentas antes y después (deben ser idénticos).
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos preexistentes),
+  `npm test` (312) y `npx expo export --platform android` en verde.
+
+### [2026-10-07] Tarea: R5.6 — Exportar movimientos a CSV
+
+- **Qué se hizo:**
+  - **Dependencias:** `expo-file-system` y `expo-sharing` (con `expo install`; sharing añadió su
+    config plugin). Se usó la **API nueva** de `expo-file-system` (`File`, `Paths`) y
+    `Sharing.isAvailableAsync()` / `shareAsync`.
+  - **Función pura `transactionsToCsv(rows)`** (`src/features/transactions/utils/csv.ts`): columnas
+    fecha, tipo, naturaleza, categoría, subcategoría, cuenta, cuenta_destino, monto, nota, recurrente;
+    separador `;`, BOM UTF-8, escape de comillas/separadores/saltos de línea, monto entero sin
+    formato, fecha `YYYY-MM-DD`, tildes; omite movimientos `pending`. Deriva categoría/subcategoría
+    (si la categoría tiene padre, la madre es "categoría" y la hija "subcategoría").
+  - **Exportación** (`src/features/transactions/api/export.ts`): consulta paginada en bloques de 1000
+    (`status='posted'`, con categoría + padre), genera el CSV en el directorio de caché, abre la hoja
+    de compartir y elimina el archivo temporal. `exportRangeBounds` (puro) para Este mes / Este año /
+    Todo.
+  - **UI:** en Más, grupo **"Datos"** con "Exportar movimientos" → `ExportSheet` (BottomSheet) con
+    selector de rango, botón "Exportar", estado "Exportando…", vacío ("No hay movimientos en este
+    rango") y error con reintento (el botón permanece).
+- **Tests:** `transactionsToCsv` (BOM/encabezados, montos, categoría/subcategoría, escape de
+  comillas/`;`/saltos, pendientes omitidos, transferencias, recurrente, tildes) y `exportRangeBounds`.
+- **Archivos:** `src/features/transactions/utils/csv.ts` (+ test), `utils/exportRange.ts` (+ test),
+  `api/export.ts`, `components/ExportSheet.tsx`, `app/(tabs)/more.tsx`, `src/i18n/es.ts`,
+  `package.json`/`app.json`.
+- **Pendientes (✋ manual):** probar en un development build que el CSV abre en Excel y Google Sheets
+  con columnas, tildes y montos correctos (requiere módulos nativos).
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos preexistentes),
+  `npm test` (322) y `npx expo export --platform android` en verde.
+
+### [2026-10-15] Tarea: R6.1 — Eliminar cuenta dentro de la app
+
+- **Qué se hizo:** Eliminación de cuenta con una Edge Function de Supabase (las tiendas la exigen):
+  - **Edge Function** `supabase/functions/delete-account/index.ts` (Deno): valida el JWT del
+    encabezado `Authorization` creando un cliente con ese token y llamando a `auth.getUser()`; si es
+    inválido responde `401`. Con un cliente administrador (`SUPABASE_URL` y
+    `SUPABASE_SERVICE_ROLE_KEY`, inyectadas automáticamente por Supabase) llama a
+    `auth.admin.deleteUser(user.id)`. Responde JSON de éxito/error y no registra datos personales.
+    Las filas se borran en cascada (`on delete cascade` a `auth.users` en `profiles`, `accounts`,
+    `categories`, `transactions`, `recurring_rules` y `budgets`; verificado en las migraciones 001 y
+    006).
+  - **`supabase/functions/README.md`:** instrucciones de despliegue con la Supabase CLI
+    (`login`, `link`, `deploy`) y alternativa pegando el código en el editor del panel.
+  - **App:** fila destructiva "Eliminar cuenta" en **Más → Cuenta** que abre
+    `app/delete-account.tsx`: explica en 3 líneas qué se borra y que es irreversible, ofrece
+    "Exportar mis datos primero" (abre el `ExportSheet` de R5.6), pide escribir `ELIMINAR` para
+    habilitar el botón destructivo e invoca `supabase.functions.invoke('delete-account')`. Al
+    responder bien limpia todo el estado local y va a login con Snackbar "Tu cuenta se eliminó.".
+  - **Limpieza de estado** (`src/features/auth/api/deleteAccount.ts` +
+    `src/features/auth/utils/deleteAccount.ts`): cierra la sesión en local
+    (`signOut({ scope: 'local' })`), vacía el caché en memoria (`queryClient.clear()`), el persistido
+    y la cola de mutaciones (`clearPersistedCache`, R5.3), cancela las notificaciones programadas y
+    restablece los stores de Zustand (biometría en SecureStore, recordatorios, preferencias, última
+    cuenta usada y tema). `resetLocalState(deps)` se inyecta por dependencias para poder testearlo.
+  - **Manejo de errores:** sin conexión → "Necesitas conexión para eliminar tu cuenta."; fallo del
+    servidor → mensaje claro con reintento. **No se cierra sesión si la eliminación falla.**
+- **Funciones puras con tests:** `isDeleteConfirmationValid` (acepta `ELIMINAR` con trim y sin
+  distinguir mayúsculas; rechaza vacío/incompleto/otra palabra) y `resetLocalState` (con mocks:
+  llama a todas las dependencias, vacía el caché antes de resetear stores y tolera fallos de
+  cierre de sesión/cancelación de notificaciones). 8 tests nuevos (330 en total).
+- **Configuración:** `tsconfig.json` y `eslint.config.js` excluyen `supabase/functions` (código de
+  Deno, no de la app).
+- **Archivos:** `supabase/functions/delete-account/index.ts`, `supabase/functions/README.md`,
+  `app/delete-account.tsx`, `app/(tabs)/more.tsx`, `src/features/auth/api/deleteAccount.ts`,
+  `src/features/auth/utils/deleteAccount.ts` (+ test), `src/i18n/es.ts`, `tsconfig.json`,
+  `eslint.config.js`, `docs/SECURITY_REVIEW.md`.
+- **Pendientes (✋ manual):** desplegar la función (ver `supabase/functions/README.md`) y probarla con
+  un usuario de prueba: verificar en Authentication → Users que desaparece y en el Table Editor que
+  no quedan sus filas. Google Play además pide una URL pública con la explicación (P10.1).
+- **Nota:** los tipos de rutas de Expo (`app/delete-account`) se regeneran al arrancar el dev server.
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos preexistentes) y
+  `npm test` (330) en verde.
+
+### [2026-10-15] Tarea: R6.2 — Enlaces profundos (confirmar correo y recuperar contraseña)
+
+- **Qué se hizo:** Se implementó el flujo completo de deep links de autenticación:
+  - **Scheme:** se mantuvo el `scheme` ya configurado (`finanzas`) en `app.json`. `expo-linking` ya
+    estaba instalado.
+  - **PKCE:** el cliente de Supabase usa `flowType: 'pkce'` (`src/lib/supabase.ts`); los enlaces de
+    correo vuelven con `?code=` y se canjean con `exchangeCodeForSession` (con `setSession` como
+    respaldo del flujo implícito).
+  - **Función pura `parseAuthLink(url)`** (`src/features/auth/utils/authLink.ts`): clasifica la URL
+    entrante en `session` (recuperación `type=recovery`/ruta `/reset-password`, o confirmación
+    `type=signup|email|...`/ruta `/confirm-email`), `error` (vencido `otp_expired`, inválido o mal
+    formado) o `none` (no es de auth). Reconoce el enlace de Expo Go (`exp://.../--/<ruta>`) y los
+    tokens del hash (implícito).
+  - **`useAuthDeepLink`** (montado en `app/_layout.tsx`): escucha `Linking.getInitialURL()` y los
+    eventos `url`, marca `isRecoverySession` ANTES de crear la sesión, canja el código y traduce
+    fallos a un estado de error.
+  - **Store en memoria** `useAuthLinkStore` (`isRecoverySession` + error del enlace, no persistido).
+  - **Guardias:** `(auth)/_layout` no redirige a las pestañas si hay recuperación activa;
+    `(tabs)/_layout` manda a `/reset-password` en ese caso.
+  - **Pantallas:** `app/(auth)/reset-password.tsx` (nueva contraseña + confirmación con zod, mínimo 8;
+    "Guardar contraseña" → `updateUser`, desactiva la bandera, entra con Snackbar "Contraseña
+    actualizada"), `app/(auth)/confirm-email.tsx` (canjea y entra), `app/(auth)/verify-email.tsx`
+    ("Revisa tu correo", con el correo, "Reenviar correo" con enfriamiento de 60 s y volver a login) y
+    el componente `AuthLinkErrorView` para enlaces vencidos/inválidos con botón para pedir uno nuevo.
+  - **Registro:** tras `signUp` sin sesión navega a "Revisa tu correo" con el correo.
+- **Tests:** `parseAuthLink` (válidas PKCE/Expo Go/`type`/hash, vencidas, inválidas, mal formadas y de
+  otro tipo) y `resetPasswordSchema`. 14 tests nuevos (344 en total).
+- **Docs:** `docs/ARCHITECTURE.md` sección 9 con el flujo, las URLs por permitir en Supabase
+  (`finanzas://**` y `exp://**`) y la limitación en Expo Go.
+- **Archivos:** `app/_layout.tsx`, `app/(auth)/{_layout,register,reset-password,confirm-email,verify-email}.tsx`,
+  `src/features/auth/hooks/useAuthDeepLink.ts`, `src/features/auth/store/useAuthLinkStore.ts`,
+  `src/features/auth/utils/authLink.ts` (+ test), `src/features/auth/api/auth.ts`,
+  `src/features/auth/utils/schemas.ts` (+ test), `src/features/auth/components/AuthLinkError.tsx`,
+  `src/lib/supabase.ts`, `src/i18n/es.ts`, `docs/ARCHITECTURE.md`.
+- **Pendientes (✋ manual):** en Supabase (Authentication → URL Configuration) agregar a Redirect URLs
+  `finanzas://**` y `exp://**`; reactivar "Confirm email"; probar los dos flujos con un correo real, de
+  preferencia en un development build (en Expo Go el scheme propio depende del dev server).
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos preexistentes),
+  `npm test` (344) y `npx expo export --platform android` en verde.
+
+### [2026-10-15] Tarea: R6.3 — Seguridad y dependencias
+
+- **Qué se hizo:** Re-auditoría posterior a R6.1/R6.2, sin agregar funcionalidades:
+  - **RLS ampliado:** nuevo `supabase/tests/003_rls_test_v2.sql` (ejecutable en el SQL Editor). Usa
+    los dos primeros usuarios de `auth.users`, reporta PASS/FAIL por caso en `_rls_results` y cubre
+    **todas** las tablas (profiles, accounts, categories, transactions, recurring_rules, budgets),
+    el acceso cruzado en SELECT/INSERT/UPDATE/DELETE, `budgets` (solo categoría de gasto principal),
+    `transactions.status` (default `'posted'` y que `account_balances` ignora `'pending'`),
+    `recurring_rules.confirmation_mode` (default `'auto'`), `account_balances` con `counts_as_liquid`
+    y el aislamiento del rol `anon`. Limpia sus filas de prueba al final.
+  - **Secretos:** re-búsqueda en el árbol y en el historial de git (`eyJhbGci` para JWT, `sb_secret`,
+    `service_role`): sin coincidencias. La `service_role key` sigue existiendo **solo** en el entorno
+    de la Edge Function.
+  - **Logs/fugas:** sin `console.*`, `error.message` crudo ni `Alert.alert` en `app/` ni `src/`; los
+    textos de `i18n` no interpolan correo/montos/token. El caché persistido (`finanzas-query-cache`,
+    R5.3) guarda solo queries/mutaciones (sin tokens) y se borra al cerrar sesión.
+  - **Dependencias:** `npx.cmd expo install --fix` alineó 8 paquetes de Expo al SDK 57 (solo
+    parches; sin cambios de API). Se eliminó `eas-cli` de `devDependencies` (lo señalaba
+    expo-doctor; EAS no está configurado y puede usarse con `npx eas-cli`), lo que quitó 340
+    paquetes. `npm audit fix` sin `--force` no cambió el resultado restante.
+- **Archivos:** `supabase/tests/003_rls_test_v2.sql`, `docs/SECURITY_REVIEW.md`, `package.json`,
+  `package-lock.json`.
+- **Resultado de dependencias:** `npm audit` → 67 (17 moderadas, 50 altas, 0 críticas);
+  `npm audit --omit=dev` → 63. Todos los advisories restantes son de tooling de build/test, salvo
+  `decode-uri-component` vía `expo-router` (moderado, DoS). Sin fixes compatibles (exigirían saltar
+  de SDK). `expo-doctor` 21/21 y `expo install --check` en verde.
+- **Pendientes (✋ manual):** ejecutar `003_rls_test_v2.sql` en Supabase con **dos usuarios reales** y
+  confirmar que todas las filas salen en `TRUE`. (De R6.1/R6.2 siguen pendientes: desplegar la Edge
+  Function `delete-account`, configurar las Redirect URLs y reactivar "Confirm email".)
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos preexistentes),
+  `npm test` (344) y `npx expo export --platform android` en verde.
+
+### [2026-10-15] Tarea: R6.4 — Checklist de QA y cierre
+
+- **Qué se hizo:** Preparación del cierre del rediseño, sin agregar funcionalidades:
+  - **`docs/QA_CHECKLIST.md` (nuevo):** 72 casos manuales agrupados en 13 secciones (autenticación y
+    recuperación, cuentas, categorías, registro rápido, movimientos, recurrentes, "Disponible hoy"
+    con casos de fórmula y números esperados, presupuestos, análisis, sin conexión, exportar, eliminar
+    cuenta, temas/accesibilidad/bloqueo), cada uno con pasos y resultado esperado en formato casilla.
+  - **`docs/APP_GUIDE.md` reescrito por completo** al estado actual: fórmula v2, migraciones 005–007,
+    RLS en 6 tablas/24 políticas, navegación de 5 elementos, sistema de diseño v2, features nuevas
+    (presupuestos, análisis, offline, recurrentes con confirmación, exportar, eliminar cuenta, deep
+    links), Edge Function, reglas de trabajo del agente ciego y lista "Para revisar visualmente".
+    Se conservó su estructura de 12 secciones y se actualizó la tabla de historial con los prompts R
+    (R0.1–R6.4) además de los P. Se corrigieron datos obsoletos (5 tabs, 137 tests, fórmula vieja,
+    `eas-cli`, etc.).
+  - **Código muerto eliminado:** `useReorderCategories` y `reorderCategories` (nunca usados),
+    `isHapticsEnabled`/`setHapticsEnabled` y el flag `enabled` de `src/lib/haptics.ts` (sin UI que
+    los use) y `calculateExtraDependency` (envoltorio trivial sin uso). Tests ajustados
+    (`haptics.test.ts`, `summary.test.ts`).
+  - **Sin TODOs resueltos pendientes:** la búsqueda en `app/`, `src/` y `supabase/` no encontró
+    comentarios `TODO/FIXME/XXX/HACK` reales (solo texto "pegar TODO este archivo" en cabeceras SQL).
+  - **Dependencias sin uso (detectadas, NO desinstaladas — pendiente de confirmación):**
+    `expo-image`, `expo-web-browser`, `expo-device` (sin imports ni uso indirecto). `expo-system-ui`
+    se deja (probablemente requerido por `userInterfaceStyle` en Android). `@expo/ui`,
+    `expo-glass-effect`, `expo-symbols`, `react-native-screens`, `react-native-worklets`, `react-dom`
+    y `react-native-web` se conservan por ser dependencias/peers indirectas o por soporte web.
+- **Discrepancias docs vs código:** se documentan en la respuesta de la tarea (docs/DESIGN_SYSTEM.md y
+  docs/UX_SPEC.md **no** se modificaron; queda a decisión del usuario).
+- **Archivos:** `docs/QA_CHECKLIST.md` (nuevo), `docs/APP_GUIDE.md`, `src/features/categories/api/categories.ts`,
+  `src/features/categories/hooks/useCategories.ts`, `src/lib/haptics.ts`, `src/lib/haptics.test.ts`,
+  `src/features/summary/utils/summary.ts`, `src/features/summary/utils/__tests__/summary.test.ts`,
+  `docs/PROGRESS.md`.
+- **Pendientes (✋ manual):** ejecutar `docs/QA_CHECKLIST.md` en un dispositivo real y enviar capturas
+  finales; decidir sobre las dependencias sin uso y las discrepancias de diseño listadas.
+- **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos preexistentes) y
+  `npm test` (343) en verde.

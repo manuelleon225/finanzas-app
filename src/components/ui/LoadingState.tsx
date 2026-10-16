@@ -20,8 +20,8 @@ export function LoadingState({ message = es.common.loading, style }: LoadingStat
       accessibilityLabel={message}
       style={[styles.container, { padding: spacing.xl }, style]}
     >
-      <ActivityIndicator color={colors.primary} />
-      <Text variant="caption" style={{ marginTop: spacing.sm }}>
+      <ActivityIndicator color={colors.brand} />
+      <Text variant="caption" color={colors.textSecondary} style={{ marginTop: spacing.sm }}>
         {message}
       </Text>
     </View>

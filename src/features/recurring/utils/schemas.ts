@@ -25,6 +25,7 @@ export const recurringRuleSchema = z
     frequency: z.enum(['weekly', 'biweekly', 'semimonthly', 'monthly']),
     start_date: dateSchema,
     end_date: dateSchema.nullable(),
+    confirmation_mode: z.enum(['auto', 'confirm']).default('auto'),
   })
   .refine((value) => !value.end_date || value.end_date >= value.start_date, {
     message: es.recurring.endBeforeStart,

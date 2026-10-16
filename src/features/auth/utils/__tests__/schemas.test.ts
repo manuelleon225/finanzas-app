@@ -1,6 +1,6 @@
 import { es } from '@/i18n/es';
 
-import { loginSchema, recoverySchema, registerSchema } from '../schemas';
+import { loginSchema, recoverySchema, registerSchema, resetPasswordSchema } from '../schemas';
 
 describe('loginSchema', () => {
   it('acepta un correo y una contraseña válidos', () => {
@@ -55,5 +55,34 @@ describe('recoverySchema', () => {
 
   it('rechaza un correo inválido', () => {
     expect(recoverySchema.safeParse({ email: 'nope' }).success).toBe(false);
+  });
+});
+
+describe('resetPasswordSchema', () => {
+  it('acepta cuando las contraseñas coinciden y tienen 8+ caracteres', () => {
+    const result = resetPasswordSchema.safeParse({
+      password: '12345678',
+      confirmPassword: '12345678',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rechaza una contraseña corta', () => {
+    const result = resetPasswordSchema.safeParse({ password: '1234', confirmPassword: '1234' });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe(es.auth.shortPassword);
+    }
+  });
+
+  it('rechaza cuando las contraseñas no coinciden', () => {
+    const result = resetPasswordSchema.safeParse({
+      password: '12345678',
+      confirmPassword: '87654321',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe(es.auth.confirmPasswordMismatch);
+    }
   });
 });

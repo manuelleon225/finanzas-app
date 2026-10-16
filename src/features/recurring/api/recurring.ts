@@ -2,7 +2,12 @@ import { supabase } from '@/lib/supabase';
 import type { Tables, TablesInsert, TablesUpdate } from '@/types/database';
 import { todayISO } from '@/lib/dates';
 
-import { computeMissingOccurrences, maxOfDates, retroactiveStart } from '../utils/generation';
+import {
+  buildGeneratedRows,
+  computeMissingOccurrences,
+  maxOfDates,
+  retroactiveStart,
+} from '../utils/generation';
 
 export type RecurringRule = Tables<'recurring_rules'>;
 export type Category = Tables<'categories'>;
@@ -104,18 +109,7 @@ export async function generateDueTransactions(): Promise<number> {
       continue;
     }
 
-    const rows: TablesInsert<'transactions'>[] = missing.map((occurrenceDate) => ({
-      type: rule.type,
-      nature: rule.nature,
-      amount: rule.amount,
-      account_id: rule.account_id,
-      transfer_account_id: null,
-      category_id: rule.category_id,
-      occurred_on: occurrenceDate,
-      note: rule.note,
-      recurring_rule_id: rule.id,
-      occurrence_date: occurrenceDate,
-    }));
+    const rows: TablesInsert<'transactions'>[] = buildGeneratedRows(rule, missing);
 
     const { data: inserted, error: insertError } = await supabase
       .from('transactions')

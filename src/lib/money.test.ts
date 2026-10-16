@@ -1,4 +1,4 @@
-import { formatCOP, isValidMoneyText, parseMoneyInput } from '@/lib/money';
+import { formatCOP, formatPesos, isValidMoneyText, parseMoneyInput } from '@/lib/money';
 
 const NBSP = '\u00a0';
 
@@ -21,6 +21,13 @@ describe('formatCOP', () => {
 
   it('formats hundreds of millions', () => {
     expect(formatCOP(123456789)).toBe(`$${NBSP}123.456.789`);
+  });
+});
+
+describe('formatPesos', () => {
+  it('formats in words for accessible labels', () => {
+    expect(formatPesos(87500)).toBe('87.500 pesos');
+    expect(formatPesos(0)).toBe('0 pesos');
   });
 });
 

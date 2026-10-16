@@ -6,9 +6,11 @@ import {
   Card,
   EmptyState,
   ErrorState,
+  IconButton,
   LoadingState,
   MoneyText,
   Screen,
+  ScreenHeader,
   Text,
 } from '@/components/ui';
 import { useSession } from '@/features/auth/hooks/AuthProvider';
@@ -72,14 +74,16 @@ export default function RecurringScreen() {
   return (
     <Screen scroll>
       <View style={{ gap: spacing.lg, marginTop: spacing.lg }}>
-        <View style={{ gap: spacing.xs }}>
-          <Pressable onPress={() => router.back()} accessibilityRole="button" hitSlop={8}>
-            <Text variant="caption" color={colors.primary}>
-              {es.common.back}
-            </Text>
-          </Pressable>
-          <Text variant="title">{es.recurring.title}</Text>
-        </View>
+        <ScreenHeader
+          left={
+            <IconButton
+              icon="chevron-back-outline"
+              onPress={() => router.back()}
+              accessibilityLabel={es.common.back}
+            />
+          }
+          title={es.recurring.title}
+        />
 
         <Button title={es.recurring.newRule} onPress={() => router.push('/recurring-form')} />
 
@@ -129,7 +133,8 @@ export default function RecurringScreen() {
                         router.push({ pathname: '/recurring-form', params: { id: rule.id } })
                       }
                       accessibilityRole="button"
-                      hitSlop={8}
+                      accessibilityLabel={`${es.common.edit}: ${label}`}
+                      hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
                     >
                       <Text variant="caption" color={colors.primary}>
                         {es.common.edit}
@@ -138,7 +143,8 @@ export default function RecurringScreen() {
                     <Pressable
                       onPress={() => confirmDelete(rule)}
                       accessibilityRole="button"
-                      hitSlop={8}
+                      accessibilityLabel={`${es.recurring.delete}: ${label}`}
+                      hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
                     >
                       <Text variant="caption" color={colors.danger}>
                         {es.recurring.delete}

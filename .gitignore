@@ -49,3 +49,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Scripts locales (no versionados)
+scripts/seed-movements.mjs

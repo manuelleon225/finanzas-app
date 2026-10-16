@@ -21,6 +21,9 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+    // Flujo PKCE: los enlaces de correo (recuperación y confirmación) vuelven a
+    // la app con `?code=`, que se canjea con exchangeCodeForSession (R6.2).
+    flowType: 'pkce',
   },
 });
 

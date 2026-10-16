@@ -111,6 +111,7 @@ export type Database = {
           user_id: string;
           type: Database['public']['Enums']['transaction_type'];
           nature: Database['public']['Enums']['nature'] | null;
+          status: Database['public']['Enums']['transaction_status'];
           amount: number;
           account_id: string;
           transfer_account_id: string | null;
@@ -127,6 +128,7 @@ export type Database = {
           user_id?: string;
           type: Database['public']['Enums']['transaction_type'];
           nature?: Database['public']['Enums']['nature'] | null;
+          status?: Database['public']['Enums']['transaction_status'];
           amount: number;
           account_id: string;
           transfer_account_id?: string | null;
@@ -143,6 +145,7 @@ export type Database = {
           user_id?: string;
           type?: Database['public']['Enums']['transaction_type'];
           nature?: Database['public']['Enums']['nature'] | null;
+          status?: Database['public']['Enums']['transaction_status'];
           amount?: number;
           account_id?: string;
           transfer_account_id?: string | null;
@@ -170,6 +173,7 @@ export type Database = {
           start_date: string;
           end_date: string | null;
           is_active: boolean;
+          confirmation_mode: Database['public']['Enums']['recurring_confirmation_mode'];
           created_at: string;
           updated_at: string;
         };
@@ -186,6 +190,7 @@ export type Database = {
           start_date: string;
           end_date?: string | null;
           is_active?: boolean;
+          confirmation_mode?: Database['public']['Enums']['recurring_confirmation_mode'];
           created_at?: string;
           updated_at?: string;
         };
@@ -201,6 +206,37 @@ export type Database = {
           frequency?: Database['public']['Enums']['frequency'];
           start_date?: string;
           end_date?: string | null;
+          is_active?: boolean;
+          confirmation_mode?: Database['public']['Enums']['recurring_confirmation_mode'];
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      budgets: {
+        Row: {
+          id: string;
+          user_id: string;
+          category_id: string;
+          amount: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string;
+          category_id: string;
+          amount: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          category_id?: string;
+          amount?: number;
           is_active?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -241,6 +277,8 @@ export type Database = {
       transaction_type: 'income' | 'expense' | 'transfer';
       nature: 'base' | 'extra';
       frequency: 'weekly' | 'biweekly' | 'semimonthly' | 'monthly';
+      transaction_status: 'posted' | 'pending';
+      recurring_confirmation_mode: 'auto' | 'confirm';
     };
     CompositeTypes: Record<string, never>;
   };

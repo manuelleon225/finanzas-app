@@ -2,7 +2,10 @@ import { useMemo } from 'react';
 
 import { useAccounts } from '@/features/accounts/hooks/useAccounts';
 import { useRecurringRules } from '@/features/recurring/hooks/useRecurringRules';
-import { useTransactionsInRange } from '@/features/transactions/hooks/useTransactions';
+import {
+  usePendingConfirmations,
+  useTransactionsInRange,
+} from '@/features/transactions/hooks/useTransactions';
 import { monthRange } from '@/features/transactions/utils/transactions';
 import { todayISO } from '@/lib/dates';
 
@@ -20,6 +23,7 @@ export function useAvailableToday(month: Date) {
   const accountsQuery = useAccounts();
   const rulesQuery = useRecurringRules();
   const rangeQuery = useTransactionsInRange(from, to);
+  const pendingQuery = usePendingConfirmations(from, to);
 
   const result = useMemo(() => {
     const accounts = (accountsQuery.data ?? []).map((account) => ({
@@ -41,27 +45,46 @@ export function useAvailableToday(month: Date) {
         nature: transaction.nature,
         amount: transaction.amount,
         occurred_on: transaction.occurred_on,
+        status: transaction.status,
       }),
+    );
+    // Los gastos pendientes de confirmar reducen el disponible aunque aún no
+    // estén publicados.
+    const pendingExpenses = (pendingQuery.data ?? []).reduce(
+      (sum, transaction) => (transaction.type === 'expense' ? sum + transaction.amount : sum),
+      0,
     );
 
     return calculateAvailableToday({
       today: todayISO(),
       accounts,
       rules,
-      pendingExpenses: 0,
+      pendingExpenses,
       monthTransactions,
       includeExtras: includeExtrasInAvailable,
     });
-  }, [accountsQuery.data, rulesQuery.data, rangeQuery.data, includeExtrasInAvailable]);
+  }, [
+    accountsQuery.data,
+    rulesQuery.data,
+    rangeQuery.data,
+    pendingQuery.data,
+    includeExtrasInAvailable,
+  ]);
 
   return {
     result,
-    isLoading: accountsQuery.isLoading || rulesQuery.isLoading || rangeQuery.isLoading,
-    isError: accountsQuery.isError || rulesQuery.isError || rangeQuery.isError,
+    isLoading:
+      accountsQuery.isLoading ||
+      rulesQuery.isLoading ||
+      rangeQuery.isLoading ||
+      pendingQuery.isLoading,
+    isError:
+      accountsQuery.isError || rulesQuery.isError || rangeQuery.isError || pendingQuery.isError,
     refetch: () => {
       void accountsQuery.refetch();
       void rulesQuery.refetch();
       void rangeQuery.refetch();
+      void pendingQuery.refetch();
     },
   };
 }

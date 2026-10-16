@@ -5,7 +5,16 @@ import { Controller, useForm } from 'react-hook-form';
 import { Pressable, View } from 'react-native';
 import { z } from 'zod';
 
-import { Button, Chip, Input, LoadingState, Screen, Text } from '@/components/ui';
+import {
+  Button,
+  Chip,
+  IconButton,
+  Input,
+  LoadingState,
+  Screen,
+  ScreenHeader,
+  Text,
+} from '@/components/ui';
 import { useSession } from '@/features/auth/hooks/AuthProvider';
 import type { CategoryKind } from '@/features/categories/api/categories';
 import { CategoryIcon } from '@/features/categories/components/CategoryIcon';
@@ -135,15 +144,24 @@ export default function CategoryFormScreen() {
   return (
     <Screen scroll>
       <View style={{ gap: spacing.lg, marginTop: spacing.lg }}>
-        <Text variant="title">
-          {isEditing
-            ? category?.parent_id
-              ? es.categories.editSubcategory
-              : es.categories.editCategory
-            : parentIdParam
-              ? es.categories.newSubcategory
-              : es.categories.newCategory}
-        </Text>
+        <ScreenHeader
+          left={
+            <IconButton
+              icon="chevron-back-outline"
+              onPress={() => router.back()}
+              accessibilityLabel={es.common.back}
+            />
+          }
+          title={
+            isEditing
+              ? category?.parent_id
+                ? es.categories.editSubcategory
+                : es.categories.editCategory
+              : parentIdParam
+                ? es.categories.newSubcategory
+                : es.categories.newCategory
+          }
+        />
 
         <Controller
           name="name"
@@ -174,6 +192,7 @@ export default function CategoryFormScreen() {
                       key={icon}
                       onPress={() => field.onChange(icon)}
                       accessibilityRole="button"
+                      accessibilityLabel={icon}
                       accessibilityState={{ selected }}
                       style={[
                         {
@@ -208,14 +227,16 @@ export default function CategoryFormScreen() {
             <View style={{ gap: spacing.sm }}>
               <Text variant="caption">{es.categories.color}</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-                {COLOR_PALETTE.map((color) => {
+                {COLOR_PALETTE.map((color, index) => {
                   const selected = field.value === color;
                   return (
                     <Pressable
                       key={color}
                       onPress={() => field.onChange(color)}
                       accessibilityRole="button"
+                      accessibilityLabel={`${es.categories.color} ${index + 1}`}
                       accessibilityState={{ selected }}
+                      hitSlop={6}
                       style={[
                         {
                           width: 32,

@@ -6,9 +6,11 @@ import {
   Card,
   EmptyState,
   ErrorState,
+  IconButton,
   LoadingState,
   MoneyText,
   Screen,
+  ScreenHeader,
   Text,
 } from '@/components/ui';
 import { useSession } from '@/features/auth/hooks/AuthProvider';
@@ -72,14 +74,16 @@ export default function AccountsScreen() {
   return (
     <Screen scroll>
       <View style={{ gap: spacing.lg, marginTop: spacing.lg }}>
-        <View style={{ gap: spacing.xs }}>
-          <Pressable onPress={() => router.back()} accessibilityRole="button" hitSlop={8}>
-            <Text variant="caption" color={colors.primary}>
-              {es.common.back}
-            </Text>
-          </Pressable>
-          <Text variant="title">{es.accounts.title}</Text>
-        </View>
+        <ScreenHeader
+          left={
+            <IconButton
+              icon="chevron-back-outline"
+              onPress={() => router.back()}
+              accessibilityLabel={es.common.back}
+            />
+          }
+          title={es.accounts.title}
+        />
 
         <Card
           style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
@@ -124,7 +128,8 @@ export default function AccountsScreen() {
                       })
                     }
                     accessibilityRole="button"
-                    hitSlop={8}
+                    accessibilityLabel={`${es.common.edit}: ${account.name}`}
+                    hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
                   >
                     <Text variant="caption" color={colors.primary}>
                       {es.common.edit}
@@ -133,7 +138,8 @@ export default function AccountsScreen() {
                   <Pressable
                     onPress={() => confirmArchive(account)}
                     accessibilityRole="button"
-                    hitSlop={8}
+                    accessibilityLabel={`${es.accounts.archive}: ${account.name}`}
+                    hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
                   >
                     <Text variant="caption" color={colors.danger}>
                       {es.accounts.archive}

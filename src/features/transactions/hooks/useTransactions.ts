@@ -1,10 +1,12 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { queryClient } from '@/lib/queryClient';
 import type { TablesInsert, TablesUpdate } from '@/types/database';
 
 import {
   createTransaction as createTransactionRequest,
   deleteTransaction as deleteTransactionRequest,
+  getPendingConfirmations,
   getTransaction,
   getTransactionsInRange,
   listTransactions,
@@ -43,11 +45,20 @@ export function useTransactionsInRange(from: string, to: string) {
   });
 }
 
+export function usePendingConfirmations(from: string, to: string) {
+  return useQuery({
+    queryKey: ['transactions', 'pending', from, to],
+    queryFn: () => getPendingConfirmations(from, to),
+  });
+}
+
 export function useCreateTransaction() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: ['transactions', 'create'],
     mutationFn: (input: TablesInsert<'transactions'>) => createTransactionRequest(input),
+    networkMode: 'offlineFirst',
     onSuccess: () => invalidateTransactionData(queryClient),
   });
 }
@@ -69,4 +80,15 @@ export function useDeleteTransaction() {
     mutationFn: (id: string) => deleteTransactionRequest(id),
     onSuccess: () => invalidateTransactionData(queryClient),
   });
+}
+
+/**
+ * Deshace la creación de un movimiento desde fuera de React (p. ej. el Snackbar
+ * global "Deshacer"): elimina y refresca las consultas afectadas.
+ */
+export async function undoCreatedTransaction(id: string) {
+  await deleteTransactionRequest(id);
+  void queryClient.invalidateQueries({ queryKey: ['transactions'] });
+  void queryClient.invalidateQueries({ queryKey: ['accounts'] });
+  void queryClient.invalidateQueries({ queryKey: ['summary'] });
 }

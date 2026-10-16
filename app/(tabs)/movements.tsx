@@ -1,35 +1,42 @@
-import { addMonths, format, startOfMonth, subDays, subMonths } from 'date-fns';
+import { format, startOfMonth, subDays } from 'date-fns';
 import { Redirect, useRouter } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
-  Modal,
-  Pressable,
   RefreshControl,
+  ScrollView,
   SectionList,
   StyleSheet,
   View,
 } from 'react-native';
 
 import {
+  AnimatedEntrance,
   AppIcon,
+  BottomSheet,
   Button,
   Card,
   Chip,
+  ConnectivityPill,
   EmptyState,
   ErrorState,
-  Fab,
+  IconButton,
   Input,
+  ListRow,
   LoadingState,
   MoneyText,
+  MonthSelector,
   Screen,
+  ScreenHeader,
+  Skeleton,
   Snackbar,
+  SwipeableRow,
+  SwipeableRowGroup,
   Text,
+  useSwipeableRowGroup,
 } from '@/components/ui';
 import { useAccounts } from '@/features/accounts/hooks/useAccounts';
 import { useSession } from '@/features/auth/hooks/AuthProvider';
-import { CategoryIcon } from '@/features/categories/components/CategoryIcon';
 import type { Category } from '@/features/categories/api/categories';
 import { useCategories } from '@/features/categories/hooks/useCategories';
 import type {
@@ -38,36 +45,224 @@ import type {
   TransactionWithRelations,
 } from '@/features/transactions/api/transactions';
 import {
+  usePendingTransactions,
+  type PendingTransaction,
+} from '@/features/transactions/hooks/usePendingTransactions';
+import {
   useCreateTransaction,
   useDeleteTransaction,
+  usePendingConfirmations,
   useTransactions,
   useTransactionsInRange,
 } from '@/features/transactions/hooks/useTransactions';
 import {
+  connectivityText,
+  mergePendingByDay,
+} from '@/features/transactions/utils/offlinePresentation';
+import {
   calculateTotals,
   formatDayHeader,
-  formatMonthLabel,
   groupTransactionsByDay,
   monthRange,
   toInsertPayload,
 } from '@/features/transactions/utils/transactions';
 import { es } from '@/i18n/es';
 import { todayISO } from '@/lib/dates';
+import { useSnackbarStore } from '@/lib/snackbar';
+import { useConnectivity } from '@/lib/useConnectivity';
 import { useTheme } from '@/theme';
+import type { TablesInsert } from '@/types/database';
+
+const ROW_HEIGHT = 64;
+const HEADER_HEIGHT = 40;
+const EMPTY_TRANSACTIONS: TransactionWithRelations[] = [];
+
+type MovementItem =
+  | { kind: 'transaction'; key: string; transaction: TransactionWithRelations }
+  | { kind: 'pending'; key: string; mutationId: number; payload: TablesInsert<'transactions'> }
+  | { kind: 'failed'; key: string; mutationId: number; payload: TablesInsert<'transactions'> }
+  | { kind: 'confirm'; key: string; transaction: TransactionWithRelations };
 
 type DaySection = {
   title: string;
   total: number;
-  data: TransactionWithRelations[];
+  data: MovementItem[];
 };
 
+const MovementRow = memo(function MovementRow({
+  item,
+  onEdit,
+  onDelete,
+}: {
+  item: TransactionWithRelations;
+  onEdit: (transaction: TransactionWithRelations) => void;
+  onDelete: (transaction: TransactionWithRelations) => void;
+}) {
+  const { colors } = useTheme();
+  const group = useSwipeableRowGroup();
+
+  const isExtra = item.nature === 'extra';
+  const isTransfer = item.type === 'transfer';
+
+  const title = isTransfer
+    ? `${item.account?.name ?? '?'} → ${item.transfer_account?.name ?? '?'}`
+    : item.note || item.category?.name || '—';
+  const subtitle = isTransfer
+    ? (item.note ?? undefined)
+    : item.note
+      ? [item.category?.name, item.account?.name].filter(Boolean).join(' · ')
+      : (item.account?.name ?? undefined);
+
+  const kind = item.type === 'income' ? 'income' : item.type === 'expense' ? 'expense' : 'neutral';
+
+  return (
+    <AnimatedEntrance>
+      <SwipeableRow onDelete={() => onDelete(item)}>
+        <ListRow
+          icon={
+            isTransfer
+              ? 'swap-horizontal-outline'
+              : (item.category?.icon ?? 'ellipsis-horizontal-outline')
+          }
+          iconColor={
+            isTransfer ? colors.textSecondary : (item.category?.color ?? colors.textSecondary)
+          }
+          title={title}
+          subtitle={subtitle}
+          tag={isExtra ? { label: es.transactionList.extra, tone: 'extra' } : undefined}
+          trailing={
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              {item.recurring_rule_id ? (
+                <AppIcon
+                  name="repeat-outline"
+                  size={16}
+                  color={colors.textSecondary}
+                  accessibilityLabel={es.transactionList.recurring}
+                />
+              ) : null}
+              <MoneyText amount={item.amount} kind={kind} signed />
+            </View>
+          }
+          onPress={() => {
+            group?.closeActive();
+            onEdit(item);
+          }}
+          style={{ flex: 1, height: ROW_HEIGHT }}
+        />
+      </SwipeableRow>
+    </AnimatedEntrance>
+  );
+});
+
+function OfflineRow({
+  payload,
+  category,
+  accountName,
+  transferAccountName,
+  failed,
+  onPress,
+}: {
+  payload: TablesInsert<'transactions'>;
+  category?: Category;
+  accountName?: string;
+  transferAccountName?: string;
+  failed: boolean;
+  onPress?: () => void;
+}) {
+  const { colors } = useTheme();
+  const isTransfer = payload.type === 'transfer';
+
+  const title = isTransfer
+    ? `${accountName ?? '?'} → ${transferAccountName ?? '?'}`
+    : payload.note || category?.name || '—';
+  const subtitle = isTransfer
+    ? (payload.note ?? undefined)
+    : payload.note
+      ? [category?.name, accountName].filter(Boolean).join(' · ')
+      : accountName;
+
+  const kind =
+    payload.type === 'income' ? 'income' : payload.type === 'expense' ? 'expense' : 'neutral';
+
+  return (
+    <ListRow
+      icon={
+        isTransfer ? 'swap-horizontal-outline' : (category?.icon ?? 'ellipsis-horizontal-outline')
+      }
+      iconColor={isTransfer ? colors.textSecondary : (category?.color ?? colors.textSecondary)}
+      title={title}
+      subtitle={subtitle}
+      tag={
+        failed
+          ? { label: es.connectivity.failedTag, tone: 'neutral' }
+          : { label: es.connectivity.pendingTag, tone: 'pending' }
+      }
+      trailing={<MoneyText amount={payload.amount} kind={kind} signed />}
+      onPress={onPress}
+      style={{ flex: 1, height: ROW_HEIGHT }}
+    />
+  );
+}
+
+function PendingConfirmRow({ item }: { item: TransactionWithRelations }) {
+  const { colors } = useTheme();
+  const isTransfer = item.type === 'transfer';
+
+  const title = isTransfer
+    ? `${item.account?.name ?? '?'} → ${item.transfer_account?.name ?? '?'}`
+    : item.note || item.category?.name || '—';
+  const subtitle = isTransfer
+    ? (item.note ?? undefined)
+    : [item.category?.name, item.account?.name].filter(Boolean).join(' · ');
+
+  return (
+    <ListRow
+      icon={
+        isTransfer
+          ? 'swap-horizontal-outline'
+          : (item.category?.icon ?? 'ellipsis-horizontal-outline')
+      }
+      iconColor={isTransfer ? colors.textSecondary : (item.category?.color ?? colors.textSecondary)}
+      title={title}
+      subtitle={subtitle}
+      tag={{ label: es.transactionList.pendingTag, tone: 'pending' }}
+      trailing={
+        <MoneyText
+          amount={item.amount}
+          kind={item.type === 'income' ? 'income' : 'expense'}
+          signed
+        />
+      }
+      style={{ flex: 1, height: ROW_HEIGHT }}
+    />
+  );
+}
+
+function MovementRowSkeleton() {
+  const { spacing } = useTheme();
+
+  return (
+    <View style={[styles.row, { height: ROW_HEIGHT, gap: spacing.md }]}>
+      <Skeleton variant="circle" width={40} height={40} />
+      <View style={{ flex: 1, gap: spacing.xs }}>
+        <Skeleton variant="line" width="60%" />
+        <Skeleton variant="line" width="40%" />
+      </View>
+      <Skeleton variant="line" width={64} />
+    </View>
+  );
+}
+
 export default function MovementsScreen() {
-  const router = useRouter();
   const { colors, spacing } = useTheme();
+  const router = useRouter();
   const { session, loading: sessionLoading } = useSession();
+  const isOnline = useConnectivity();
+  const showSnackbar = useSnackbarStore((state) => state.show);
 
   const [monthAnchor, setMonthAnchor] = useState(() => startOfMonth(new Date()));
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [accountId, setAccountId] = useState<string | null>(null);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<TransactionType | null>(null);
@@ -75,6 +270,7 @@ export default function MovementsScreen() {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [deleted, setDeleted] = useState<TransactionWithRelations | null>(null);
+  const [failedSheet, setFailedSheet] = useState<PendingTransaction | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setSearch(searchInput.trim()), 300);
@@ -90,13 +286,17 @@ export default function MovementsScreen() {
     categoryId: categoryId ?? undefined,
     type: typeFilter ?? undefined,
     nature: natureFilter ?? undefined,
+    status: 'posted',
     search: search.length > 0 ? search : undefined,
   });
   const rangeQuery = useTransactionsInRange(from, to);
+  const pendingConfirmationsQuery = usePendingConfirmations(from, to);
+  const pendingConfirmations = pendingConfirmationsQuery.data ?? EMPTY_TRANSACTIONS;
   const accountsQuery = useAccounts();
   const categoriesQuery = useCategories();
   const deleteTransaction = useDeleteTransaction();
   const createTransaction = useCreateTransaction();
+  const { pending, failed, retry, discard } = usePendingTransactions();
 
   const items = useMemo(
     () => (transactionsQuery.data?.pages ?? []).flatMap((page) => page.items),
@@ -106,34 +306,114 @@ export default function MovementsScreen() {
 
   const today = todayISO();
   const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
-  const sections = useMemo<DaySection[]>(
-    () =>
-      groupTransactionsByDay(items).map((group) => ({
-        title: formatDayHeader(group.date, today, yesterday),
-        total: group.total,
-        data: group.items,
-      })),
-    [items, today, yesterday],
+
+  const dayGroups = useMemo(() => groupTransactionsByDay(items), [items]);
+  const totalByDate = useMemo(
+    () => new Map(dayGroups.map((group) => [group.date, group.total])),
+    [dayGroups],
   );
+
+  const pendingItems = useMemo<{ occurred_on: string; item: MovementItem }[]>(
+    () => [
+      ...pending.map((entry) => ({
+        occurred_on: entry.payload.occurred_on,
+        item: {
+          kind: 'pending' as const,
+          key: `pending-${entry.mutationId}`,
+          mutationId: entry.mutationId,
+          payload: entry.payload,
+        },
+      })),
+      ...failed.map((entry) => ({
+        occurred_on: entry.payload.occurred_on,
+        item: {
+          kind: 'failed' as const,
+          key: `failed-${entry.mutationId}`,
+          mutationId: entry.mutationId,
+          payload: entry.payload,
+        },
+      })),
+    ],
+    [pending, failed],
+  );
+
+  const sections = useMemo<DaySection[]>(() => {
+    const base: { date: string; items: MovementItem[] }[] = dayGroups.map((group) => ({
+      date: group.date,
+      items: group.items.map((transaction) => ({
+        kind: 'transaction' as const,
+        key: transaction.id,
+        transaction,
+      })),
+    }));
+
+    const daySections = mergePendingByDay<MovementItem>(base, pendingItems).map(
+      ({ date, items: dayItems }) => ({
+        title: formatDayHeader(date, today, yesterday),
+        total: totalByDate.get(date) ?? 0,
+        data: dayItems,
+      }),
+    );
+
+    if (pendingConfirmations.length === 0) {
+      return daySections;
+    }
+
+    const confirmSection: DaySection = {
+      title: es.transactionList.pendingSection,
+      total: 0,
+      data: pendingConfirmations.map((transaction) => ({
+        kind: 'confirm' as const,
+        key: `confirm-${transaction.id}`,
+        transaction,
+      })),
+    };
+
+    return [confirmSection, ...daySections];
+  }, [dayGroups, pendingItems, pendingConfirmations, totalByDate, today, yesterday]);
+
+  const layout = useMemo(() => {
+    const entries: { length: number; offset: number }[] = [];
+    let offset = 0;
+
+    for (const section of sections) {
+      entries.push({ length: HEADER_HEIGHT, offset });
+      offset += HEADER_HEIGHT;
+      for (let index = 0; index < section.data.length; index += 1) {
+        entries.push({ length: ROW_HEIGHT, offset });
+        offset += ROW_HEIGHT;
+      }
+    }
+
+    return entries;
+  }, [sections]);
 
   const activeFilterCount = [accountId, categoryId, typeFilter, natureFilter].filter(
     Boolean,
   ).length;
+  const hasActiveQuery = activeFilterCount > 0 || search.length > 0;
+  const pillLabel = connectivityText(isOnline, pending.length);
 
-  const confirmDelete = useCallback(
+  const openEdit = useCallback(
     (transaction: TransactionWithRelations) => {
-      Alert.alert(es.transactionList.deleteTitle, es.transactionList.deleteMessage, [
-        { text: es.common.cancel, style: 'cancel' },
-        {
-          text: es.transactionForm.delete,
-          style: 'destructive',
-          onPress: () => {
-            deleteTransaction.mutate(transaction.id, { onSuccess: () => setDeleted(transaction) });
-          },
-        },
-      ]);
+      if (!isOnline) {
+        showSnackbar(es.connectivity.needsConnection);
+        return;
+      }
+      router.push({ pathname: '/transaction-form', params: { id: transaction.id } });
     },
-    [deleteTransaction],
+    [isOnline, router, showSnackbar],
+  );
+
+  const handleDelete = useCallback(
+    (transaction: TransactionWithRelations) => {
+      if (!isOnline) {
+        showSnackbar(es.connectivity.needsConnection);
+        return;
+      }
+      deleteTransaction.mutate(transaction.id, { onSuccess: () => setDeleted(transaction) });
+    },
+    [deleteTransaction, isOnline, showSnackbar],
   );
 
   if (sessionLoading) {
@@ -158,53 +438,72 @@ export default function MovementsScreen() {
     setNatureFilter(null);
   }
 
+  function closeSearch() {
+    setSearchOpen(false);
+    setSearchInput('');
+  }
+
   const summaryBalanceKind =
     summary.balance > 0 ? 'income' : summary.balance < 0 ? 'expense' : 'neutral';
 
   return (
     <Screen
       overlay={
-        <>
-          <Fab
-            onPress={() => router.push('/transaction-form')}
-            accessibilityLabel={es.transactionForm.add}
-          />
-          <Snackbar
-            message={deleted ? es.transactionList.deleted : null}
-            actionLabel={es.transactionList.undo}
-            onAction={undoDelete}
-            onDismiss={() => setDeleted(null)}
-            durationMs={5000}
-          />
-        </>
+        <Snackbar
+          message={deleted ? es.transactionList.deleted : null}
+          actionLabel={es.transactionList.undo}
+          onAction={undoDelete}
+          onDismiss={() => setDeleted(null)}
+          durationMs={5000}
+        />
       }
     >
-      <View style={{ gap: spacing.md, marginTop: spacing.md, flex: 1 }}>
-        <Card style={{ gap: spacing.md }}>
-          <View style={styles.monthRow}>
-            <Pressable
-              onPress={() => setMonthAnchor((anchor) => subMonths(anchor, 1))}
-              accessibilityRole="button"
-              accessibilityLabel={es.transactionList.previousMonth}
-              hitSlop={8}
-            >
-              <Text variant="subtitle" color={colors.primary}>
-                ‹
-              </Text>
-            </Pressable>
-            <Text variant="subtitle">{formatMonthLabel(monthAnchor)}</Text>
-            <Pressable
-              onPress={() => setMonthAnchor((anchor) => addMonths(anchor, 1))}
-              accessibilityRole="button"
-              accessibilityLabel={es.transactionList.nextMonth}
-              hitSlop={8}
-            >
-              <Text variant="subtitle" color={colors.primary}>
-                ›
-              </Text>
-            </Pressable>
+      <View style={{ flex: 1, gap: spacing.md, marginTop: spacing.md }}>
+        {searchOpen ? (
+          <View style={[styles.searchRow, { gap: spacing.sm }]}>
+            <View style={{ flex: 1 }}>
+              <Input
+                placeholder={es.transactionList.searchPlaceholder}
+                value={searchInput}
+                onChangeText={setSearchInput}
+                autoFocus
+                autoCapitalize="none"
+                accessibilityLabel={es.transactionList.search}
+              />
+            </View>
+            <IconButton
+              icon="close-outline"
+              onPress={closeSearch}
+              accessibilityLabel={es.common.close}
+            />
           </View>
+        ) : (
+          <>
+            <ScreenHeader
+              title={es.transactionList.title}
+              actions={
+                <>
+                  <IconButton
+                    icon="search-outline"
+                    onPress={() => setSearchOpen(true)}
+                    accessibilityLabel={es.transactionList.search}
+                  />
+                  <IconButton
+                    icon="options-outline"
+                    onPress={() => setFiltersOpen(true)}
+                    accessibilityLabel={es.transactionList.filters}
+                    badge={activeFilterCount > 0}
+                  />
+                </>
+              }
+            />
+            <MonthSelector value={monthAnchor} onChange={setMonthAnchor} />
+          </>
+        )}
 
+        <ConnectivityPill label={pillLabel} />
+
+        <Card style={{ gap: spacing.sm }}>
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
               <Text variant="caption">{es.transactionList.income}</Text>
@@ -221,71 +520,122 @@ export default function MovementsScreen() {
           </View>
         </Card>
 
-        <View style={styles.searchRow}>
-          <View style={{ flex: 1 }}>
-            <Input
-              placeholder={es.transactionList.searchPlaceholder}
-              value={searchInput}
-              onChangeText={setSearchInput}
-              autoCapitalize="none"
-            />
-          </View>
-          <Pressable onPress={() => setFiltersOpen(true)} accessibilityRole="button" hitSlop={8}>
-            <Text variant="caption" color={colors.primary}>
-              {es.transactionList.filters}
-              {activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
-            </Text>
-          </Pressable>
-        </View>
-
         {transactionsQuery.isLoading ? (
-          <LoadingState />
+          <View style={{ gap: spacing.sm }}>
+            {Array.from({ length: 6 }).map((_, index) => (
+              <MovementRowSkeleton key={index} />
+            ))}
+          </View>
         ) : transactionsQuery.isError ? (
           <ErrorState onRetry={() => void transactionsQuery.refetch()} />
         ) : sections.length === 0 ? (
           <EmptyState
-            title={es.transactionList.emptyTitle}
-            description={
-              activeFilterCount > 0 || search.length > 0
-                ? es.transactionList.emptyFiltered
-                : es.transactionList.emptyDescription
+            title={
+              hasActiveQuery ? es.transactionList.emptyFiltered : es.transactionList.emptyTitle
             }
+            description={hasActiveQuery ? '' : es.transactionList.emptyDescription}
+            actionLabel={hasActiveQuery ? es.transactionList.clearFilters : es.transactionForm.add}
+            onAction={hasActiveQuery ? clearFilters : () => router.push('/transaction-form')}
           />
         ) : (
-          <SectionList
-            style={{ flex: 1 }}
-            sections={sections}
-            keyExtractor={(item) => item.id}
-            stickySectionHeadersEnabled={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={transactionsQuery.isRefetching}
-                onRefresh={() => void transactionsQuery.refetch()}
-              />
-            }
-            onEndReachedThreshold={0.4}
-            onEndReached={() => {
-              if (transactionsQuery.hasNextPage && !transactionsQuery.isFetchingNextPage) {
-                void transactionsQuery.fetchNextPage();
-              }
-            }}
-            ListFooterComponent={
-              transactionsQuery.isFetchingNextPage ? (
-                <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
-              ) : null
-            }
-            renderSectionHeader={({ section }) => (
-              <View style={styles.sectionHeader}>
-                <Text variant="caption">{section.title}</Text>
-                <MoneyText
-                  amount={section.total}
-                  kind={section.total < 0 ? 'expense' : section.total > 0 ? 'income' : 'neutral'}
-                  signed
+          <SwipeableRowGroup>
+            <SectionList
+              style={{ flex: 1 }}
+              sections={sections}
+              keyExtractor={(item) => item.key}
+              stickySectionHeadersEnabled
+              initialNumToRender={12}
+              maxToRenderPerBatch={12}
+              windowSize={11}
+              getItemLayout={(_data, index) => {
+                const entry = layout[index] ?? { length: ROW_HEIGHT, offset: index * ROW_HEIGHT };
+                return { length: entry.length, offset: entry.offset, index };
+              }}
+              refreshControl={
+                <RefreshControl
+                  refreshing={transactionsQuery.isRefetching}
+                  onRefresh={() => {
+                    void transactionsQuery.refetch();
+                    void pendingConfirmationsQuery.refetch();
+                  }}
                 />
-              </View>
-            )}
-            renderItem={({ item }) => <MovementRow item={item} onLongPress={confirmDelete} />}
-          />
+              }
+              onEndReachedThreshold={0.5}
+              onEndReached={() => {
+                if (transactionsQuery.hasNextPage && !transactionsQuery.isFetchingNextPage) {
+                  void transactionsQuery.fetchNextPage();
+                }
+              }}
+              ListFooterComponent={
+                transactionsQuery.isFetchingNextPage ? (
+                  <ActivityIndicator color={colors.brand} style={{ marginVertical: spacing.md }} />
+                ) : null
+              }
+              renderSectionHeader={({ section }) => (
+                <View
+                  style={[
+                    styles.sectionHeader,
+                    { backgroundColor: colors.background, height: HEADER_HEIGHT },
+                  ]}
+                >
+                  <Text variant="caption">{section.title}</Text>
+                  <MoneyText
+                    amount={section.total}
+                    kind={section.total < 0 ? 'expense' : section.total > 0 ? 'income' : 'neutral'}
+                    signed
+                  />
+                </View>
+              )}
+              renderItem={({ item }) => {
+                if (item.kind === 'transaction') {
+                  return (
+                    <MovementRow
+                      item={item.transaction}
+                      onEdit={openEdit}
+                      onDelete={handleDelete}
+                    />
+                  );
+                }
+
+                if (item.kind === 'confirm') {
+                  return <PendingConfirmRow item={item.transaction} />;
+                }
+
+                const payload = item.payload;
+                const category = categoriesQuery.data?.find(
+                  (entry) => entry.id === payload.category_id,
+                );
+                const accountName = accountsQuery.data?.find(
+                  (account) => account.account_id === payload.account_id,
+                )?.name;
+                const transferAccountName = payload.transfer_account_id
+                  ? accountsQuery.data?.find(
+                      (account) => account.account_id === payload.transfer_account_id,
+                    )?.name
+                  : undefined;
+
+                return (
+                  <OfflineRow
+                    payload={payload}
+                    category={category}
+                    accountName={accountName}
+                    transferAccountName={transferAccountName}
+                    failed={item.kind === 'failed'}
+                    onPress={
+                      item.kind === 'failed'
+                        ? () =>
+                            setFailedSheet({
+                              mutationId: item.mutationId,
+                              payload,
+                              failed: true,
+                            })
+                        : undefined
+                    }
+                  />
+                );
+              }}
+            />
+          </SwipeableRowGroup>
         )}
       </View>
 
@@ -304,69 +654,37 @@ export default function MovementsScreen() {
         onNatureChange={setNatureFilter}
         onClear={clearFilters}
       />
+
+      <BottomSheet visible={failedSheet !== null} onClose={() => setFailedSheet(null)}>
+        <View style={{ gap: spacing.md }}>
+          <Text variant="subtitle">{es.connectivity.failedTitle}</Text>
+          <Text variant="body" color={colors.textSecondary}>
+            {es.connectivity.failedMessage}
+          </Text>
+          <Button
+            title={es.connectivity.retry}
+            onPress={() => {
+              if (failedSheet) {
+                retry(failedSheet.mutationId);
+              }
+              setFailedSheet(null);
+            }}
+          />
+          <Button
+            title={es.connectivity.discard}
+            variant="destructive"
+            onPress={() => {
+              if (failedSheet) {
+                discard(failedSheet.mutationId);
+              }
+              setFailedSheet(null);
+            }}
+          />
+        </View>
+      </BottomSheet>
     </Screen>
   );
 }
-
-const MovementRow = memo(function MovementRow({
-  item,
-  onLongPress,
-}: {
-  item: TransactionWithRelations;
-  onLongPress: (transaction: TransactionWithRelations) => void;
-}) {
-  const { colors } = useTheme();
-  const router = useRouter();
-
-  const isExtra = item.nature === 'extra';
-  const isTransfer = item.type === 'transfer';
-  const categoryName = isTransfer
-    ? `${item.account?.name ?? '?'} → ${item.transfer_account?.name ?? '?'}`
-    : (item.category?.name ?? '—');
-  const kind = item.type === 'income' ? 'income' : item.type === 'expense' ? 'expense' : 'neutral';
-  const details = isTransfer
-    ? (item.note ?? '')
-    : [item.note, item.account?.name].filter(Boolean).join(' · ');
-
-  return (
-    <Pressable
-      onPress={() => router.push({ pathname: '/transaction-form', params: { id: item.id } })}
-      onLongPress={() => onLongPress(item)}
-      accessibilityRole="button"
-      style={styles.row}
-    >
-      <CategoryIcon
-        icon={
-          isTransfer
-            ? 'swap-horizontal-outline'
-            : (item.category?.icon ?? 'ellipsis-horizontal-outline')
-        }
-        color={isTransfer ? colors.textSecondary : (item.category?.color ?? colors.textSecondary)}
-        size={22}
-      />
-      <View style={{ flex: 1 }}>
-        <View style={styles.titleRow}>
-          <Text variant="body">{categoryName}</Text>
-          {isExtra ? (
-            <Text variant="caption" color={colors.extra}>
-              · {es.transactionList.extra}
-            </Text>
-          ) : null}
-          {item.recurring_rule_id ? (
-            <AppIcon
-              name="repeat-outline"
-              size={16}
-              color={colors.textSecondary}
-              accessibilityLabel={es.transactionList.recurring}
-            />
-          ) : null}
-        </View>
-        {details.length > 0 ? <Text variant="caption">{details}</Text> : null}
-      </View>
-      <MoneyText amount={item.amount} kind={kind} signed />
-    </Pressable>
-  );
-});
 
 type FiltersSheetProps = {
   visible: boolean;
@@ -399,24 +717,11 @@ function FiltersSheet({
   onNatureChange,
   onClear,
 }: FiltersSheetProps) {
-  const { colors, radii, spacing } = useTheme();
+  const { spacing } = useTheme();
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={[styles.backdrop, { backgroundColor: colors.scrim }]} onPress={onClose} />
-      <View
-        style={[
-          styles.sheet,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderTopLeftRadius: radii.xl,
-            borderTopRightRadius: radii.xl,
-            padding: spacing.lg,
-            gap: spacing.md,
-          },
-        ]}
-      >
+    <BottomSheet visible={visible} onClose={onClose}>
+      <ScrollView contentContainerStyle={{ gap: spacing.md }} showsVerticalScrollIndicator={false}>
         <Text variant="subtitle">{es.transactionList.filters}</Text>
 
         <View style={{ gap: spacing.xs }}>
@@ -503,16 +808,15 @@ function FiltersSheet({
           <Button title={es.transactionList.clearFilters} variant="ghost" onPress={onClear} />
           <Button title={es.transactionList.apply} onPress={onClose} />
         </View>
-      </View>
-    </Modal>
+      </ScrollView>
+    </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  monthRow: {
+  searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
   summaryRow: {
     flexDirection: 'row',
@@ -523,37 +827,14 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 4,
   },
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 8,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingVertical: 10,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  backdrop: {
-    flex: 1,
-  },
-  sheet: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderTopWidth: StyleSheet.hairlineWidth,
   },
   chipRow: {
     flexDirection: 'row',

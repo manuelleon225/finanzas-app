@@ -7,8 +7,10 @@ import {
   Card,
   EmptyState,
   ErrorState,
+  IconButton,
   LoadingState,
   Screen,
+  ScreenHeader,
   SegmentedControl,
   Snackbar,
   Text,
@@ -112,14 +114,16 @@ export default function CategoriesScreen() {
   return (
     <Screen scroll overlay={<Snackbar message={snackbar} onDismiss={() => setSnackbar(null)} />}>
       <View style={{ gap: spacing.lg, marginTop: spacing.lg }}>
-        <View style={{ gap: spacing.xs }}>
-          <Pressable onPress={() => router.back()} accessibilityRole="button" hitSlop={8}>
-            <Text variant="caption" color={colors.primary}>
-              {es.common.back}
-            </Text>
-          </Pressable>
-          <Text variant="title">{es.categories.title}</Text>
-        </View>
+        <ScreenHeader
+          left={
+            <IconButton
+              icon="chevron-back-outline"
+              onPress={() => router.back()}
+              accessibilityLabel={es.common.back}
+            />
+          }
+          title={es.categories.title}
+        />
 
         <SegmentedControl<KindOption>
           options={[
@@ -133,8 +137,11 @@ export default function CategoriesScreen() {
         <Pressable
           onPress={() => setShowArchived((value) => !value)}
           accessibilityRole="button"
+          accessibilityLabel={
+            showArchived ? es.categories.hideArchived : es.categories.showArchived
+          }
           accessibilityState={{ selected: showArchived }}
-          hitSlop={8}
+          hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
           style={{ alignSelf: 'flex-start' }}
         >
           <Text variant="caption" color={colors.primary}>
@@ -181,7 +188,8 @@ export default function CategoriesScreen() {
                     <Pressable
                       onPress={() => restore(category)}
                       accessibilityRole="button"
-                      hitSlop={8}
+                      accessibilityLabel={`${es.categories.restore}: ${category.name}`}
+                      hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
                     >
                       <Text variant="caption" color={colors.primary}>
                         {es.categories.restore}
@@ -198,7 +206,7 @@ export default function CategoriesScreen() {
                         }
                         accessibilityRole="button"
                         accessibilityLabel={`${es.categories.addSubcategory}: ${category.name}`}
-                        hitSlop={8}
+                        hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
                       >
                         <Text variant="caption" color={colors.primary}>
                           +
@@ -207,7 +215,8 @@ export default function CategoriesScreen() {
                       <Pressable
                         onPress={() => editCategory(category)}
                         accessibilityRole="button"
-                        hitSlop={8}
+                        accessibilityLabel={`${es.common.edit}: ${category.name}`}
+                        hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
                       >
                         <Text variant="caption" color={colors.primary}>
                           {es.common.edit}
@@ -216,7 +225,8 @@ export default function CategoriesScreen() {
                       <Pressable
                         onPress={() => confirmArchive(category)}
                         accessibilityRole="button"
-                        hitSlop={8}
+                        accessibilityLabel={`${es.categories.archive}: ${category.name}`}
+                        hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
                       >
                         <Text variant="caption" color={colors.danger}>
                           {es.categories.archive}
@@ -244,7 +254,8 @@ export default function CategoriesScreen() {
                       <Pressable
                         onPress={() => restore(child)}
                         accessibilityRole="button"
-                        hitSlop={8}
+                        accessibilityLabel={`${es.categories.restore}: ${child.name}`}
+                        hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
                       >
                         <Text variant="caption" color={colors.primary}>
                           {es.categories.restore}
@@ -255,7 +266,8 @@ export default function CategoriesScreen() {
                         <Pressable
                           onPress={() => editCategory(child)}
                           accessibilityRole="button"
-                          hitSlop={8}
+                          accessibilityLabel={`${es.common.edit}: ${child.name}`}
+                          hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
                         >
                           <Text variant="caption" color={colors.primary}>
                             {es.common.edit}
@@ -264,7 +276,8 @@ export default function CategoriesScreen() {
                         <Pressable
                           onPress={() => confirmArchive(child)}
                           accessibilityRole="button"
-                          hitSlop={8}
+                          accessibilityLabel={`${es.categories.archive}: ${child.name}`}
+                          hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
                         >
                           <Text variant="caption" color={colors.danger}>
                             {es.categories.archive}

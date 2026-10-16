@@ -4,7 +4,17 @@ import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Switch, View } from 'react-native';
 
-import { Button, Card, Chip, Input, LoadingState, Screen, Text } from '@/components/ui';
+import {
+  Button,
+  Card,
+  Chip,
+  IconButton,
+  Input,
+  LoadingState,
+  Screen,
+  ScreenHeader,
+  Text,
+} from '@/components/ui';
 import { useSession } from '@/features/auth/hooks/AuthProvider';
 import {
   useAccounts,
@@ -96,7 +106,16 @@ export default function AccountFormScreen() {
   return (
     <Screen scroll>
       <View style={{ gap: spacing.lg, marginTop: spacing.lg }}>
-        <Text variant="title">{isEditing ? es.accounts.editAccount : es.accounts.newAccount}</Text>
+        <ScreenHeader
+          left={
+            <IconButton
+              icon="chevron-back-outline"
+              onPress={() => router.back()}
+              accessibilityLabel={es.common.back}
+            />
+          }
+          title={isEditing ? es.accounts.editAccount : es.accounts.newAccount}
+        />
 
         <Controller
           name="name"

@@ -1,5 +1,5 @@
 import type { TransactionWithRelations } from '../../../transactions/api/transactions';
-import { calculateExtraDependency, calculateMonthSummary } from '../summary';
+import { calculateMonthSummary } from '../summary';
 
 function makeTransaction(
   overrides: Partial<TransactionWithRelations> = {},
@@ -72,11 +72,11 @@ describe('calculateMonthSummary', () => {
     const allExtra = calculateMonthSummary([
       makeTransaction({ type: 'income', nature: 'extra', amount: 80000 }),
     ]);
-    expect(calculateExtraDependency(allExtra)).toBe(100);
+    expect(allExtra.extraDependency).toBe(100);
 
     const noneExtra = calculateMonthSummary([
       makeTransaction({ type: 'income', nature: 'base', amount: 80000 }),
     ]);
-    expect(calculateExtraDependency(noneExtra)).toBe(0);
+    expect(noneExtra.extraDependency).toBe(0);
   });
 });

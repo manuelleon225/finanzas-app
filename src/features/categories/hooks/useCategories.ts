@@ -7,7 +7,6 @@ import {
   createCategory as createCategoryRequest,
   listCategories,
   restoreCategory as restoreCategoryRequest,
-  reorderCategories as reorderCategoriesRequest,
   updateCategory as updateCategoryRequest,
   type CategoryKind,
 } from '../api/categories';
@@ -64,17 +63,6 @@ export function useRestoreCategory() {
 
   return useMutation({
     mutationFn: (id: string) => restoreCategoryRequest(id),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['categories'] });
-    },
-  });
-}
-
-export function useReorderCategories() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (items: { id: string; sort_order: number }[]) => reorderCategoriesRequest(items),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['categories'] });
     },

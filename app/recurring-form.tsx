@@ -1,17 +1,19 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Switch, View } from 'react-native';
 
 import {
   Button,
   Chip,
   EmptyState,
   ErrorState,
+  IconButton,
   Input,
   LoadingState,
   MoneyText,
   Screen,
+  ScreenHeader,
   SegmentedControl,
   Text,
 } from '@/components/ui';
@@ -43,6 +45,7 @@ type RuleFormValues = {
   frequency: Frequency;
   startDate: string;
   endDate: string | null;
+  confirmationMode: 'auto' | 'confirm';
 };
 
 const FREQUENCIES: Frequency[] = ['weekly', 'biweekly', 'semimonthly', 'monthly'];
@@ -84,6 +87,7 @@ export default function RecurringFormScreen() {
       frequency: 'monthly',
       startDate: todayISO(),
       endDate: null,
+      confirmationMode: 'auto',
     },
   });
 
@@ -110,6 +114,7 @@ export default function RecurringFormScreen() {
         frequency: rule.frequency,
         startDate: rule.start_date,
         endDate: rule.end_date,
+        confirmationMode: rule.confirmation_mode,
       });
     }
   }, [isEditing, rule, reset]);
@@ -165,6 +170,7 @@ export default function RecurringFormScreen() {
       frequency: values.frequency,
       start_date: values.startDate,
       end_date: values.endDate,
+      confirmation_mode: values.confirmationMode,
     });
 
     if (!parsed.success) {
@@ -203,6 +209,7 @@ export default function RecurringFormScreen() {
       frequency: parsed.data.frequency,
       start_date: parsed.data.start_date,
       end_date: parsed.data.end_date,
+      confirmation_mode: parsed.data.confirmation_mode,
     };
 
     if (isEditing) {
@@ -226,7 +233,16 @@ export default function RecurringFormScreen() {
   return (
     <Screen scroll>
       <View style={{ gap: spacing.lg, marginTop: spacing.lg }}>
-        <Text variant="title">{isEditing ? es.recurring.editRule : es.recurring.newRule}</Text>
+        <ScreenHeader
+          left={
+            <IconButton
+              icon="chevron-back-outline"
+              onPress={() => router.back()}
+              accessibilityLabel={es.common.back}
+            />
+          }
+          title={isEditing ? es.recurring.editRule : es.recurring.newRule}
+        />
         <Text variant="caption">{es.recurring.generatedNote}</Text>
 
         <MoneyText
@@ -285,6 +301,34 @@ export default function RecurringFormScreen() {
             />
           )}
         />
+
+        {type === 'expense' ? (
+          <Controller
+            name="confirmationMode"
+            control={control}
+            render={({ field }) => (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: spacing.md,
+                }}
+              >
+                <View style={{ flex: 1, gap: spacing.xs }}>
+                  <Text variant="body">{es.recurring.confirmation}</Text>
+                  <Text variant="caption">{es.recurring.confirmationHelp}</Text>
+                </View>
+                <Switch
+                  value={field.value === 'confirm'}
+                  onValueChange={(value) => field.onChange(value ? 'confirm' : 'auto')}
+                  trackColor={{ true: colors.brand, false: colors.border }}
+                  accessibilityLabel={es.recurring.confirmation}
+                />
+              </View>
+            )}
+          />
+        ) : null}
 
         <View style={{ gap: spacing.sm }}>
           <Text variant="caption">{es.recurring.category}</Text>
