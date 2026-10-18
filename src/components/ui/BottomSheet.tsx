@@ -4,10 +4,10 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
   useAnimatedStyle,
-  useReducedMotion,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import { useReducedMotion } from '@/lib/useReducedMotion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { es } from '@/i18n/es';

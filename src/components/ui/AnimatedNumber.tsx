@@ -4,10 +4,10 @@ import {
   Easing,
   runOnJS,
   useAnimatedReaction,
-  useReducedMotion,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import { useReducedMotion } from '@/lib/useReducedMotion';
 
 import { formatCOP } from '@/lib/money';
 import { useTheme } from '@/theme';

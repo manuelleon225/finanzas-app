@@ -1,13 +1,7 @@
 import { useEffect, useState } from 'react';
-import {
-  AccessibilityInfo,
-  Animated,
-  Easing,
-  StyleSheet,
-  type DimensionValue,
-  type ViewStyle,
-} from 'react-native';
+import { Animated, Easing, StyleSheet, type DimensionValue, type ViewStyle } from 'react-native';
 
+import { useReducedMotion } from '@/lib/useReducedMotion';
 import { useTheme } from '@/theme';
 
 export type SkeletonVariant = 'line' | 'circle' | 'card';
@@ -29,16 +23,12 @@ export function Skeleton({
   style,
 }: SkeletonProps) {
   const { colors, radii } = useTheme();
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
   const [opacity] = useState(() => new Animated.Value(0.5));
 
   const isCircle = variant === 'circle';
   const resolvedHeight = height ?? (isCircle ? 40 : variant === 'card' ? 96 : 12);
   const baseColor = tone === 'onBlock' ? colors.blockTrack : colors.surfaceRaised;
-
-  useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
-  }, []);
 
   useEffect(() => {
     if (reduceMotion) {

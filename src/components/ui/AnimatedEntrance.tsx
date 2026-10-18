@@ -3,11 +3,11 @@ import { type ViewStyle } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
-  useReducedMotion,
   useSharedValue,
   withDelay,
   withTiming,
 } from 'react-native-reanimated';
+import { useReducedMotion } from '@/lib/useReducedMotion';
 
 import { durations } from '@/theme';
 

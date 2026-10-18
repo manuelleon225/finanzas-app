@@ -17,7 +17,7 @@ Marcas: ✋ paso tuyo · 🔍 revisión obligatoria · 📸 mándame capturas.
 ## 2. Antes de empezar (checklist)
 
 - ✋ Las migraciones 006 y 007 deben estar aplicadas (ya lo hiciste).
-- ✋ Recomendado: haber corrido el prompt de corrección de "EducaciÃ³n" (migración 008) y pegado ese SQL en Supabase. No bloquea el rediseño.
+- ✋ Recomendado: haber corrido el prompt de corrección de "Educación" (migración 008) y pegado ese SQL en Supabase. No bloquea el rediseño.
 - ✋ Guarda **este archivo** en la misma carpeta (fuera del repositorio) donde guardaste las guías anteriores. El prompt R7.0 le dice al agente que lo busque ahí.
 - El botón azul con engranaje que flota en tus capturas es de Expo Go, no de tu app. No lo arreglamos; desaparece en la app publicada.
 

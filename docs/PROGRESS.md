@@ -1932,7 +1932,7 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
 - **Textos (i18n):** `accounts.doesNotCountAsLiquid`, `categories.moreActions`,
   `categories.subcategoryOne`/`subcategoryMany`, `categories.archivedEmptyTitle`/`…Description`.
 - **Caracteres rotos (punto 6):** no se encontró ningún texto de interfaz con caracteres rotos en el
-  código (el único `Ã³` está en la guía y en la migración 008, que es dato/BD y queda fuera de alcance).
+  código (el único `ó` está en la guía y en la migración 008, que es dato/BD y queda fuera de alcance).
 - **Decisión:** la parrilla de color mantiene los 12 valores de `categoryPalette` (para no cambiar los
   datos guardados) pero se dibuja con fichas `IconTile`; el preview usa el color elegido. El botón al
   pie usa "Guardar" (`es.common.save`) en ambos formularios, como pide la spec.
@@ -2372,3 +2372,36 @@ ancho, `contentContainerStyle` sin padding horizontal).
 - **Snackbar** con entrada/salida animada (220/150 ms), respetando reducir movimiento.
 - **Calidad:** `npm run typecheck`, `npm run lint` (0 errores, avisos preexistentes) y `npm test`
   (567) en verde.
+
+
+### [2026-10-17] Tarea: Corrección de codificación UTF-8
+
+- Escaneo del repositorio: corregido CLAUDE.md (bytes inválidos), PROGRESS.md, guia-prompts-ui-v3-app-finanzas.md, plan-maestro-r8-correcciones-y-evolucion.md.
+- AGENTS.md: agregada regla de codificación Windows.
+- Prueba automática: src/__tests__/encoding.test.ts.
+- Migración: supabase/migrations/008_fix_text_encoding.sql.
+- Calidad: typecheck, lint (0 errores) y test en verde.
+
+
+## Verificación R8.0 y R8.1
+
+| Requisito | Archivo | Estado |
+|---|---|---|
+| BlockHeader width 100% + overflow hidden | src/components/ui/BlockHeader.tsx | PASS |
+| Fondo Svg absoluteFill width/height 100% preserveAspectRatio none | src/components/ui/BlockHeader.tsx | PASS |
+| Decor circles inside Svg (cx 88/100) | src/components/ui/BlockHeader.tsx | PASS |
+| Content padding bottom 44 | src/components/ui/BlockHeader.tsx | PASS |
+| Sheet marginTop -28 + radios sheet | src/components/ui/Sheet.tsx | PASS |
+| ScreenScaffold block structure | src/components/ui/ScreenScaffold.tsx | PASS |
+| System bars getStatusBarStyle/getTopInsetColor | src/lib/systemBars.ts | PASS |
+| Tests BlockHeader/Sheet/systemBars | src/components/ui/__tests__/* | PASS |
+
+
+### [2026-10-17] Tarea: R8.0/R8.1 verificación + reducir movimiento centralizado + animaciones
+
+- Verificación R8.0/R8.1: todos los requisitos PASS (tabla arriba).
+- Creado src/lib/useReducedMotion.ts como fuente única.
+- Migrados PressableScale, ProgressBar, Skeleton, Snackbar, transaction-form pulse.
+- GroupedBarChart: barras crecen 320ms con stagger 40ms.
+- CashFlowChart: línea/área se dibujan 400ms.
+- Calidad: typecheck, lint (0 errores), tests (570) en verde.

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
-import { Animated, Pressable, type PressableProps, View } from 'react-native';
+import { useState } from 'react';
+import { Animated, Pressable, type PressableProps } from 'react-native';
 
+import { useReducedMotion } from '@/lib/useReducedMotion';
 import { useTheme } from '@/theme';
 
 export type PressableScaleProps = PressableProps & {
@@ -9,27 +10,8 @@ export type PressableScaleProps = PressableProps & {
 
 export function PressableScale({ scaleTo = 0.97, style, children, ...rest }: PressableScaleProps) {
   const { colors } = useTheme();
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
   const [scale] = useState(() => new Animated.Value(1));
-
-  useEffect(() => {
-    let mounted = true;
-    // Lazy import to avoid bundling issues; use global AccessibilityInfo via react-native
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { AccessibilityInfo } = require('react-native');
-    AccessibilityInfo.isReduceMotionEnabled().then((value: boolean) => {
-      if (mounted) {
-        setReduceMotion(value);
-      }
-    });
-    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', (value: boolean) => {
-      setReduceMotion(value);
-    });
-    return () => {
-      mounted = false;
-      sub.remove();
-    };
-  }, []);
 
   function animateTo(value: number, duration: number) {
     if (reduceMotion) {

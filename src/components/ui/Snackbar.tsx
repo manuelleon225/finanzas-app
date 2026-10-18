@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Animated, Pressable, StyleSheet, View } from 'react-native';
 
+import { useReducedMotion } from '@/lib/useReducedMotion';
 import { useTheme } from '@/theme';
 
 import { Text } from './Text';
@@ -22,22 +23,9 @@ export function Snackbar({
 }: SnackbarProps) {
   const { colors, radii, spacing } = useTheme();
   const [visible, setVisible] = useState(!!message);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
   const [opacity] = useState(() => new Animated.Value(message ? 1 : 0));
   const [translateY] = useState(() => new Animated.Value(message ? 0 : 16));
-
-  useEffect(() => {
-    let mounted = true;
-    const { AccessibilityInfo } = require('react-native');
-    AccessibilityInfo.isReduceMotionEnabled().then((value: boolean) => {
-      if (mounted) {
-        setReduceMotion(value);
-      }
-    });
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   useEffect(() => {
     if (message) {
@@ -60,7 +48,6 @@ export function Snackbar({
 
     if (visible) {
       if (reduceMotion) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setVisible(false);
         opacity.setValue(0);
         translateY.setValue(16);

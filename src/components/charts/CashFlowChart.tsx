@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PanResponder, View } from 'react-native';
 import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop } from 'react-native-svg';
+import Animated, { useAnimatedProps, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { useReducedMotion } from '@/lib/useReducedMotion';
 import { Text } from '@/components/ui';
 import { formatCOP } from '@/lib/money';
 import { select } from '@/lib/haptics';
@@ -9,6 +11,8 @@ import { es } from '@/i18n/es';
 import { useTheme } from '@/theme';
 
 import { buildLineChartLayout, nearestIndex } from '@/features/analysis/utils/cashFlow';
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 export type CashFlowChartProps = {
   points: { day: number; balance: number }[];
@@ -22,6 +26,26 @@ export function CashFlowChart({ points, month, height = 140 }: CashFlowChartProp
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const layout = width > 0 ? buildLineChartLayout({ points, width, height, padding: 12 }) : null;
+
+  const reduceMotion = useReducedMotion();
+  const progress = useSharedValue(reduceMotion ? 1 : 0);
+
+  useEffect(() => {
+    if (!layout) {
+      return;
+    }
+    if (reduceMotion) {
+      progress.value = 1;
+      return;
+    }
+    progress.value = 0;
+    progress.value = withTiming(1, { duration: 400 });
+  }, [layout, reduceMotion, progress]);
+
+  const areaAnimatedProps = useAnimatedProps(() => ({ opacity: progress.value }));
+  const lineAnimatedProps = useAnimatedProps(() => ({
+    strokeDashoffset: 1000 * (1 - progress.value),
+  }));
 
   const isEmpty = points.length === 0 || points.every((point) => point.balance === 0);
 
@@ -108,14 +132,20 @@ export function CashFlowChart({ points, month, height = 140 }: CashFlowChartProp
                     <Stop offset="1" stopColor={colors.brand} stopOpacity={0} />
                   </LinearGradient>
                 </Defs>
-                <Path d={layout.areaPath} fill="url(#cashFlowArea)" />
-                <Path
+                <AnimatedPath
+                  d={layout.areaPath}
+                  fill="url(#cashFlowArea)"
+                  animatedProps={areaAnimatedProps}
+                />
+                <AnimatedPath
                   d={layout.path}
                   fill="none"
                   stroke={colors.brand}
                   strokeWidth={2.5}
                   strokeLinejoin="round"
                   strokeLinecap="round"
+                  strokeDasharray="1000"
+                  animatedProps={lineAnimatedProps}
                 />
                 {layout.zeroY !== null ? (
                   <Line

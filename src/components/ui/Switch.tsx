@@ -1,11 +1,7 @@
 import { useEffect } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { useReducedMotion } from '@/lib/useReducedMotion';
 
 import { select } from '@/lib/haptics';
 import { durations, useTheme } from '@/theme';

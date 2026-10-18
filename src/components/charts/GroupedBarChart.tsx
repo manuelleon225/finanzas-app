@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
+import Animated, { useAnimatedProps, useSharedValue, withTiming } from 'react-native-reanimated';
+
+import { useReducedMotion } from '@/lib/useReducedMotion';
 
 import { Text } from '@/components/ui';
 import { formatCOP, formatPesos } from '@/lib/money';
@@ -23,6 +26,52 @@ export type GroupedBarChartProps = {
   onSelectIndex?: (index: number) => void;
 };
 
+const AnimatedRect = Animated.createAnimatedComponent(Rect);
+
+function Bar({
+  targetHeight,
+  height,
+  x,
+  color,
+  opacity,
+  progress,
+  groupIndex,
+  groupCount,
+}: {
+  targetHeight: number;
+  height: number;
+  x: number;
+  color: string;
+  opacity: number;
+  progress: ReturnType<typeof useSharedValue<number>>;
+  groupIndex: number;
+  groupCount: number;
+}) {
+  const totalDuration = 320 + 40 * Math.max(0, groupCount - 1);
+  const animatedProps = useAnimatedProps(() => {
+    const start = (groupIndex * 40) / totalDuration;
+    const end = (groupIndex * 40 + 320) / totalDuration;
+    const span = Math.max(0.0001, end - start);
+    const local = Math.min(1, Math.max(0, (progress.value - start) / span));
+    const h = targetHeight * local;
+    return {
+      height: Math.max(0, h),
+      y: height - h,
+    };
+  });
+
+  return (
+    <AnimatedRect
+      x={x}
+      width={10}
+      rx={4}
+      fill={color}
+      opacity={opacity}
+      animatedProps={animatedProps}
+    />
+  );
+}
+
 export function GroupedBarChart({
   groups,
   colors,
@@ -32,12 +81,28 @@ export function GroupedBarChart({
   onSelectIndex,
 }: GroupedBarChartProps) {
   const { spacing } = useTheme();
+  const reduceMotion = useReducedMotion();
   const [width, setWidth] = useState(0);
 
   const layout =
     width > 0
       ? buildBarChartLayout({ data: groups, width, height, barWidth: 10, innerGap: 4 })
       : null;
+
+  const totalDuration = 320 + 40 * Math.max(0, groups.length - 1);
+  const progress = useSharedValue(reduceMotion ? 1 : 0);
+
+  useEffect(() => {
+    if (!layout) {
+      return;
+    }
+    if (reduceMotion) {
+      progress.value = 1;
+      return;
+    }
+    progress.value = 0;
+    progress.value = withTiming(1, { duration: totalDuration });
+  }, [groups, layout, reduceMotion, progress, totalDuration]);
 
   const summary = groups
     .map(
@@ -63,15 +128,16 @@ export function GroupedBarChart({
                 const opacity =
                   selectedIndex === undefined || selectedIndex === groupIndex ? 1 : 0.45;
                 return group.bars.map((bar, barIndex) => (
-                  <Rect
+                  <Bar
                     key={`${groupIndex}-${barIndex}`}
+                    targetHeight={bar.height}
+                    height={height}
                     x={bar.x}
-                    y={bar.y}
-                    width={bar.width}
-                    height={Math.max(0, bar.height)}
-                    rx={4}
-                    fill={colors[barIndex % colors.length]}
+                    color={colors[barIndex % colors.length]}
                     opacity={opacity}
+                    progress={progress}
+                    groupIndex={groupIndex}
+                    groupCount={groups.length}
                   />
                 ));
               })}

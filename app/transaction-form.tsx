@@ -7,7 +7,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   Alert,
-  AccessibilityInfo,
   Animated,
   KeyboardAvoidingView,
   Platform,
@@ -76,6 +75,7 @@ import {
 import { formatCompactCOP, formatPesos, parseMoneyInput } from '@/lib/money';
 import { useSnackbarStore } from '@/lib/snackbar';
 import { useConnectivity } from '@/lib/useConnectivity';
+import { useReducedMotion } from '@/lib/useReducedMotion';
 import { getTileColors, useTheme, type TileKey } from '@/theme';
 import type { TablesInsert } from '@/types/database';
 
@@ -277,7 +277,7 @@ export default function TransactionFormScreen() {
 
   const [suggestedIds, setSuggestedIds] = useState<string[]>([]);
   const [frequent, setFrequent] = useState<FrequentTransaction[]>([]);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
   const pulse = useRef(new Animated.Value(1)).current;
 
   const categoryKind: CategoryKind = type === 'income' ? 'income' : 'expense';
@@ -286,21 +286,6 @@ export default function TransactionFormScreen() {
 
   const yesterdayISO = useMemo(() => format(subDays(new Date(), 1), 'yyyy-MM-dd'), []);
 
-  useEffect(() => {
-    let mounted = true;
-    AccessibilityInfo.isReduceMotionEnabled().then((value) => {
-      if (mounted) {
-        setReduceMotion(value);
-      }
-    });
-    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', (value) => {
-      setReduceMotion(value);
-    });
-    return () => {
-      mounted = false;
-      sub.remove();
-    };
-  }, []);
   const usageFrom = useMemo(() => format(subDays(new Date(), 179), 'yyyy-MM-dd'), []);
 
   const categoriesQuery = useCategories(categoryKind);

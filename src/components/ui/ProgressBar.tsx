@@ -1,13 +1,7 @@
 import { useEffect, useState } from 'react';
-import {
-  AccessibilityInfo,
-  Animated,
-  Easing,
-  StyleSheet,
-  View,
-  type ViewStyle,
-} from 'react-native';
+import { Animated, Easing, StyleSheet, View, type ViewStyle } from 'react-native';
 
+import { useReducedMotion } from '@/lib/useReducedMotion';
 import { tint, useTheme } from '@/theme';
 
 export function clampProgress(value: number): number {
@@ -30,7 +24,7 @@ export type ProgressBarProps = {
 
 export function ProgressBar({ value, color, tone = 'default', status, style }: ProgressBarProps) {
   const { colors, radii } = useTheme();
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
   const [progress] = useState(() => new Animated.Value(clampProgress(value)));
   const clamped = clampProgress(value);
   const onBlock = tone === 'onBlock';
@@ -46,10 +40,6 @@ export function ProgressBar({ value, color, tone = 'default', status, style }: P
           : (color ?? colors.brand);
 
   const trackColor = onBlock ? colors.blockTrack : colors.surfaceHigh;
-
-  useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
-  }, []);
 
   useEffect(() => {
     if (reduceMotion) {

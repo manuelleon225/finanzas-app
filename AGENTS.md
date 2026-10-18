@@ -106,3 +106,8 @@ Al terminar:
 2. Actualiza `docs/PROGRESS.md`.
 3. Responde con: resumen breve, archivos tocados, comandos a ejecutar por la persona y un mensaje de commit sugerido (Conventional Commits).
 4. Detente. No empieces la siguiente tarea.
+
+
+### Regla de codificación (Windows)
+
+En este equipo Windows, nunca escribas ni añadas texto a archivos con redirecciones (> o >>), Out-File, Add-Content ni Set-Content con la codificación por defecto. Usa las herramientas de edición de archivos del agente, o [System.IO.File]::WriteAllText / AppendAllText con UTF8Encoding(False).

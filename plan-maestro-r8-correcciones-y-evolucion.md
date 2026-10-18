@@ -26,7 +26,7 @@ Continuación de la guía v3 (R7.0 a R7.14). Parte de las capturas nuevas del di
 | 4 | Alta | Todas | Barra de estado negra (el bloque no llega arriba) y franja gris clara en la barra de navegación inferior. Puede ser un límite de Expo Go. | Prompt #2 |
 | 5 | Media | Análisis | Dos chevrones "<" apilados (atrás y mes) que se confunden; la frase del estado vacío se repite en dos lugares. | Prompt #6 |
 | 6 | Media | Planificar, Más, Cuentas, Categorías | Siguen con el estilo anterior (tarjetas grises, enlaces de texto "Editar" y "Archivar"). Corresponden a R7.9, R7.10 y R7.11 de la guía v3. | Guía v3 |
-| 7 | Media | Categorías | Texto roto: "EducaciÃ³n" (error de codificación en la base de datos). | Migración 008 (ya tienes el prompt) |
+| 7 | Media | Categorías | Texto roto: "Educación" (error de codificación en la base de datos). | Migración 008 (ya tienes el prompt) |
 | 8 | Baja | Todas | El botón azul con engranaje flotante es de Expo Go, no de la app. | No aplica |
 
 ### 1.3 Brecha frente a las apps líderes
