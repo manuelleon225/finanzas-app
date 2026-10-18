@@ -30,6 +30,7 @@ import {
   LoadingState,
   MoneyText,
   NumericKeypad,
+  PressableScale,
   ScreenScaffold,
   SegmentedControl,
   Skeleton,
@@ -157,16 +158,16 @@ function CategoryGrid({
                   transform: [{ scale: isSuggested && pulse ? pulse : 1 }],
                 }}
               >
-                <Pressable
+                <PressableScale
                   onPress={() => onSelect(item.category.id)}
                   accessibilityRole="button"
                   accessibilityLabel={item.category.name}
                   accessibilityState={{ selected }}
-                  style={({ pressed }) => [
+                  style={[
                     styles.tile,
                     {
                       borderRadius: radii.lg,
-                      backgroundColor: pressed ? colors.surfaceHigh : colors.surfaceRaised,
+                      backgroundColor: colors.surfaceRaised,
                       borderColor: selected ? colors.brand : 'transparent',
                     },
                   ]}
@@ -176,7 +177,7 @@ function CategoryGrid({
                     {item.category.name}
                   </Text>
                   {isSuggested ? <Tag label={es.transactionForm.suggested} tone="base" /> : null}
-                </Pressable>
+                </PressableScale>
               </Animated.View>
             );
           })}
@@ -835,7 +836,7 @@ export default function TransactionFormScreen() {
                       }
 
                       return (
-                        <Pressable
+                        <PressableScale
                           key={`${item.categoryId}-${index}`}
                           onPress={handleFrequent}
                           accessibilityRole="button"
@@ -872,7 +873,7 @@ export default function TransactionFormScreen() {
                           <Text variant="caption" numberOfLines={1}>
                             {displayLabel}
                           </Text>
-                        </Pressable>
+                        </PressableScale>
                       );
                     })}
                   </ScrollView>

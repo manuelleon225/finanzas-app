@@ -2405,3 +2405,11 @@ ancho, `contentContainerStyle` sin padding horizontal).
 - GroupedBarChart: barras crecen 320ms con stagger 40ms.
 - CashFlowChart: línea/área se dibujan 400ms.
 - Calidad: typecheck, lint (0 errores), tests (570) en verde.
+
+
+### [2026-10-17] Tarea: PressableScale en superficies tocables + consulta única en Análisis
+
+- PressableScale aplicado a: ListRow, QuickActions, CategoryGrid (registro rápido), chips frecuentes.
+- Excluidos: botones, chips, IconButton, segmentos, elementos <44px, tarjetas no presionables (AccountCard).
+- Análisis: eliminada consulta duplicada (useTransactionsInRange), usa transactions de useAnalysis.
+- Calidad: typecheck, lint (0 errores), tests en verde.

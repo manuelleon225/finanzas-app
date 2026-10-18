@@ -24,7 +24,7 @@ export function EmptyIllustration({ variant }: EmptyIllustrationProps) {
       style={styles.container}
     >
       <Svg testID={`empty-illustration-${variant}`} width={120} height={96} viewBox="0 0 120 96">
-        <Circle cx={60} cy={48} r={44} fill={colors.brandSoft} />
+        <Circle testID="empty-illustration-base" cx={60} cy={48} r={44} fill={colors.brandSoft} />
 
         {variant === 'list' ? (
           <>

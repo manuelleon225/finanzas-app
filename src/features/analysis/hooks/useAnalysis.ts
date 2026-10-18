@@ -63,7 +63,7 @@ export function useAnalysis(month: Date, kind: AnalysisKind) {
       topExpenses: spendingByCategory(monthTransactions, categories, { kind: 'expense' }),
     });
 
-    return { byCategory, trend, extraShare, insights };
+    return { byCategory, trend, extraShare, insights, transactions };
   }, [query.data, categoriesQuery.data, kind, month]);
 
   return {

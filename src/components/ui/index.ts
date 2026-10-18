@@ -52,6 +52,7 @@ export { ErrorState, type ErrorStateProps } from './ErrorState';
 export { Input, type InputProps } from './Input';
 export { LoadingState, type LoadingStateProps } from './LoadingState';
 export { MoneyText, type MoneyKind, type MoneyTextProps } from './MoneyText';
+export { PressableScale, type PressableScaleProps } from './PressableScale';
 export { Screen, type ScreenProps } from './Screen';
 export { Snackbar, type SnackbarProps } from './Snackbar';
 export { SnackbarHost } from './SnackbarHost';

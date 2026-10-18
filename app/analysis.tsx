@@ -21,7 +21,6 @@ import {
   Text,
 } from '@/components/ui';
 import { useAnalysis } from '@/features/analysis/hooks/useAnalysis';
-import { useTransactionsInRange } from '@/features/transactions/hooks/useTransactions';
 import type { AnalysisKind } from '@/features/analysis/utils/analysis';
 import { cumulativeBalanceByDay } from '@/features/analysis/utils/cashFlow';
 import { todayISO } from '@/lib/dates';
@@ -52,28 +51,26 @@ export default function AnalysisScreen() {
   const [monthAnchor, setMonthAnchor] = useState(() => startOfMonth(new Date()));
   const [kind, setKind] = useState<AnalysisKind>('expense');
 
-  const { byCategory, trend, extraShare, insights, isLoading, isError, refetch } = useAnalysis(
-    monthAnchor,
-    kind,
-  );
-
-  const cashFlowFrom = format(startOfMonth(monthAnchor), 'yyyy-MM-dd');
-  const cashFlowTo = format(endOfMonth(monthAnchor), 'yyyy-MM-dd');
-  const cashFlowQuery = useTransactionsInRange(cashFlowFrom, cashFlowTo);
+  const { byCategory, trend, extraShare, insights, transactions, isLoading, isError, refetch } =
+    useAnalysis(monthAnchor, kind);
 
   const cashFlowPoints = useMemo(
     () =>
       cumulativeBalanceByDay({
-        transactions: (cashFlowQuery.data ?? []).map((transaction) => ({
-          type: transaction.type,
-          status: transaction.status,
-          amount: transaction.amount,
-          occurred_on: transaction.occurred_on,
-        })),
+        transactions: transactions
+          .filter(
+            (transaction) => transaction.occurred_on.slice(0, 7) === format(monthAnchor, 'yyyy-MM'),
+          )
+          .map((transaction) => ({
+            type: transaction.type,
+            status: transaction.status,
+            amount: transaction.amount,
+            occurred_on: transaction.occurred_on,
+          })),
         month: monthAnchor,
         today: todayISO(),
       }),
-    [cashFlowQuery.data, monthAnchor],
+    [transactions, monthAnchor],
   );
 
   const selectedMonthIndex = Math.max(

@@ -105,4 +105,13 @@ describe('buildLineChartLayout', () => {
     expect(nearestIndex(0, coords)).toBe(0);
     expect(nearestIndex(100, coords)).toBe(2);
   });
+
+  it('nearestIndex en el centro', () => {
+    const coords = [
+      { x: 10, y: 0 },
+      { x: 50, y: 0 },
+      { x: 90, y: 0 },
+    ];
+    expect(nearestIndex(50, coords)).toBe(1);
+  });
 });
