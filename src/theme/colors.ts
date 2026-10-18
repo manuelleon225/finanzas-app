@@ -8,66 +8,78 @@ export type ThemeColors = {
   textSecondary: string;
   textMuted: string;
   brand: string;
+  brandDeep: string;
   brandSoft: string;
+  brandText: string;
   onBrand: string;
+  onBrandMuted: string;
+  blockTrack: string;
+  blockSoft: string;
+  blockDecor: string;
   income: string;
   expense: string;
   extra: string;
+  extraFill: string;
   extraSoft: string;
   danger: string;
+  dangerSoft: string;
   scrim: string;
-  // deprecated: migrar a bg
-  background: string;
-  // deprecated: migrar a brand
-  primary: string;
-  // deprecated: migrar a onBrand
-  onPrimary: string;
 };
 
-const dark = {
-  bg: '#0F1115',
-  surface: '#181B22',
-  surfaceRaised: '#1F232C',
-  surfaceHigh: '#2A2F3A',
-  border: '#262A33',
-  textPrimary: '#F2F3F5',
-  textSecondary: '#9AA0AB',
-  textMuted: '#858B97',
-  brand: '#7C86FF',
-  brandSoft: '#262B4D',
-  onBrand: '#0F1115',
+const dark: ThemeColors = {
+  bg: '#0E1118',
+  surface: '#171B26',
+  surfaceRaised: '#1F2433',
+  surfaceHigh: '#2A3042',
+  border: '#232938',
+  textPrimary: '#F2F4FA',
+  textSecondary: '#9AA3B8',
+  textMuted: '#7C849A',
+  brand: '#2F5BFF',
+  brandDeep: '#2449E0',
+  brandSoft: '#26305A',
+  brandText: '#9DB4FF',
+  onBrand: '#FFFFFF',
+  onBrandMuted: '#EEF3FF',
+  blockTrack: '#5A80FF',
+  blockSoft: '#1F45D6',
+  blockDecor: 'rgba(255, 255, 255, 0.08)',
   income: '#4ADE9A',
   expense: '#FF7A6B',
   extra: '#F5B544',
-  extraSoft: '#3A2E14',
-  danger: '#FF5C5C',
+  extraFill: '#F5B544',
+  extraSoft: '#3A3217',
+  danger: '#FF6B6B',
+  dangerSoft: '#3A1E1E',
   scrim: 'rgba(0, 0, 0, 0.6)',
-  background: '#0F1115',
-  primary: '#7C86FF',
-  onPrimary: '#0F1115',
-} as const;
+};
 
-const light = {
-  bg: '#F6F7F9',
+const light: ThemeColors = {
+  bg: '#F4F6FB',
   surface: '#FFFFFF',
-  surfaceRaised: '#F0F2F5',
-  surfaceHigh: '#E6E9EE',
+  surfaceRaised: '#EEF1F7',
+  surfaceHigh: '#E3E7F0',
   border: '#E3E6EB',
   textPrimary: '#12141A',
   textSecondary: '#5B6270',
-  textMuted: '#6B7280',
-  brand: '#4F5BFF',
-  brandSoft: '#E6E8FF',
+  textMuted: '#646B79',
+  brand: '#2F5BFF',
+  brandDeep: '#2449E0',
+  brandSoft: '#E3EBFF',
+  brandText: '#2347D6',
   onBrand: '#FFFFFF',
-  income: '#0A7F48',
+  onBrandMuted: '#EEF3FF',
+  blockTrack: '#5A80FF',
+  blockSoft: '#1F45D6',
+  blockDecor: 'rgba(255, 255, 255, 0.10)',
+  income: '#0F7A45',
   expense: '#C73A2B',
   extra: '#9A5B00',
-  extraSoft: '#FFF1D6',
+  extraFill: '#F2A93B',
+  extraSoft: '#FFF0C2',
   danger: '#C73A2B',
+  dangerSoft: '#FFE3E0',
   scrim: 'rgba(0, 0, 0, 0.4)',
-  background: '#F6F7F9',
-  primary: '#4F5BFF',
-  onPrimary: '#FFFFFF',
-} as const;
+};
 
 export const colors: Record<'dark' | 'light', ThemeColors> = { dark, light };

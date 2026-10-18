@@ -79,6 +79,11 @@ docs/                     # documentación del proyecto
   todo sale de los tokens.
 - **Un solo botón primario por vista**.
 - **Ámbar solo para la naturaleza "extra"**, nunca para advertencias.
+- **Ionicons solo a través de `AppIcon`**; se permite la variante rellena en fichas de categoría
+  (`IconTile`) y en la pestaña activa.
+- **Esta etapa solo cambia la capa visual**: no tocar lógica de negocio, hooks de datos, `api` ni
+  migraciones.
+- **Si el diseño no cubre algo, pregunta antes de inventar**.
 - Reglas de accesibilidad y microcopy según `docs/UX_SPEC.md` (sección "Estados y microcopy").
 
 ## 5. Reglas de trabajo

@@ -1,4 +1,10 @@
-import { groupCategoriesByParent, validateCategoryName, type Category } from '../categories';
+import {
+  categorySubtitle,
+  colorTileKey,
+  groupCategoriesByParent,
+  validateCategoryName,
+  type Category,
+} from '../categories';
 
 describe('groupCategoriesByParent', () => {
   it('devuelve una lista vacía si no hay categorías', () => {
@@ -34,6 +40,36 @@ describe('groupCategoriesByParent', () => {
     const groups = groupCategoriesByParent(categories);
     expect(groups).toHaveLength(1);
     expect(groups[0].children).toEqual([]);
+  });
+});
+
+describe('categorySubtitle', () => {
+  it('devuelve undefined sin subcategorías', () => {
+    expect(categorySubtitle(0)).toBeUndefined();
+  });
+
+  it('usa singular con una subcategoría', () => {
+    expect(categorySubtitle(1)).toBe('1 subcategoría');
+  });
+
+  it('usa plural con varias subcategorías', () => {
+    expect(categorySubtitle(3)).toBe('3 subcategorías');
+  });
+});
+
+describe('colorTileKey', () => {
+  it('mapea un color de la paleta a su ficha', () => {
+    expect(colorTileKey('#3B82F6', 'expense')).toBe('blue');
+    expect(colorTileKey('#EC4899', 'income')).toBe('pink');
+  });
+
+  it('cae a gray con un color desconocido o vacío', () => {
+    expect(colorTileKey('#123456', 'expense')).toBe('gray');
+    expect(colorTileKey('', 'expense')).toBe('gray');
+  });
+
+  it('ignora el nombre de la categoría', () => {
+    expect(colorTileKey('#F97316', 'expense')).toBe('orange');
   });
 });
 

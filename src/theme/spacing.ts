@@ -4,6 +4,8 @@ export const spacing = {
   md: 12,
   lg: 16,
   xl: 20,
+  // Margen lateral de pantalla (v3 §5)
+  screen: 20,
   xl2: 24,
   xxl: 32,
   xxl2: 40,

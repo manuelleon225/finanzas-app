@@ -7,12 +7,17 @@ import { useTheme } from '@/theme';
 
 import { IconButton } from './IconButton';
 import { Text, type TextVariant } from './Text';
+import { type IconSize } from './AppIcon';
+
+export type MonthSelectorTone = 'default' | 'onBlock';
 
 export type MonthSelectorProps = {
   value: Date | string;
   onChange: (next: Date) => void;
   maxDate?: Date;
   labelVariant?: TextVariant;
+  tone?: MonthSelectorTone;
+  iconSize?: IconSize;
   style?: ViewStyle;
 };
 
@@ -26,12 +31,15 @@ export function MonthSelector({
   onChange,
   maxDate,
   labelVariant = 'subtitle',
+  tone = 'default',
+  iconSize = 24,
   style,
 }: MonthSelectorProps) {
-  const { spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const anchor = toMonthDate(value);
   const maxAnchor = startOfMonth(maxDate ?? new Date());
   const canGoNext = isBefore(anchor, maxAnchor);
+  const color = tone === 'onBlock' ? colors.onBrand : undefined;
 
   return (
     <View style={[styles.row, { gap: spacing.sm }, style]}>
@@ -39,14 +47,18 @@ export function MonthSelector({
         icon="chevron-back-outline"
         onPress={() => onChange(subMonths(anchor, 1))}
         accessibilityLabel={es.transactionList.previousMonth}
+        color={color}
+        iconSize={iconSize}
       />
-      <Text variant={labelVariant} align="center" style={styles.label}>
+      <Text variant={labelVariant} align="center" color={color} style={styles.label}>
         {formatMonthLabel(anchor)}
       </Text>
       <IconButton
         icon="chevron-forward-outline"
         onPress={() => onChange(addMonths(anchor, 1))}
         accessibilityLabel={es.transactionList.nextMonth}
+        color={color}
+        iconSize={iconSize}
         disabled={!canGoNext}
       />
     </View>

@@ -184,4 +184,54 @@ la app en la pantalla correcta, sin que el guardia de rutas mande a las pestaña
   esté corriendo. `Linking.createURL` resuelve la URL correcta en cada caso; para probar el flujo
   completo conviene un development build.
 
+## 10. Barras del sistema y borde a borde (R7.2)
+
+**Objetivo:** que la app se dibuje de borde a borde y que las barras del sistema (estado y
+navegación) no dejen franjas que desentonen con el tema.
+
+### Solución elegida (sin dependencias nuevas)
+
+- **Borde a borde (Android):** en SDK 54 pasó a ser el **predeterminado para proyectos nuevos y
+  existentes**, y en Android 16 es **obligatorio**; en SDK 55 se eliminó `edgeToEdgeEnabled` de
+  `app.json` (ya no se configura: siempre está activo). Las barras quedan transparentes y el
+  contenido se dibuja detrás. En **Expo Go** está siempre activo y **sin opt-out**.
+- **Barra de estado:** `expo-status-bar` (`<StatusBar>`), con el estilo que decide la función pura
+  `getStatusBarStyle(mode, variant)` (`src/lib/systemBars.ts`): `block` siempre íconos claros;
+  `plain` claros en oscuro y oscuros en claro. Con borde a borde, `backgroundColor`/`translucent`
+  son **no-ops**; solo `style`/`hidden` tienen efecto.
+- **Fondo de las barras / franjas:** `expo-system-ui`
+  (`SystemUI.setBackgroundColorAsync(colors.bg)`) pinta la vista raíz (ventana) con el token `bg`; es
+  el color que se ve detrás de las barras transparentes. Reacciona al cambio de tema (incluido
+  "Sistema").
+- **Área de la zona segura superior (R8.1):** `ScreenScaffold` pinta una `View` absoluta de alto
+  `insets.top` con `brand` en pantallas con bloque y `bg` en las demás, para que la franja superior
+  no quede sin el color correcto. La decisión la toma la función pura `getTopInsetColor(variant)`
+  (`src/lib/systemBars.ts`), con tests.
+- **Componente:** `<SystemBars variant>` (`src/components/ui/SystemBars.tsx`) aplica el estilo de la
+  barra de estado y el fondo de la ventana. Se monta en el layout raíz con `variant="plain"` y en
+  cada `ScreenScaffold` con la variante de la pantalla.
+- **Zonas seguras:** el contenido usa `react-native-safe-area-context` (`Screen` con
+  `SafeAreaView`, `TabBar` con `useSafeAreaInsets`), de modo que nada queda tapado por el notch ni
+  la barra de gestos.
+- `useTheme()` expone también `mode` (`'dark' | 'light'` efectivo, resuelto desde
+  `system`/`dark`/`light`).
+
+### Límites (documentados)
+
+- **Color de fondo de la barra de navegación en Android:** con borde a borde (Android 15+), Android
+  deprecó el pintado de la barra de navegación; no se puede fijar su color propio. Lo que se ve
+  detrás es el fondo de la app/ventana (token `bg`), que es lo que controlamos.
+- **Scrim de contraste (navegación por 3 botones):** Android aplica por defecto un scrim translúcido
+  (`android:enforceNavigationBarContrast = true`) que sobre fondo oscuro se ve como una franja gris
+  claro. No se puede quitar ni colorear desde JS; se desactiva en build con `enforceContrast: false`
+  (plugin de `expo-navigation-bar`). **No tiene efecto en Expo Go**.
+- **Íconos de la barra de navegación (Android):** su color lo controla el sistema. `expo-navigation-bar`
+  permitiría forzarlo (`setStyle`) solo si `enforceContrast` es `false`; **no está instalado** y la
+  tarea pide la solución con menos dependencias. Además, en SDK 55+ sus APIs de color/estilo quedaron
+  deprecadas o como no-op.
+- **Expo Go:** `expo-system-ui` y borde a borde están incluidos en Expo Go, así que el fondo `bg` y el
+  relleno de la zona segura superior deberían verse. El color/scrim de la barra de navegación **no**
+  se puede controlar en Expo Go; en un **development build** se verificaría con un plugin
+  `enforceContrast: false` (requiere instalar `expo-navigation-bar`, con permiso).
+
 

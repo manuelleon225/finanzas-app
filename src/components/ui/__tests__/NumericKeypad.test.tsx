@@ -52,4 +52,14 @@ describe('NumericKeypad', () => {
     await fireEvent.press(getByText('7'));
     expect(onDigit).not.toHaveBeenCalled();
   });
+
+  it('usa teclas de 52 px de alto', async () => {
+    const { utils } = setup();
+    const { getAllByTestId } = await utils;
+    const keys = getAllByTestId('keypad-key');
+    expect(keys).toHaveLength(12);
+    for (const key of keys) {
+      expect(key).toHaveStyle({ height: 52 });
+    }
+  });
 });

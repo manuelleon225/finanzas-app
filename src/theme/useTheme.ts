@@ -13,9 +13,11 @@ export function useTheme() {
   const mode = useThemeModeStore((state) => state.mode);
 
   return useMemo(() => {
-    const effective = mode === 'system' ? (systemScheme ?? 'dark') : mode;
+    const effective: 'dark' | 'light' =
+      mode === 'system' ? (systemScheme === 'light' ? 'light' : 'dark') : mode;
 
     return {
+      mode: effective,
       colors: colors[effective === 'light' ? 'light' : 'dark'],
       spacing,
       radii,

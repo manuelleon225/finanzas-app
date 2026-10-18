@@ -1483,3 +1483,892 @@ Registro de lo que se hizo en cada tarea. La memoria del proyecto vive aquí, no
   finales; decidir sobre las dependencias sin uso y las discrepancias de diseño listadas.
 - **Calidad:** `npm run typecheck`, `npm run lint` (2 avisos informativos preexistentes) y
   `npm test` (343) en verde.
+
+### [2026-10-15] Tarea: R7.0 — Rama y documentos del diseño v3
+
+- **Qué se hizo:** Preparación del rediseño v3, sin escribir código de la app:
+  - Confirmada la rama `feat/ui-v3` (creada desde `feat/redesign`, commit `dedbe65`).
+  - Copia exacta de los documentos v2 a `docs/archive/DESIGN_SYSTEM_v2.md` y
+    `docs/archive/UX_SPEC_v2.md` (verificada byte a byte con SHA256 contra el commit `dedbe65`).
+  - Copia mecánica de los Anexos de `guia-prompts-ui-v3-app-finanzas.md`: Anexo A →
+    `docs/DESIGN_SYSTEM.md` (169 líneas) y Anexo B → `docs/UX_SPEC.md` (112 líneas). Verificada
+    línea por línea contra el original (primera y última línea coinciden).
+  - `AGENTS.md`: se precisó la regla de íconos ("Ionicons solo a través de `AppIcon`, con relleno
+    permitido en `IconTile` y pestaña activa"), se agregó que esta etapa **solo cambia la capa
+    visual** (no lógica de negocio, hooks de datos, `api` ni migraciones) y "si el diseño no cubre
+    algo, pregunta antes de inventar". Se mantienen las reglas de colores fuera de `src/theme`, un
+    solo botón primario por vista y ámbar solo para "extra".
+  - `docs/DECISIONS.md`: cinco decisiones del v3 (bloque de color, íconos rellenos sin nueva librería,
+    oscuro por defecto con claro soportado, degradado sutil con `react-native-svg` sin dependencias
+    nuevas, formato compacto de montos grandes en resúmenes).
+- **Archivos creados o modificados:** `AGENTS.md`, `docs/DESIGN_SYSTEM.md`, `docs/UX_SPEC.md`,
+  `docs/DECISIONS.md`, `docs/PROGRESS.md`, `docs/archive/DESIGN_SYSTEM_v2.md` (nuevo),
+  `docs/archive/UX_SPEC_v2.md` (nuevo).
+- **Nota:** la guía quedó dentro del repo (`guia-prompts-ui-v3-app-finanzas.md`, commit `dedbe65`),
+  no en una carpeta hermana; se usó esa copia como fuente.
+- **Pendientes (✋ manual):** revisar la extracción de los Anexos y arrancar R7.1.
+- **Calidad:** `npm run typecheck` en verde, `npm run lint` (0 errores, 2 avisos preexistentes) y
+  `npm test` (343) en verde. Solo cambios de documentación; no se tocó código de la app.
+
+### [2026-10-15] Tarea: R7.1 — Tokens v3
+
+- **Qué se hizo:** Tokens del tema alineados al diseño v3 sin romper la API de `useTheme()` ni las
+  pantallas:
+  - **Colores (`src/theme/colors.ts`):** valores exactos de la sección 3.1 del Anexo (oscuro y
+    claro) y tokens nuevos: `brandDeep`, `onBrandMuted`, `blockTrack`, `blockSoft`, `blockDecor`,
+    `brandText`, `extraFill`, `dangerSoft`. Se conservan `background`, `primary` y `onPrimary` como
+    alias deprecated apuntando a `bg`, `brand` y `onBrand`.
+  - **Tipografía:** `displayLg` 44/52 y `title` 24/30 (sección 4); el resto sin cambios.
+  - **Radios:** `xl` pasa a 20 y se agrega `sheet` 28 (sección 5); `sm/md/lg/pill/button` sin cambios.
+  - **Espaciado:** nuevo token `spacing.screen = 20` (margen lateral de pantalla).
+  - **Nueva `src/theme/tilePalette.ts`:** las 12 fichas de la sección 3.2 con
+    `{ darkBg, darkIcon, lightBg, lightIcon }`, `getTileColors(key, mode)` y la función pura
+    `resolveTileKey(input)` (categorías por nombre por defecto §3.3, color guardado → clave más
+    cercana en tono, cuentas por tipo; fallback `gray`). Exportada desde `src/theme/index.ts`.
+  - **Tests:** `contrast.test.ts` ampliado (19 pares de texto a 4.5:1 en ambos modos + 12 fichas a
+    3:1 en ambos modos) y nuevo `tilePalette.test.ts` (categorías por defecto, color desconocido,
+    personalizadas y cuentas). +64 tests (407 en total).
+- **Decisiones tomadas:**
+  - `radii.xl` ya existía con 24 (lo usan `Card` y `BottomSheet`); con visto bueno se alineó a 20
+    (sección 5) y se añadió `sheet` 28. `BottomSheet` quedará en 20 hasta que R7.4 lo pase a `sheet`.
+  - Nuevo token de espaciado llamado `screen` (20).
+  - En `resolveTileKey` el mapeo por **nombre** de las categorías por defecto tiene prioridad sobre
+    el color guardado: los colores de las categorías por defecto son heredados (p. ej. `Extra` es
+    verde #22C55E pero la sección 3.3 pide `yellow`), así que sin esa precedencia no se cumpliría la
+    sección 3.3. Para categorías personalizadas se usa el color.
+- **Contraste:** todos los pares pasan con los valores EXACTOS del Anexo, sin ajustes de luminosidad.
+- **Archivos:** `src/theme/colors.ts`, `src/theme/typography.ts`, `src/theme/radii.ts`,
+  `src/theme/spacing.ts`, `src/theme/tilePalette.ts` (nuevo), `src/theme/index.ts`,
+  `src/theme/__tests__/contrast.test.ts`, `src/theme/__tests__/tilePalette.test.ts` (nuevo),
+  `docs/PROGRESS.md`.
+- **Pendientes (✋ manual):** revisar en el dispositivo (ver lista en la respuesta) y continuar con R7.2.
+- **Calidad:** `npm run typecheck` en verde, `npm run lint` (0 errores, 2 avisos preexistentes) y
+  `npm test` (407) en verde.
+
+### [2026-10-15] Tarea: R7.2 — Barras del sistema
+
+- **Qué se hizo:** borde a borde y barras del sistema alineadas al tema, sin dependencias nuevas:
+  - **`src/lib/systemBars.ts` (nuevo):** función pura `getStatusBarStyle(mode, variant)` (`block` =
+    siempre íconos claros; `plain` = claros en oscuro, oscuros en claro) + tests.
+  - **`src/components/ui/SystemBars.tsx` (nuevo):** componente `<SystemBars variant>` que aplica el
+    estilo de la barra de estado con `expo-status-bar` y el color de fondo del sistema (vista raíz)
+    con `SystemUI.setBackgroundColorAsync(colors.bg)`; reacciona al cambio de tema (incluido
+    "Sistema"). Exportado desde `@/components/ui`.
+  - **`useTheme()`** ahora expone `mode` (`'dark' | 'light'` efectivo) para que las barras sepan el
+    modo resuelto.
+  - **Layout raíz:** se reemplazó `<StatusBar style="auto" />` por `<SystemBars variant="plain" />` y
+    se le dio `backgroundColor` al contenedor raíz.
+  - **Docs:** `docs/ARCHITECTURE.md` sección 10 con la solución y sus límites (color de la barra de
+    navegación deprecado en Android 15+, íconos de la barra de navegación controlados por el sistema
+    y nota de Expo Go / development build).
+  - **Tests:** +2 (409 en total).
+- **Decisiones tomadas:**
+  - Solución con lo ya instalado (`expo-status-bar` + `expo-system-ui`); **no** se agregó
+    `expo-navigation-bar` (sería dependencia nueva y su personalización de fondo está deprecada con
+    borde a borde).
+  - El "fondo de la barra de navegación" se logra pintando la vista raíz con el token `bg` (lo que se
+    ve detrás de la barra transparente en borde a borde).
+- **Archivos:** `src/lib/systemBars.ts` (nuevo), `src/lib/systemBars.test.ts` (nuevo),
+  `src/components/ui/SystemBars.tsx` (nuevo), `src/components/ui/index.ts`, `src/theme/useTheme.ts`,
+  `app/_layout.tsx`, `docs/ARCHITECTURE.md`, `docs/PROGRESS.md`.
+- **Pendientes (✋ manual):** revisar en el dispositivo (capturas arriba/abajo en oscuro y claro) y
+  continuar con R7.3.
+- **Calidad:** `npm run typecheck` en verde, `npm run lint` (0 errores, 2 avisos preexistentes) y
+  `npm test` (409) en verde.
+
+### [2026-10-15] Tarea: R7.3 — Íconos rellenos y fichas de color
+
+- **Qué se hizo:** variante rellena de íconos + componente de ficha con color:
+  - **`AppIcon`:** nueva prop `filled` (por defecto `false`) y función pura exportada
+    `resolveIconName(name, filled)` (resuelve el sufijo `-outline` a su versión rellena si existe en el
+    mapa de Ionicons; si no, cae al contorno o al glifo por defecto). Se añadió `hasGlyph(name)` (puro)
+    para consultar el mapa sin importar Ionicons fuera de este archivo. `AppIcon` sigue siendo el único
+    archivo que importa Ionicons. La prop `size` pasa de `IconSize` a `number` (sin romper llamadas) para
+    permitir el tamaño del ícono de la ficha.
+  - **`src/components/ui/IconTile.tsx` (nuevo):** ficha cuadrada `{ icon, tileKey, size }` con
+    `size: 32 | 40 | 48` (por defecto 40), radios 10/12/14 según tamaño, fondo y color de ícono desde
+    `getTileColors(tileKey, mode)`, ícono **relleno** al 55% del lado (18/22/26 px). Accesibilidad:
+    decorativa (`accessible={false}`) salvo que se pase `accessibilityLabel` (rol `image`).
+  - **`src/components/ui/tileHelpers.ts` (nuevo):** helpers puros `resolveCategoryTile(category)` y
+    `resolveAccountTile(account)` + hooks `useCategoryTile` / `useAccountTile` que devuelven
+    `{ icon, tileKey }`. Combinan `resolveTileKey` con el ícono guardado. Ícono por tipo de cuenta:
+    `cash=wallet`, `bank=business`, `savings=piggy-bank si existe en Ionicons o cash`, `credit_card=card`.
+  - **`app/dev-preview.tsx` (nuevo):** pantalla solo-dev (redirige a `/` si `!__DEV__`, sin enlace desde
+    la app) con las 12 fichas en los 3 tamaños y un interruptor oscuro/claro. Se eliminará en R7.14.
+  - **Exports:** `IconTile`, `resolveIconName`, `hasGlyph`, `useCategoryTile`, `useAccountTile`,
+    `resolveCategoryTile`, `resolveAccountTile` y tipos desde `@/components/ui`.
+  - **Tests:** `AppIcon.test.ts` (`resolveIconName`, `hasGlyph`), `IconTile.test.tsx` (tamaños, radios y
+    color por modo, accesibilidad) y `tileHelpers.test.ts` (categorías, cuentas y hook). +15 (424 total).
+- **Decisiones tomadas:**
+  - `resolveIconName` y `hasGlyph` viven en `AppIcon.tsx` para que siga siendo el único archivo que
+    importa Ionicons (regla de `eslint.config.js`).
+  - Ionicons **no** trae `piggy-bank` (verificado en el mapa de glifos), así que `savings` cae a
+    `wallet` (ícono de `cash`) como respaldo, según lo pedido en el prompt.
+  - El ícono de la ficha se calcula al 55% y se redondea: 32→18, 40→22, 48→26.
+- **Archivos:** `src/components/ui/AppIcon.tsx`, `src/components/ui/IconTile.tsx` (nuevo),
+  `src/components/ui/tileHelpers.ts` (nuevo), `src/components/ui/index.ts`, `app/dev-preview.tsx` (nuevo),
+  `src/components/ui/__tests__/AppIcon.test.ts` (nuevo),
+  `src/components/ui/__tests__/IconTile.test.tsx` (nuevo),
+  `src/components/ui/__tests__/tileHelpers.test.ts` (nuevo), `docs/PROGRESS.md`.
+- **Pendientes (✋ manual):** abrir `dev-preview` y enviar capturas de las fichas en oscuro y claro;
+  continuar con R7.4.
+- **Calidad:** `npm run typecheck` en verde, `npm run lint` (0 errores, 2 avisos preexistentes) y
+  `npm test` (424) en verde.
+
+### [2026-10-15] Tarea: R7.4 — Piezas base (bloque, hoja, interruptor, avatar, variantes)
+
+- **Qué se hizo:** nuevas piezas base del diseño v3 + variantes opcionales en componentes existentes,
+  sin cambiar props actuales (solo se agregan opcionales):
+  - **`BlockHeader` (nuevo):** bloque de marca a todo ancho con degradado vertical brand→brandDeep
+    dibujado con `react-native-svg` (ya instalado, sin dependencias nuevas) y dos círculos decorativos
+    translúcidos (`blockDecor`) arriba a la derecha. `paddingTop = zona segura + 12`, `paddingBottom = 44`;
+    `overflow: hidden`. Expone `children`.
+  - **`Sheet` (nuevo):** contenedor con fondo `bg`, radios superiores `sheet` (28), `marginTop -28` para
+    solapar el bloque y padding horizontal = `spacing.screen` (20).
+  - **`ScreenScaffold` (nuevo):** variante `block` (BlockHeader con slot `header` + Sheet con scroll) o
+    `plain` (encabezado normal sobre bg). Incluye `SystemBars` con la variante correspondiente
+    (`block`/`plain`) y respeta la zona segura inferior (`insets.bottom + spacing.xl`).
+  - **`Avatar` (nuevo):** círculo con inicial, tamaños 32/36/44, fondo `blockTrack` sobre el bloque y
+    `brand` fuera, texto `onBrand`. Decorativo salvo `accessibilityLabel`.
+  - **`Switch` (nuevo):** riel 44×26 y perilla 20, encendido `brand` / apagado `surfaceHigh`, animación de
+    150 ms con `react-native-reanimated` que respeta "reducir movimiento", `accessibilityRole="switch"`
+    con `checked`/`disabled` y haptic de selección.
+  - **`Card`:** radio `xl` (20) y padding 16; borde de 1 px solo en modo claro (en oscuro sin borde).
+  - **`SegmentedControl`:** prop `tone` `default | onBlock` (contenedor `blockSoft`, activo fondo
+    `onBrand` y texto `brand`, inactivo `onBrandMuted`).
+  - **`MonthSelector`:** prop `tone` `default | onBlock` (mes y chevrones en `onBrand`).
+  - **`Button`:** variante `onBrand` (fondo `onBrand`, texto `brand`); base con radio 16 (`radii.lg`).
+  - **`ListRow`:** prop `leading` (nodo) que reemplaza el círculo; `icon`/`iconColor` ahora opcionales;
+    alto mínimo 64 (ya existía).
+  - **`ProgressBar`:** props `tone` `default | onBlock` (riel `blockTrack`, relleno `onBrand`) y `status`
+    `ok | near | over` (brand; expense al 65%; expense). Riel por defecto pasa a `surfaceHigh` (§6).
+  - **`StackedBar`:** el único consumidor (Inicio) usa `extraFill` para el segmento "extra" (§6).
+  - **`dev-preview`:** bloque + hoja de ejemplo con Avatar, Switch (también el toggle de tema),
+    SegmentedControl `onBlock`, ProgressBar `onBlock` y los tres estados, Button `onBrand` y la
+    cuadrícula de fichas.
+  - **Tests:** nuevos de `BlockHeader`, `Sheet`, `ScreenScaffold`, `Avatar`, `Switch`, `Card` y pruebas de
+    las props nuevas en `Button`, `ListRow`, `ProgressBar`, `SegmentedControl` y `MonthSelector`.
+    +21 (445 en total).
+- **Decisiones tomadas:**
+  - `react-native-svg` ya estaba instalado (lo usan los charts), así que no hizo falta agregar nada.
+  - Tamaños/posiciones de los círculos decorativos del bloque no venían en el Anexo: se definieron como
+    constantes nombradas (`DECOR_WIDTH`, radios) y se recortan con `overflow: hidden`.
+  - Como la barra de pestañas ocupa su espacio en el layout de `Tabs`, `ScreenScaffold` solo agrega la
+    zona segura inferior; si una pantalla necesita más aire puede usar `contentContainerStyle`.
+  - `BottomSheet` **no** se toca en esta tarea (no está en la lista del prompt); sigue en radio 20 y su
+    paso a `radii.sheet` (28) queda pendiente para su prompt correspondiente.
+  - Se aplicó el radio 16 del Button a todas las variantes (§6 "Button: alto 52, radio 16").
+- **Archivos:** `src/components/ui/BlockHeader.tsx` (nuevo), `Sheet.tsx` (nuevo),
+  `ScreenScaffold.tsx` (nuevo), `Avatar.tsx` (nuevo), `Switch.tsx` (nuevo), `Card.tsx`,
+  `SegmentedControl.tsx`, `MonthSelector.tsx`, `Button.tsx`, `ListRow.tsx`, `ProgressBar.tsx`,
+  `index.ts`, `app/dev-preview.tsx`, `app/(tabs)/index.tsx` (StackedBar `extraFill`),
+  `src/components/ui/__tests__/BlockHeader.test.tsx` (nuevo), `Sheet.test.tsx` (nuevo),
+  `ScreenScaffold.test.tsx` (nuevo), `Avatar.test.tsx` (nuevo), `Switch.test.tsx` (nuevo),
+  `Card.test.tsx` (nuevo), `Button.test.tsx`, `ListRow.test.tsx`, `ProgressBar.test.tsx`,
+  `SegmentedControl.test.tsx`, `MonthSelector.test.tsx`, `docs/PROGRESS.md`.
+- **Pendientes (✋ manual):** abrir `dev-preview` y enviar capturas del bloque con hoja en oscuro y claro;
+  continuar con R7.5.
+- **Calidad:** `npm run typecheck` en verde, `npm run lint` (0 errores, 2 avisos preexistentes) y
+  `npm test` (445) en verde.
+
+### [2026-10-15] Tarea: R7.5 — Barra de pestañas v3
+
+- **Qué se hizo:** rediseño visual de `src/components/ui/TabBar.tsx` sin tocar rutas ni comportamiento
+  (el botón central sigue abriendo `/transaction-form`):
+  - **Pestañas:** 5 elementos (Inicio, Movimientos, botón central, Planificar, Más), etiquetas completas
+    en variante `micro` (11 px). Activa: ícono **relleno** y color `brandText`; inactiva: ícono de
+    **contorno** y color `textSecondary`. Se resolvió con `AppIcon filled={focused}` y nombres base
+    (`home`, `list`, `pie-chart`, `ellipsis-horizontal`).
+  - **Botón central:** anillo de 64 px de color `bg` con el círculo de 56 px `brand` dentro (deja 4 px de
+    anillo alrededor, efecto de recorte sin sombra), ícono `add` relleno en `onBrand`, desplazado 14 px
+    hacia arriba y con haptic `tap()`.
+  - **Barra:** fondo `bg`, línea superior de 1 px (`border`), alto 64 + zona segura inferior; cada pestaña
+    con `accessibilityRole="button"`, `accessibilityLabel` y `selected`.
+  - **Tests:** nuevo `TabBar.test.tsx` (etiquetas + botón central, pestaña activa y color, navegación al
+    pulsar, apertura del registro rápido). +4 (449 en total).
+- **Decisiones tomadas:**
+  - Los íconos se guardan por nombre base (`home`, no `home-outline`) y `AppIcon` decide relleno/contorno
+    según el estado, reutilizando `resolveIconName` de R7.3.
+  - El "anillo de 4 px" se implementó como un contenedor `bg` de 64 px alrededor del círculo `brand` de
+    56 px (no como `borderWidth`, para que el color sea exactamente el token `bg`).
+  - Se cambió la línea superior de `hairlineWidth` a 1 px según §6.
+- **Archivos:** `src/components/ui/TabBar.tsx`, `src/components/ui/__tests__/TabBar.test.tsx` (nuevo),
+  `docs/PROGRESS.md`.
+- **Pendientes (✋ manual):** revisar la barra en el dispositivo sobre Inicio (con bloque) y sobre
+  Movimientos (sin bloque), en oscuro y claro; continuar con R7.6.
+- **Calidad:** `npm run typecheck` en verde, `npm run lint` (0 errores, 2 avisos preexistentes) y
+  `npm test` (449) en verde.
+
+### [2026-10-15] Tarea: R7.6 — Inicio
+
+- **Qué se hizo:** rediseño visual de `app/(tabs)/index.tsx` con `ScreenScaffold variant="block"`, sin
+  tocar la lógica de datos (mismos hooks: `useAvailableToday`, `useMonthSummary`, `useAccounts`,
+  `useBudgets`, `usePendingConfirmations`, `usePendingTransactions`, `useProfile`, `useConnectivity`).
+  - **Bloque** (`src/features/summary/components/HomeHero.tsx`): saludo `Hola, {nombre}` (caption,
+    `onBrandMuted`), `MonthSelector tone="onBlock"` ("octubre 2026" con chevrones) y `Avatar` 36 a la
+    derecha; etiqueta "Disponible hoy" con ícono de ayuda (abre el `BottomSheet` de desglose ya
+    existente); monto con `AnimatedNumber` variante `display` en `onBrand`; `ProgressBar tone="onBlock"`;
+    pie "Gastaste X de Y" / "N días a tu pago" (o "N días para fin de mes") en `onBrandMuted`; píldora
+    "Colchón extra {monto}" (fondo `blockSoft`, texto `onBrand`) cuando aplica.
+  - **Sin margen:** el monto sigue en `onBrand` y el texto "Sin margen hoy. Revisa tus pagos próximos."
+    va en `onBrandMuted` (nunca coral/verde sobre el bloque). **Primer uso:** monto "$ 0" y texto
+    "Registra tu ingreso base para calcularlo".
+  - **Hoja, en orden:** banner de pendientes (`PendingBanner`) → píldora de conexión (`ConnectivityPill`)
+    → tarjeta "Empieza en 3 pasos" (`OnboardingCard`, 3 filas con `IconTile` 32 y check al cumplirse) →
+    "Este mes" (`MonthSummaryCard`, Ingresos y Gastos con `StackedBar` base/extra y pie de % de extras) →
+    "Cuentas" (`AccountsSection`, total a la derecha y fila horizontal de tarjetas con `IconTile` por
+    tipo) → "Recientes" (`RecentSection`, hasta 5 `ListRow` con `IconTile` de categoría y enlace
+    "Ver todos").
+  - **Estados:** `Skeleton` con la forma de cada sección (incluido el bloque azul, con el nuevo
+    `Skeleton tone="onBlock"`), error con `ErrorState`/reintento y pull-to-refresh (`ScreenScaffold`
+    gana un prop opcional `refreshControl`).
+  - **Navegación de los pasos:** "Agrega tu ingreso base" abre `/transaction-form?type=income`;
+    "Registra tu primer gasto" abre `/transaction-form`; "Ponle tope a un gasto" abre `/budgets`.
+- **Decisiones tomadas (confirmadas con la persona):**
+  - Se permitió un cambio mínimo en `app/transaction-form.tsx` para aceptar `?type=income|expense|transfer`
+    y preseleccionar el segmento (el formulario solo leía `id`).
+  - La tarjeta "Empieza en 3 pasos" se muestra **mientras falte algún paso** (no solo en primer uso) y se
+    oculta cuando los tres están cumplidos. `hasIncome`/`hasExpense` salen de los movimientos del mes ya
+    cargados; `hasBudget` de `useBudgets`.
+  - Íconos y fichas de los pasos: ingreso `cash`/green, gasto `cart`/coral, presupuesto `flag`/yellow.
+  - `getOnboardingSteps`/`isOnboardingDone` son puras, en `src/features/summary/utils/onboarding.ts`.
+  - Los componentes de sección importan los componentes de UI por archivo directo (no por el barrel),
+    para no arrastrar `TabBar`/`BottomSheet` en los tests; hay precedente en `CategoryIcon.tsx`.
+  - Microcopy: `noMarginHelp` pasa a "Revisa tus pagos próximos." según Anexo B.
+- **Archivos:** `app/(tabs)/index.tsx`, `app/transaction-form.tsx`,
+  `src/components/ui/ScreenScaffold.tsx`, `src/components/ui/Skeleton.tsx`, `src/i18n/es.ts`,
+  `src/features/summary/utils/onboarding.ts` (nuevo),
+  `src/features/summary/utils/__tests__/onboarding.test.ts` (nuevo),
+  `src/features/summary/components/{HomeHero,OnboardingCard,MonthSummaryCard,AccountsSection,RecentSection,PendingBanner,index}.tsx|ts` (nuevos),
+  `src/features/summary/components/__tests__/HomeSections.test.tsx` (nuevo), `docs/PROGRESS.md`.
+- **Pendientes (✋ manual):** Inicio con datos y en cuenta nueva, en oscuro y claro (capturas) comparando
+  con los mockups; continuar con R7.7.
+- **Calidad:** `npm run typecheck` en verde, `npm run lint` (0 errores, 2 avisos preexistentes) y
+  `npm test` (462) en verde.
+
+### [2026-10-15] Tarea: R7.7 — Registro rápido
+
+- **Qué se hizo:** rediseño visual de `app/transaction-form.tsx` con `ScreenScaffold variant="block"`
+  (`scroll={false}`), sin tocar la lógica (zod, hooks, guardado offline, quick-save, transferencias,
+  edición y haptics se mantienen).
+  - **Bloque:** fila con "Cancelar" (`onBrandMuted`, absoluto a la izquierda) y título "Nuevo
+    movimiento"/"Editar movimiento" (`onBrand`); `SegmentedControl tone="onBlock"` (Gasto/Ingreso/
+    Transferencia); monto con `MoneyText size="displayLg"` (44/52, blanco tabular, "$ 0" en
+    `onBrandMuted` cuando está vacío) dentro de un `Animated.View` que conserva la sacudida; línea
+    centrada con "Cuenta · Fecha", cada parte tappable (abre su propia hoja) con chevron pequeño.
+    En transferencia la línea muestra "Desde {A} → {B} · {fecha}".
+  - **Hoja:** fila centrada de `Chip` (Base seleccionada por defecto `brandSoft`/`brandText`, Extra
+    `extraSoft`/`extra`, Nota que despliega un campo de una línea); rejilla de categorías de 3 columnas
+    (tarjetas con `IconTile` 40 + nombre, borde 1.5px `brand` cuando está seleccionada, toque = guardado
+    rápido en creación y solo selección en edición) + mosaico "Más"; `NumericKeypad` al pie.
+  - **Transferencia:** chips "Desde"/"Hacia" en la hoja y botón primario "Guardar transferencia" en
+    lugar de la rejilla.
+  - **Edición:** primario "Guardar cambios" y destructivo "Eliminar" con confirmación (`Alert`).
+  - El monto usa `adjustsFontSizeToFit` con `minimumFontScale` 28/44 y `numberOfLines={1}` para no
+    recortarse con 12 dígitos.
+- **Componentes/tokens ajustados:**
+  - `MoneyText`: `SIZE_STYLE` ahora sale de los tokens `fontSizes`/`lineHeights` (`displayLg` pasó de
+    40/48 a 44/52) y su `style` se combina con el tamaño en vez de reemplazarlo (corrige que el
+    `textAlign` de la llamada anulara el tamaño).
+  - `NumericKeypad`: teclas con radio `radii.lg` (16), fondo `colors.surface`, `testID="keypad-key"`.
+- **Guardrails (tests):** `MoneyText.test.tsx` verifica que la variante grande usa `fontSize` 44 (y
+  `lineHeight` 52); `NumericKeypad.test.tsx` verifica 12 teclas de 52 px de alto.
+- **Decisión (confirmada con la persona):** en transferencia se mantiene la fecha tappable, así que la
+  línea del bloque es "Desde {A} → {B} · {fecha}".
+- **Archivos:** `app/transaction-form.tsx`, `src/components/ui/MoneyText.tsx`,
+  `src/components/ui/NumericKeypad.tsx`, `src/components/ui/__tests__/MoneyText.test.tsx`,
+  `src/components/ui/__tests__/NumericKeypad.test.tsx`, `docs/PROGRESS.md`.
+- **Pendientes (✋ manual):** registrar un gasto base en ≤ 3 toques, en oscuro y claro; probar
+  ingreso, transferencia, edición y eliminación, y el monto con 12 dígitos; comparar con los mockups.
+- **Calidad:** `npm run typecheck` en verde, `npm run lint` (0 errores, 2 avisos preexistentes) y
+  `npm test` (463) en verde.
+
+### [2026-10-16] Tarea: R7.8 — Movimientos
+
+- **Qué se hizo:** rediseño visual de `app/(tabs)/movements.tsx` (v3) sin tocar la lógica:
+  paginación, filtros, búsqueda, deslizar para eliminar con deshacer, sección "Por confirmar" y
+  filas offline se conservan igual.
+  - **Cabecera (plana):** `ScreenHeader` con título y `IconButton` de búsqueda y de opciones (con
+    `badge` cuando hay filtros activos); debajo, `MonthSelector` centrado. Al abrir búsqueda, la
+    cabecera se sustituye por un `Input` con `autoFocus` y un `IconButton` de cerrar.
+  - **Resumen:** `Card` con fondo `colors.brand` y radio `radii.xl`; tres columnas (Ingresos, Gastos,
+    Balance) con etiqueta `onBrandMuted` (caption) y valor `onBrand` (`MoneyText`), todo con
+    `formatCompactCOP`; el balance lleva prefijo `+` cuando es positivo.
+  - **Lista:** `SectionList` por día con cabeceras fijas (etiqueta a la izquierda con "Hoy"/"Ayer"/
+    "mar 7 oct" y total del día a la derecha en caption con signo). Filas con `ListRow` y `IconTile`
+    de 40 al frente; título = nota o categoría; subtítulo "Categoría · Cuenta"; `Tag "Extra"` cuando
+    `nature === 'extra'`; marcador de recurrente al final. Las transferencias usan ficha gris con
+    icono de intercambio, título "Origen → Destino" y monto neutro.
+  - Se conserva `getItemLayout`/`initialNumToRender`/`onEndReached`/pull-to-refresh; los esqueletos
+    de carga toman la forma de la fila (círculo 40 + líneas) y los estados vacío/error usan los
+    componentes v3.
+  - **Hoja de filtros:** orden cuenta → categoría → tipo → naturaleza con "Limpiar"/"Aplicar".
+  - **Deshacer:** se migra de `Snackbar` local con overlay a la tienda global de snackbar
+    (`useSnackbarStore` + `SnackbarHost`), porque `ScreenScaffold` no expone `overlay`.
+- **Lógica pura nueva:** `movementRowModel(item)` en
+  `src/features/transactions/utils/movementRow.ts` deriva ficha, título, subtítulo, tipo y banderas
+  (extra/recurrente) de cada movimiento; el modelo decide la ficha por nombre y, si no, por color,
+  y cae a la ficha de ingreso/gasto por defecto.
+- **Ajustes menores:** `formatDayHeader` pasa a `'EEE d MMM'` (p. ej. "mar 7 oct"); en
+  `src/theme` se reutiliza `componentHeights.listRow` y `spacing` (sin valores sueltos). Se añade
+  `es.transactionList.clear` ("Limpiar").
+- **Corrección:** `src/lib/money.test.ts` tenía un bloque `formatPesos` mal formado que rompía la
+  suite; se reescribió y se añadieron pruebas de `formatCompactCOP`.
+- **Archivos:** `app/(tabs)/movements.tsx`, `src/features/transactions/utils/movementRow.ts`,
+  `src/features/transactions/utils/__tests__/movementRow.test.ts`,
+  `src/features/transactions/utils/transactions.ts`,
+  `src/features/transactions/utils/__tests__/format.test.ts`, `src/lib/money.test.ts`,
+  `src/i18n/es.ts`, `docs/PROGRESS.md`.
+- **Pendientes (✋ manual):** con 300 movimientos, comprobar fluidez de scroll y cabeceras fijas;
+  combinar filtros (cuenta + categoría + tipo + naturaleza) y confirmar que el resultado no cambia
+  respecto a antes; revisar resumen, transferencias, etiqueta "Extra", filas offline y "Por
+  confirmar" en oscuro y claro.
+- **Calidad:** `npm run typecheck` en verde, `npm run lint` (0 errores, 2 avisos preexistentes) y
+  `npm test` (475) en verde.
+
+### [2026-10-16] Tarea: R7.9 — Planificar y Presupuestos
+
+- **Qué se hizo:** rediseño visual de `app/(tabs)/plan.tsx` y `app/budgets.tsx` (v3) sin tocar la
+  lógica: `calculateBudgetProgress`, hooks de presupuestos, `BottomSheet` de crear/editar (categoría
+  principal sin presupuesto, teclado numérico, "Guardar" y "Eliminar") y haptics se conservan.
+  - **Planificar (encabezado plano "Planificar"):** tarjeta de fondo `brand` con "Presupuestos de
+    {mes}" (caption `onBrandMuted`), el monto gastado (`onBrand`) seguido de "de {presupuestado}"
+    (`onBrandMuted`) y `ProgressBar tone="onBlock"`. Sin presupuestos: "Ponle un tope a lo que más
+    gastas" y botón `onBrand` "Crear presupuesto".
+  - **Tarjeta de presupuestos principales:** hasta 3 (los de mayor uso, ordenados por `ratio` y luego
+    por `spent`); cada fila con `IconTile` 32, nombre de categoría, texto a la derecha ("Te quedan…" o
+    "Te pasaste…" en `expense`) y `ProgressBar` con `status` ok/near/over. Enlace "Ver todos ›" si hay
+    más de 3.
+  - **Filas de acceso** (`ListRow` con `IconTile` 40): "Pagos recurrentes" (ficha violet, subtítulo
+    "Próximo: {nombre} · {fecha}" de la regla activa más próxima o "Automatiza lo que se repite cada
+    mes.") y "Análisis" (ficha teal, primera frase de `buildInsights` o "Tus gastos por categoría y
+    por mes.").
+  - **Estados:** carga con `Skeleton` (tarjeta del bloque `tone="onBlock"` + tarjeta), error con
+    `ErrorState` y reintento; el estado vacío de presupuestos vive dentro de la tarjeta del bloque.
+  - **Presupuestos:** `MonthSelector`, lista de `Card` con `ListRow` (leads `IconTile` 40, subtítulo
+    "{gastado} de {presupuesto}", a la derecha "Te quedan…"/"Te pasaste…") + `ProgressBar` con
+    `status`; agregar con `IconButton "+"` en el encabezado (atrás a la izquierda); vacío con
+    `EmptyState` y botón; carga con `Skeleton` y error con `ErrorState`.
+- **Lógica pura nueva:** `src/features/plan/utils/planText.ts` con `recurringSubtitle(rules, today)`,
+  `analysisSubtitle(insights)` y `featuredBudgets(items, max=3)` (subset de presupuestos principales),
+  más pruebas en `src/features/plan/utils/__tests__/planText.test.ts`.
+- **Textos (i18n):** `plan.budgetsOf`, `plan.spentDe`, `plan.recurringNext`, `plan.recurringFallback`,
+  `plan.viewAll`, `plan.createBudget`; `plan.recurring` pasa a "Pagos recurrentes".
+- **Decisión:** "los de mayor uso" se interpreta como mayor `ratio` (porcentaje de uso del tope),
+  desempatando por gasto absoluto. Si se prefiere ordenar por gasto, es un cambio de una línea en
+  `featuredBudgets`.
+- **Archivos:** `app/(tabs)/plan.tsx`, `app/budgets.tsx`,
+  `src/features/plan/utils/planText.ts`,
+  `src/features/plan/utils/__tests__/planText.test.ts`, `src/i18n/es.ts`, `docs/PROGRESS.md`.
+- **Pendientes (✋ manual):** revisar Planificar con y sin presupuestos y la pantalla de Presupuestos
+  con 1, 3 y 4+ presupuestos (aparición de "Ver todos"); comprobar los colores de las barras a 85 % y
+  por encima del 100 %; ver el subtítulo "Próximo…" con reglas activas, y el de Análisis según
+  insights; en oscuro y claro.
+- **Calidad:** `npm run typecheck` en verde, `npm run lint` (0 errores, 2 avisos preexistentes) y
+  `npm test` (486) en verde.
+
+### [2026-10-16] Tarea: R7.10 — Más
+
+- **Qué se hizo:** rediseño visual de `app/(tabs)/more.tsx` (v3) conservando TODA la funcionalidad:
+  tema, incluir extras, biometría (con su diálogo), recordatorios (permisos y build), exportar,
+  cerrar sesión y eliminar cuenta, y la versión.
+  - **Encabezado plano "Más"** y **tarjeta de perfil**: `Avatar` 44 con la inicial, nombre
+    (`display_name`, con respaldo al correo) y caption "Cuenta personal"; no es tocable.
+  - **Grupos** (título en caption + una `Card` por grupo, filas con `IconTile` 32 según el Anexo B):
+    Organización (Cuentas = blue, Categorías = violet), Preferencias (Apariencia = yellow, Incluir
+    extras = yellow, Biometría = green, Recordatorios = orange), Datos (Exportar = sky) y Cuenta
+    (Cerrar sesión = gray, Eliminar cuenta = ficha danger).
+  - **Apariencia:** fila con el valor actual a la derecha y chevron; abre un `BottomSheet` con
+    Sistema/Oscuro/Claro (se cierra al elegir).
+  - **Switches:** ahora usan el `Switch` v3 (riel brand/`surfaceHigh`), sin `trackColor`; la fila de
+    recordatorios despliega la anticipación (Chips "El mismo día"/"1 día antes") cuando está activa.
+  - **Pie:** "Versión {x}".
+- **Componentes nuevos y con tests:** `src/features/more/components/ProfileCard.tsx` y
+  `src/features/more/components/AppearanceOptions.tsx` (selector de apariencia con roles radio),
+  más sus pruebas de render en `.../__tests__/`.
+- **Textos (i18n):** `more.personalAccount` = "Cuenta personal".
+- **Decisión (conflicto prompt ↔ Anexo B):** el prompt pedía "texto y ficha en danger" para el grupo
+  Cuenta, pero el Anexo B §3.3 define "Cerrar sesión = gray". Se siguió el Anexo B (fuente de verdad):
+  Cerrar sesión = ficha gray; Eliminar cuenta = ficha y texto en danger. No existe una ficha `danger`
+  en la paleta (§3.2), así que la de Eliminar cuenta se dibuja con los tokens `dangerSoft`/`danger`
+  (geometría de `IconTile` 32). Si se quiere, se cambia Cerrar sesión a danger.
+- **Archivos:** `app/(tabs)/more.tsx`, `src/features/more/components/ProfileCard.tsx`,
+  `src/features/more/components/AppearanceOptions.tsx`,
+  `src/features/more/components/__tests__/ProfileCard.test.tsx`,
+  `src/features/more/components/__tests__/AppearanceOptions.test.tsx`, `src/i18n/es.ts`,
+  `docs/PROGRESS.md`.
+- **Pendientes (✋ manual):** revisar Más completa (dos capturas) y el selector de apariencia; comprobar
+  que Cuentas/Categorías navegan, que Apariencia cambia el tema y persiste, que cada Switch funciona
+  (extras, biometría con su mensaje, recordatorios con anticipación), exportar, cerrar sesión y
+  eliminar cuenta; en oscuro y claro.
+- **Calidad:** `npm run typecheck` en verde, `npm run lint` (0 errores, 2 avisos preexistentes) y
+  `npm test` (492) en verde.
+
+### [2026-10-16] Tarea: R7.11 — Cuentas y Categorías
+
+- **Qué se hizo:** rediseño visual v3 de `app/accounts.tsx`, `app/categories.tsx`,
+  `app/account-form.tsx` y `app/category-form.tsx` sin tocar la lógica de datos (archivar con reglas,
+  restaurar archivadas, validaciones, subcategorías de un nivel).
+  - **Cuentas:** encabezado plano con atrás y `+` a la derecha; tarjeta de saldo total con fondo
+    `brand` y texto `onBrand`; lista con `ListRow` + `IconTile` 40 por tipo, subtítulo y saldo a la
+    derecha. Tocar abre la edición; deslizar (`SwipeableRow` con etiqueta "Archivar") pide
+    confirmación y bloquea archivar la última cuenta activa. Se quitaron los enlaces de texto
+    "Editar"/"Archivar". Carga con `Skeleton`, error con `ErrorState` y vacío con `EmptyState` + botón.
+  - **Categorías:** encabezado plano con atrás y `+`; `SegmentedControl` Gastos | Ingresos; filas con
+    `IconTile` 40 (subtítulo "N subcategorías" si las tiene) y subcategorías anidadas con sangría e
+    `IconTile` 32. Cada fila tiene un `IconButton` "⋯" que abre un `BottomSheet` con "Editar",
+    "Agregar subcategoría" (solo principales) y "Archivar" (danger); en la vista de archivadas el menú
+    ofrece "Restaurar". Enlace "Ver archivadas" al final. Se quitaron los enlaces de texto de cada
+    fila. Snackbar vía `useSnackbarStore` (global) porque `ScreenScaffold` no expone `overlay`.
+  - **Formulario de cuenta:** `ScreenScaffold` + `Input` v3 y `Switch` v3 (se eliminó el `Switch` de
+    React Native y su `trackColor`); un solo botón primary al pie.
+  - **Formulario de categoría:** `ScreenScaffold` + `Input` v3; vista previa con `IconTile` 48 y
+    cuadrícula de color con `IconTile` 32; rejilla de íconos con `AppIcon` sobre `surfaceRaised`/brand;
+    un solo botón primary al pie.
+- **Lógica pura nueva:** `accountSubtitle` (`src/features/accounts/utils/accountRow.ts`) y
+  `categorySubtitle` + `colorTileKey` (`src/features/categories/utils/categories.ts`), con tests.
+- **Componente extendido:** `SwipeableRow` acepta `actionLabel`/`actionIcon` (por defecto
+  "Eliminar"/`trash-outline`, retrocompatible con Movimientos) para soportar "Archivar".
+- **Textos (i18n):** `accounts.doesNotCountAsLiquid`, `categories.moreActions`,
+  `categories.subcategoryOne`/`subcategoryMany`, `categories.archivedEmptyTitle`/`…Description`.
+- **Caracteres rotos (punto 6):** no se encontró ningún texto de interfaz con caracteres rotos en el
+  código (el único `Ã³` está en la guía y en la migración 008, que es dato/BD y queda fuera de alcance).
+- **Decisión:** la parrilla de color mantiene los 12 valores de `categoryPalette` (para no cambiar los
+  datos guardados) pero se dibuja con fichas `IconTile`; el preview usa el color elegido. El botón al
+  pie usa "Guardar" (`es.common.save`) en ambos formularios, como pide la spec.
+- **Archivos:** `app/accounts.tsx`, `app/categories.tsx`, `app/account-form.tsx`,
+  `app/category-form.tsx`, `src/components/ui/SwipeableRow.tsx`,
+  `src/features/accounts/utils/accountRow.ts` (+ test),
+  `src/features/categories/utils/categories.ts` (+ test), `src/i18n/es.ts`, `docs/PROGRESS.md`.
+- **Pendientes (✋ manual):** revisar Cuentas (con y sin saldo, 1 cuenta vs varias, swipe), Categorías
+  (menú "⋯" abierto, subcategorías, archivadas) y los dos formularios (preview, cuadrícula de color e
+  íconos, switch); en oscuro y claro.
+- **Calidad:** `npm run typecheck` en verde, `npm run lint` (0 errores, 2 avisos preexistentes) y
+  `npm test` (502) en verde.
+
+### [2026-10-16] Tarea: R7.12 — Autenticación y estados vacíos y de error
+
+- **Qué se hizo:** capa visual de las pantallas de auth y rediseño v3 de los estados vacío/error,
+  sin tocar la lógica (react-hook-form + zod, textos de error traducidos, enlaces profundos,
+  reenvío con enfriamiento, guardia de sesión y `isRecoverySession` se conservan).
+  - **AuthScaffold:** ahora usa `ScreenScaffold variant="block" scroll={false}`. En el bloque va el
+    wordmark tipográfico "Finanzas" (`display`, `onBrand`), el título (`title`, `onBrand`) y la
+    línea de apoyo (`caption`, `onBrandMuted`); en la hoja, el formulario dentro de un
+    `KeyboardAvoidingView` + `ScrollView` (`flexGrow: 1`, `keyboardShouldPersistTaps="handled"`) para
+    que el teclado no tape el formulario y el botón primario quede alcanzable.
+  - **Pantallas de auth:** `login`, `register`, `forgot-password`, `reset-password` y `verify-email`
+    ya lo hacían a través de `AuthScaffold`; `confirm-email` y el estado de carga de `reset-password`
+    pasan también al bloque (con `LoadingState` dentro) en lugar de una `Screen` plana.
+  - **Input:** el radio pasa de `radii.md` (12) a `radii.lg` (16) según la spec (altura 52 se mantiene
+    con `componentHeights.input`). Afecta a todos los formularios.
+  - **PasswordInput:** conserva el `IconButton` ver/ocultar como accesorio; sin cambios de lógica.
+  - **AuthLinkError:** el ícono de alerta ahora va en una ficha coral suave (`dangerSoft`/`danger`)
+    coherente con `ErrorState`; se mantiene su botón "Pedir un enlace nuevo".
+  - **EmptyState v3:** ficha de 64 px con radio 18 y color `brandSoft`/`brandText` (equivalente al
+    `IconTile` 48 escalado), título, línea de apoyo y botón con verbo. Ahora `icon` es obligatorio: se
+    eliminó el valor por defecto `sparkles-outline` para forzar un ícono contextual en cada llamada.
+  - **ErrorState v3:** ficha de 64 px coral suave con ícono de alerta relleno (`alert-circle`),
+    frase de qué pasó + qué hacer y botón "Reintentar".
+- **Estados revisados (íconos contextuales añadidos):** Inicio (`home` no aplica: su vacío es por
+  sección), Análisis (`bar-chart-outline`), Movimientos (`receipt-outline`, o `search-outline` con
+  filtros activos), Planificar/Presupuestos (`pie-chart-outline`), Cuentas (`wallet-outline`),
+  Categorías (`pricetags-outline` y `archive-outline` para archivadas), Recurrentes
+  (`repeat-outline`) y los formularios que piden tener una cuenta (`wallet-outline`). Todos los
+  errores de pantalla usan `ErrorState` y todas las cargas usan `Skeleton`/`LoadingState`.
+- **Pendiente menor:** el vacío interno de secciones ("Recientes" en Inicio y `CategoryPicker`) sigue
+  siendo una línea de `caption`, no una ficha; y el pie "cargar más" de Movimientos usa un
+  `ActivityIndicator` propio (paginación, no estado de pantalla).
+- **Archivos:** `src/components/ui/EmptyState.tsx`, `src/components/ui/ErrorState.tsx`,
+  `src/components/ui/Input.tsx`, `src/features/auth/components/AuthScaffold.tsx`,
+  `src/features/auth/components/AuthLinkError.tsx`, `app/(auth)/confirm-email.tsx`,
+  `app/(auth)/reset-password.tsx`, `app/analysis.tsx`, `app/accounts.tsx`, `app/budgets.tsx`,
+  `app/categories.tsx`, `app/recurring.tsx`, `app/recurring-form.tsx`, `app/transaction-form.tsx`,
+  `app/(tabs)/movements.tsx`, `docs/PROGRESS.md`. (Sin cambios en `es.ts`: los textos existentes ya
+  siguen el tono del Anexo.)
+- **Pendientes (✋ manual):** revisar login, registro, recuperar y nueva contraseña en oscuro y claro,
+  con el teclado abierto (que el botón primario quede visible), el ver/ocultar contraseña, los errores
+  de formulario y el "enlace no sirve"; y los estados vacío/error de cada pantalla.
+- **Calidad:** `npm run typecheck` en verde, `npm run lint` (0 errores, 2 avisos preexistentes) y
+  `npm test` (502) en verde.
+
+### [2026-10-16] Tarea: R7.13 — Análisis
+
+- **Qué se hizo:** rediseño visual v3 de `app/analysis.tsx` con `ScreenScaffold variant="block"`, sin
+  tocar la lógica ni los datos: `spendingByCategory`, `monthlyTrend`, `extraShareByMonth` y
+  `buildInsights` siguen calculando lo mismo, y la consulta sigue trayendo solo `posted`.
+  - **Bloque:** botón atrás (`onBrand`), título "Análisis" (`title`, `onBrand`), `MonthSelector
+    tone="onBlock"` y la primera frase de `buildInsights` (`caption`, `onBrandMuted`); si no hay
+    frases, "Registra movimientos para ver tu análisis".
+  - **Hoja:** `SegmentedControl` Gastos | Ingresos; tarjeta del donut con monto central y la lista de
+    categorías con `IconTile` 32, nombre, porcentaje y monto; "Últimos 6 meses"
+    (`GroupedBarChart` con `income`/`expense`); "Base y extras" con el porcentaje de extras por mes
+    y un `StackedBar` (base = `brand`, extra = `extraFill`) además de la leyenda.
+  - **Colores del donut:** nueva función pura `sliceTileKey`/`sliceColor` en
+    `src/features/analysis/utils/sliceColors.ts`, que reutiliza el mismo mapeo que las filas de
+    categoría (por nombre y, si no, por color) para que cada categoría tenga siempre el mismo color
+    (el color de ícono de la ficha del modo actual). "Otros" queda en gray.
+  - **Estados:** carga con `Skeleton` (segmento + 3 tarjetas), error con `ErrorState` y reintento, y
+    vacío con `EmptyState` (`bar-chart-outline`); con estados, el contenido se centra
+    (`contentContainerStyle` con `flexGrow: 1`). Se quitó la tarjeta "Insights" porque la primera
+    frase ya vive en el bloque (según la spec de la hoja).
+  - **Datos:** `AnalysisCategory` y `CategoryFlow` ganan `icon` (aditivo) para pintar la `IconTile` de
+    cada categoría en la lista; el ícono de "Otros" cae a `ellipsis-horizontal`.
+  - **DonutChart:** nuevo prop opcional `legend` (por defecto `true`) para ocultar su leyenda interna
+    y usar la lista v3 de la pantalla; su resumen accesible se conserva.
+- **Tests:** `sliceColors.test.ts` verifica que la misma categoría pinta igual aunque cambien monto u
+  orden, que el color sale de la ficha del modo actual, que "Otros" es gray y que oscuro ≠ claro.
+- **Textos (i18n):** `analysis.base` ("Base") y `analysis.extra` ("Extra").
+- **Archivos:** `app/analysis.tsx`, `src/components/charts/DonutChart.tsx`,
+  `src/features/analysis/utils/analysis.ts`, `src/features/analysis/utils/sliceColors.ts` (nuevo),
+  `src/features/analysis/utils/__tests__/sliceColors.test.ts` (nuevo),
+  `src/features/analysis/utils/__tests__/analysis.test.ts`,
+  `src/features/analysis/hooks/useAnalysis.ts`, `src/i18n/es.ts`, `docs/PROGRESS.md`.
+- **Pendientes (✋ manual):** revisar Análisis con datos y en cuenta nueva (dos capturas con scroll),
+  cambiar el mes y el segmento Gastos/Ingresos, comprobar que los totales del donut cuadran con
+  Movimientos del mismo mes, el color de cada porción frente a su `IconTile`, "Otros" en gray, y los
+  gráficos de 6 meses y de extras; en oscuro y claro.
+- **Calidad:** `npm run typecheck` en verde, `npm run lint` (0 errores, 2 avisos preexistentes) y
+  `npm test` (509) en verde.
+
+### [2026-10-16] Tarea: R7.14 — Auditoría final y limpieza
+
+- **Qué se hizo:** auditoría de consistencia del rediseño v3 frente a `docs/DESIGN_SYSTEM.md` y
+  `docs/UX_SPEC.md`, y limpieza de código muerto/obsoleto. Sin tocar lógica de negocio, hooks de
+  datos, `api` ni migraciones.
+  - **Limpieza:** eliminado `app/dev-preview.tsx` (preview temporal de R7.3).
+  - **Tokens obsoletos:** se migraron los últimos usos de los alias deprecated y se eliminaron de
+    `src/theme/colors.ts`: `background`→`bg` (`app/_layout.tsx`, `src/components/ui/Screen.tsx`,
+    `src/features/auth/components/LockScreen.tsx`), `primary`→`brand` (`app/recurring.tsx`,
+    `src/features/categories/components/CategoryPicker.tsx`) y `onPrimary`→`onBrand` (CategoryPicker).
+    Se quitó `radii.button` (14, sin uso y fuera de la spec). Se quitaron de `src/theme/typography.ts`
+    las claves deprecated de `fontSizes` y `lineHeights` (`xs, sm, md, lg, xl, xxl`).
+  - **Componentes:** se retiró el prop `overlay` de `Screen` (sin uso en v3); se reemplazó el `Switch`
+    nativo de React Native (con `trackColor`) por el `Switch` v3 en `app/recurring.tsx` y
+    `app/recurring-form.tsx`; `Input` pasó su `fontSize: 15` literal a `fontSizes.body`;
+    `SegmentedControl` ganó `hitSlop` vertical para llegar a 44 px de área táctil (el control mide 40).
+  - **Auditoría (sin hallazgos nuevos):** sin hex/rgb/`rgba()` fuera de `src/theme` (regla de lint);
+    ámbar (`extra*`) solo en la naturaleza "extra"; un solo botón primario por vista; Ionicons solo
+    vía `AppIcon`; `EmptyState`/`ErrorState`/`Skeleton` presentes en las pantallas; títulos/enlaces
+    con `accessibilityRole`; sin `TODOs`, `console.*` ni caracteres rotos (mojibake) en el código.
+- **Documentación:** `docs/APP_GUIDE.md` y `CLAUDE.md` actualizados al estado v3 (tokens, componentes
+  v3, rama `feat/ui-v3`, historial R7.0–R7.14, estado real de la BD 001–007 aplicadas). Nueva
+  `docs/QA_VISUAL.md`: checklist de QA visual por pantalla (oscuro/claro, texto grande, reducir
+  movimiento) con los puntos del Anexo B.
+- **Diferencias docs ↔ código (no se modificaron los docs):** `recurring*` y `delete-account` sin
+  prompt R7 (estructura v2); `Screen` (v2) aún en uso por esas pantallas; `Snackbar` con posición
+  fija que puede solapar la barra de pestañas; `fontSize: 36`/`lineHeight: 44` literales en
+  `app/recurring-form.tsx`. Detalle en `CLAUDE.md` §17.3.
+- **Archivos:** `app/dev-preview.tsx` (borrado), `src/theme/{colors,radii,typography}.ts`,
+  `src/components/ui/{Screen,Input,SegmentedControl}.tsx`, `app/_layout.tsx`,
+  `app/recurring.tsx`, `app/recurring-form.tsx`,
+  `src/features/categories/components/CategoryPicker.tsx`,
+  `src/features/auth/components/LockScreen.tsx`, `docs/APP_GUIDE.md`, `CLAUDE.md`,
+  `docs/QA_VISUAL.md` (nuevo), `docs/PROGRESS.md`.
+- **Pendientes (✋ manual):** recorrer `docs/QA_VISUAL.md` en dispositivo real (oscuro y claro) y
+  enviar capturas de las pantallas principales.
+- **Calidad:** `npm run typecheck` en verde, `npm run lint` (0 errores, 2 avisos preexistentes) y
+  `npm test` (509) en verde.
+
+### [2026-10-16] Tarea: R8.0 — Geometría del bloque y de la hoja
+
+**Diagnóstico R8.0**
+
+**(1) El bloque azul termina antes del ancho y el círculo decorativo desborda.**
+
+- Causa raíz: la decoración se dibuja en un **segundo `Svg` aparte**, posicionado en absoluto y con
+  ancho/alto en **píxeles fijos** (`src/components/ui/BlockHeader.tsx:11-14`:
+  `DECOR_WIDTH = 220`, `DECOR_HEIGHT = 170`; `:48-51`: `styles.decor = { position: 'absolute',
+  top: 0, right: 0 }`). Sus círculos usan coordenadas **fuera del viewport** de ese SVG
+  (`cx = DECOR_WIDTH - 18 = 202`, `r = 112`; `cx = DECOR_WIDTH - 132 = 88`, `r = 46`) y solo quedan
+  contenidos si el padre los recorta. En Android un `Svg` nativo posicionado en absoluto no se
+  recorta de forma fiable con el `overflow: 'hidden'` del contenedor, así que la mitad sobresaliente
+  cae sobre el fondo oscuro (`colors.bg`) y se ve el "círculo gris"; el borde de esa capa queda
+  junto al avatar (`HomeHero.tsx:76`), de ahí la "costura".
+- Además, el `Svg` del degradado (`BlockHeader.tsx:38-46`) no define `viewBox` ni
+  `preserveAspectRatio`, y el contenedor raíz tampoco declara `width: '100%'` (solo
+  `alignSelf: 'stretch'`, `:60`), por lo que el relleno a todo el ancho/alto no está garantizado.
+- Confirmación/descarte de las causas probables:
+  - "ancho calculado una sola vez con `Dimensions` o con `onLayout`": **descartada**.
+    `BlockHeader.tsx` no usa `Dimensions` ni `onLayout`; `Dimensions.get` solo aparece en
+    `BottomSheet.tsx` (`useWindowDimensions`), fuera de este flujo.
+  - "SVG con `width` y `height` fijos en lugar de 100%": **confirmada** para el SVG decorativo
+    (`BlockHeader.tsx:48`); el del degradado sí usa 100%.
+  - "círculos decorativos como `View` absolutas fuera de un contenedor con `overflow: hidden`":
+    **parcial**. No son `View` sino `<Circle>` dentro de un `Svg` posicionado en absoluto
+    (`styles.decor`, `:63-67`), sin `viewBox` ni capa de recorte propia, por lo que pueden
+    desbordarse.
+  - "`paddingBottom` del bloque sobrescrito o ausente": **descartada**. Existe y vale 44
+    (`BlockHeader.tsx:9,32`).
+  - "textos pasados como hijos de la hoja y no del bloque": **descartada**. Los textos de apoyo ya
+    llegan a `BlockHeader` por `header` (`app/(tabs)/index.tsx:190-207` → `HomeHero.tsx:108-110`;
+    `app/transaction-form.tsx:594-610`; `app/analysis.tsx:74-92`).
+  - "márgenes o paddings horizontales aplicados al contenedor externo del bloque": **confirmada**.
+    El `paddingHorizontal` está en la raíz (`BlockHeader.tsx:33`) en vez de en una `View` interna.
+  - "`marginTop` negativo de la hoja absorbiendo el relleno inferior del bloque": **riesgo
+    confirmado**. `Sheet` solapa 28 px (`Sheet.tsx:22`) y el bloque rellena 44 (`BlockHeader.tsx:32`);
+    los 16 px teóricos son correctos, pero al no garantizarse el relleno a todo el ancho/alto, los
+    textos inferiores caen sobre la zona oscura.
+
+**(2) Los textos de apoyo quedan fuera del bloque, sobre el fondo oscuro.**
+
+- No es un problema de ubicación en el árbol (los textos ya son hijos del `header`, ver arriba): el
+  relleno inferior del bloque **no llega a pintarse de azul**. El degradado no tiene `viewBox`
+  (`BlockHeader.tsx:38-46`) y la decoración vive en una capa absoluta aparte, de modo que la franja
+  inferior del bloque (donde van "Registra tu ingreso base para calcularlo", la línea
+  "{Cuenta} · {Fecha}" de Registro rápido y la frase de Análisis) queda sobre el `bg` oscuro. Con un
+  único `Svg` a `absoluteFill` + `viewBox "0 0 100 100"` + `preserveAspectRatio="none"`, más el
+  relleno de 44 y el solape de 28, quedan 16 px libres de azul bajo el último texto.
+
+**(3) La hoja con esquinas superiores redondeadas no se aprecia.**
+
+- Es consecuencia de (1)/(2): si la parte baja del bloque no es azul sólido, las esquinas
+  redondeadas de la hoja (`Sheet.tsx:20-22`) no tienen azul detrás contra el que contrastar y
+  desaparecen. Además, la hoja no declara `flex` ni `overflow: 'hidden'` y lleva el
+  `paddingHorizontal` en su raíz (`Sheet.tsx:23`) en lugar de su contenido. Con la hoja a `flex: 1`,
+  `overflow: 'hidden'` y el relleno horizontal movido al contenido interno, las esquinas se recortan
+  y se aprecian sobre el bloque azul.
+
+**Corrección aplicada (PASO B):** `src/components/ui/BlockHeader.tsx` (raíz `width: '100%'`,
+`overflow: 'hidden'`, sin padding horizontal; un único `Svg` `absoluteFill` con
+`viewBox "0 0 100 100"` y `preserveAspectRatio="none"` con el degradado y los dos círculos dentro;
+contenido interno con `paddingTop = safeTop + 12`, `paddingBottom = 44`, `paddingHorizontal = 20`),
+`src/components/ui/Sheet.tsx` (`marginTop -28`, radios `sheet`, `flex: 1`, `overflow: 'hidden'`,
+padding horizontal en el contenido interno) y `src/components/ui/ScreenScaffold.tsx` (hoja a todo
+ancho, `contentContainerStyle` sin padding horizontal).
+
+- **Qué se hizo (PASO B):**
+  - **`BlockHeader`:** contenedor raíz con `width: '100%'`, `alignSelf: 'stretch'` y
+    `overflow: 'hidden'`, sin margen ni padding horizontal. Un **único `Svg`** a
+    `StyleSheet.absoluteFill` con `width/height="100%"`, `viewBox "0 0 100 100"` y
+    `preserveAspectRatio="none"` que dibuja el `LinearGradient` (de `brand` a `brandDeep`), el
+    `Rect` de fondo y **los dos círculos** decorativos (`blockDecor`) dentro del mismo `Svg`
+    (`cx=88, cy=8, r=24` y `cx=100, cy=30, r=30`). Se eliminaron las `View`/constantes de píxeles
+    (`DECOR_WIDTH/HEIGHT/RADIO`) y el segundo `Svg` en absoluto. El contenido va en una `View` interna
+    con `paddingTop = safeTop + 12`, `paddingBottom = 44` y `paddingHorizontal = 20`.
+  - **`Sheet`:** `marginTop: -radii.sheet` (28), `borderTopLeft/RightRadius = radii.sheet`, fondo
+    `bg`, `flex: 1` y `overflow: 'hidden'`; el `paddingHorizontal` (20) pasa a una `View` interna
+    (`sheet-content`).
+  - **`ScreenScaffold`:** la hoja ocupa todo el ancho y el `contentContainerStyle` del `ScrollView`
+    no lleva padding horizontal (el padding lo aporta el contenido interno de la hoja). El bloque y
+    la hoja se siguen renderizando en ese orden (`BlockHeader` → `Sheet`), con el solape de 28.
+  - **Pantallas:** se revisó `app/(tabs)/index.tsx`, `app/transaction-form.tsx` y `app/analysis.tsx`:
+    ya pasan sus textos de apoyo por `header` (van al bloque) y no añaden contenedores ni márgenes
+    propios, por lo que **no requirieron cambios**. La fila superior de `HomeHero` (saludo +
+    `MonthSelector` + `Avatar`) ya usa `row` + `space-between` dentro del contenido interno, así que
+    el avatar queda dentro de los márgenes de 20.
+  - **Lint:** nueva regla `no-restricted-properties` (objeto `Dimensions`, propiedad `get`) acotada a
+    `src/components/ui/BlockHeader.tsx` en `eslint.config.js`. Verificada: marca el error al usar
+    `Dimensions.get`.
+  - **Tests:** `BlockHeader.test.tsx` (children dentro del raíz y del contenido; raíz `width '100%'` +
+    `overflow 'hidden'`; contenido con `paddingBottom 44`, `paddingTop = safeTop + 12` y
+    `paddingHorizontal 20`; un solo `Svg` con `preserveAspectRatio="none"` → `align 'none'`,
+    `viewBox` 100×100, y los dos círculos dentro por `testID`) y `Sheet.test.tsx` (fondo `bg`, radios
+    28, `marginTop -28`, `flex 1`, `overflow 'hidden'` y padding horizontal en el contenido). +4
+    tests (513 en total).
+- **Solo estructura y geometría:** no se tocaron colores, tipografía ni textos.
+- **Archivos:** `src/components/ui/BlockHeader.tsx`, `src/components/ui/Sheet.tsx`,
+  `src/components/ui/ScreenScaffold.tsx`, `src/components/ui/__tests__/BlockHeader.test.tsx`,
+  `src/components/ui/__tests__/Sheet.test.tsx`, `eslint.config.js`, `docs/PROGRESS.md`.
+- **Pendientes (✋ manual):** revisar en el dispositivo (lista "Para revisar visualmente" en la
+  respuesta): bloque a todo el ancho sin franja oscura ni círculo desbordado, textos de apoyo sobre el
+  azul y esquinas superiores redondeadas de la hoja, en las tres pantallas y en oscuro y claro.
+- **Calidad:** `npm run typecheck` en verde, `npm run lint` (0 errores, 2 avisos preexistentes) y
+  `npm test` (513) en verde.
+
+### [2026-10-16] Tarea: R8.1 — Barras del sistema
+
+**Diagnóstico R8.1**
+
+**Versiones y configuración activa (leídas).**
+
+- `expo` `~57.0.30` (SDK 57), `react-native` `0.86.3`, `expo-status-bar` `~57.0.1`,
+  `expo-system-ui` `~57.0.4` (`package.json`).
+- `app.json`: `userInterfaceStyle: "automatic"`; el bloque `android` solo tiene `adaptiveIcon` y
+  `predictiveBackGestureEnabled`. **No** hay `edgeToEdgeEnabled`, **no** hay `androidStatusBar`, **no**
+  hay `androidNavigationBar` ni `backgroundColor` de raíz.
+- Uso actual:
+  - `expo-status-bar`: solo `<StatusBar style animated>` (`src/components/ui/SystemBars.tsx:25`).
+  - `expo-system-ui`: solo `SystemUI.setBackgroundColorAsync(colors.bg)` (vista raíz/ventana), dentro
+    de un `useEffect` que depende de `colors.bg` y por tanto reacciona al tema (incluido "Sistema")
+    (`SystemBars.tsx:21-23`). `getStatusBarStyle(mode, variant)` sigue decidiendo el estilo de los
+    íconos (`src/lib/systemBars.ts`).
+  - `SystemBars` se monta dos veces: en la raíz con `variant="plain"` (`app/_layout.tsx:131`) y en
+    cada `ScreenScaffold` con `variant` según la pantalla (`ScreenScaffold.tsx:50`).
+
+**Borde a borde (edge-to-edge) en Android: qué manda hoy.**
+
+- En SDK 54 el borde a borde pasó a ser el **predeterminado para proyectos nuevos y existentes**, y
+  con Android 16 es **obligatorio** (Google quitó el opt-out). En SDK 55 se **eliminó**
+  `edgeToEdgeEnabled` de `app.json`: ya no se configura, siempre está activo (changelog SDK 54 y SDK
+  55). Por tanto, en SDK 57 el borde a borde está activo y **no se puede desactivar**.
+- Con borde a borde, Android **deprecó** el color propio de la barra de estado y de la de navegación:
+  `expo-status-bar` `backgroundColor`/`translucent` y `expo-navigation-bar`
+  `backgroundColor`/`borderColor`/`behavior`/`position` pasaron a ser **no-ops** (changelog SDK 55 y
+  blog de borde a borde). Lo único controlable es: estilo de íconos (`style`) y visibilidad
+  (`hidden`) de la barra de estado, y `setStyle`/visibilidad de la de navegación (y su `setStyle`
+  solo tiene efecto si `enforceContrast` es `false`).
+- **Expo Go:** el borde a borde está **siempre activo y sin opt-out** (blog). La barra de estado y la
+  de navegación son **transparentes**; lo que se ve detrás es el contenido de la app (la vista raíz
+  la pinta `expo-system-ui` con `bg`).
+- El proyecto **no define `androidStatusBar`**. Según la referencia de `app.json`, el color de la
+  barra por defecto para `light-content` sería `#00000088` (negro semitransparente) y `translucent`
+  por defecto `true`; en borde a borde ese color se ignora, pero si un runtime volviera al
+  comportamiento previo a borde a borde mostraría esa franja.
+
+**Diagnóstico de los síntomas.**
+
+- **Franja negra arriba + contenido debajo del borde (el bloque no llega arriba):** con borde a
+  borde activo, la barra de estado es transparente y el bloque **debería** pintarse desde `y = 0`
+  (`BlockHeader` es el primer hijo de `ScreenScaffold`, que a su vez llena la pantalla; el contenido
+  del bloque ya deja `paddingTop = safeTop + 12`). Si se observa una franja opaca/oscura, significa
+  que en ese run la barra de estado **no** se está comportando como borde a borde (versión de Expo Go
+  o cliente que no aplica la transparencia); eso **no se puede forzar desde JS** con la API vigente.
+  Un intento previo, `SystemUI.setBackgroundColorAsync(colors.bg)`, pinta la ventana, no la barra.
+- **Franja gris clara abajo en modo oscuro:** es la barra de navegación. En navegación por
+  **gestos** es transparente (se vería el `bg` que ya extiende el `TabBar`:
+  `backgroundColor: colors.bg` + `paddingBottom: insets.bottom`, `src/components/ui/TabBar.tsx:62-71`).
+  En navegación por **3 botones**, Android aplica por defecto un **scrim translúcido de contraste**
+  (`android:enforceNavigationBarContrast = true`); sobre un fondo oscuro ese scrim se percibe como una
+  franja gris claro. Ese scrim **no** se puede quitar ni colorear desde JS; se desactiva en tiempo de
+  build con `enforceContrast: false` (plugin de `expo-navigation-bar`), que **no tiene efecto en Expo
+  Go** y requiere instalar esa dependencia (no está en el proyecto).
+
+**Solución con menos dependencias (la aplicada).**
+
+1. **Barra de estado (arriba):** mantener `getStatusBarStyle` y añadir un **relleno de la zona
+   segura superior**: una `View` absoluta, de alto `insets.top`, con `brand` en pantallas con bloque y
+   `bg` en las demás. Garantiza que la franja superior sea del color correcto cuando el contenido sí
+   subyace a la barra. La decisión de color es una función pura nueva,
+   `getTopInsetColor(variant)` (`src/lib/systemBars.ts`), con tests.
+2. **Barra de navegación (abajo):** con la API vigente **no** se puede fijar su color ni quitar el
+   scrim desde JS, y `expo-navigation-bar` no está instalado (y en borde a borde su color es no-op).
+   Lo que sí controlamos es que la ventana y el pie (hoja/`TabBar`) sean `bg`, que ya ocurre. El
+   scrim de 3 botones queda **documentado** con lo que se verificaría en un development build.
+3. **Sin dependencias nuevas** y sin tocar lógica de negocio, hooks de datos, `api` ni migraciones.
+
+- **Qué se hizo (PASO B):**
+  - **Función pura nueva:** `getTopInsetColor(variant): 'brand' | 'bg'` en `src/lib/systemBars.ts`.
+    Decide el color del área de la zona segura superior: `brand` en pantallas con bloque, `bg` en las
+    demás. `getStatusBarStyle` y sus tests se mantienen intactos.
+  - **`ScreenScaffold`:** nueva `View` absoluta de relleno de la zona segura superior
+    (`testID="top-inset-fill"`, `pointerEvents="none"`, `top/left/right: 0`, alto `insets.top`) con
+    `colors[getTopInsetColor(variant)]`. Se renderiza como primer hijo (por detrás del bloque y del
+    encabezado), así que no altera el contenido; garantiza que la franja superior sea `brand`/`bg`
+    en lugar del fondo oscuro. Reacciona al tema porque sale de `useTheme()`.
+  - **Barra de navegación:** no se pudo colorear ni quitar el scrim con la API vigente (deprecada en
+    borde a borde) y `expo-navigation-bar` no está instalado; se documenta y se deja para verificar en
+    un development build. La ventana ya se pinta con `SystemUI.setBackgroundColorAsync(colors.bg)` y el
+    `TabBar` ya extiende `bg` hasta el borde inferior.
+  - **`app.json`:** sin cambios (no hay `edgeToEdgeEnabled` que poner: se eliminó en SDK 55; tampoco
+    `androidStatusBar`/`androidNavigationBar`, deprecados).
+  - **`docs/ARCHITECTURE.md`:** sección "Barras del sistema" actualizada a la realidad de SDK 57
+    (borde a borde obligatorio, no-ops, relleno de la zona segura superior, scrim de 3 botones y qué
+    se verificaría en un development build).
+  - **Tests:** `systemBars.test.ts` (color del área superior por variante) y `ScreenScaffold.test.tsx`
+    (relleno con `brand` en `block` y `bg` en `plain`, con el alto de la zona segura). +4 tests (517).
+- **Archivos:** `src/lib/systemBars.ts`, `src/lib/systemBars.test.ts`,
+  `src/components/ui/ScreenScaffold.tsx`, `src/components/ui/__tests__/ScreenScaffold.test.tsx`,
+  `docs/ARCHITECTURE.md`, `docs/PROGRESS.md`.
+- **Pendientes (✋ manual):** revisar en el dispositivo si desaparece la franja negra arriba (o queda
+  el fondo del sistema, no atribuible a la app) y confirmar que la franja inferior responde a la
+  barra de navegación del dispositivo; en un development build, verificar el scrim de 3 botones.
+- **Calidad:** `npm run typecheck` en verde, `npm run lint` (0 errores, 2 avisos preexistentes) y
+  `npm test` (517) en verde.
+
+### [2026-10-16] Tarea: R8.2 — Acciones rápidas y "Últimos 7 días" en Inicio
+
+- **Qué se hizo (PARTE 1 — acciones rápidas):**
+  - Fila de tres acciones de igual ancho, separadas 12 px, al inicio de la hoja (antes de "Este mes"):
+    "Gasto" (ficha coral, `arrow-up`), "Ingreso" (ficha verde, `arrow-down`) y "Transferir" (ficha
+    azul, `swap-horizontal`). Cada columna es un `Pressable` con `IconTile` 40 y el texto debajo
+    (caption), con `minHeight` 44 y `haptics.tap()` al pulsar.
+  - Cada acción abre Registro rápido con el tipo elegido: `router.push({ pathname:
+    '/transaction-form', params: { type } })`. El botón central (+) sigue abriendo sin parámetro
+    (queda `'expense'` por defecto).
+  - **Registro rápido:** el parámetro `type` se valida ahora con zod (`z.enum(['expense','income',
+    'transfer']).safeParse`); si falta o es inválido cae a `'expense'`. Se mantiene el
+    `SegmentedControl` con el tipo inicial.
+  - **Accesibilidad:** cada acción es `role="button"` con etiqueta "Registrar un gasto" / "Registrar
+    un ingreso" / "Hacer una transferencia".
+- **Qué se hizo (PARTE 2 — "Últimos 7 días"):**
+  - **Funciones puras nuevas** en `src/features/summary/utils/dailySpending.ts`: `getDailySpending`
+    (gastos publicados por día en la ventana de 7 días, una fila por día de más antiguo a más
+    reciente, en cero si no hubo gasto; ignora ingresos, transferencias y no publicados),
+    `getDailyAverage` (promedio entero hacia abajo, contando los días en cero) y `getWeekdayInitial`
+    (inicial en español, con "X" para miércoles), más `shiftISODate` (sin depender de zona horaria).
+  - **Tarjeta** `DailySpendingCard`: título "Últimos 7 días" y a la derecha "Promedio {monto}/día";
+    siete columnas de igual ancho con la barra del día (altura proporcional al máximo, entre 4 y 64;
+    la de hoy en `brand`, el resto en `surfaceHigh`) y la inicial del día debajo. Al tocar una barra
+    se muestra encima su monto compacto y `haptics.select()`; tocar otra mueve la etiqueta y tocar la
+    misma la oculta. Sin gastos: "Aún no hay gastos esta semana".
+  - **Datos:** hook `useDailySpending` que reutiliza `useTransactionsInRange` con `[hoy − 6, hoy]`
+    (la API ya filtra `posted`); sin consultas nuevas.
+  - **Estados:** carga con `Skeleton` con la forma de la tarjeta y error con `ErrorState` y reintento.
+  - **Accesibilidad:** cada barra es `role="button"` con "{día}: {monto en palabras}"; el encabezado
+    resume "Gastaste {total} en los últimos 7 días; promedio {promedio} por día".
+- **Orden de la hoja (Inicio):** banner de pendientes, píldora de conexión, acciones rápidas,
+  "Empieza en 3 pasos" (primer uso), "Este mes", "Últimos 7 días", "Cuentas", "Recientes". Actualizada
+  la sección "Inicio" de `docs/UX_SPEC.md`.
+- **Textos (i18n):** `home.quickExpense/quickIncome/quickTransfer`, `quickExpenseA11y/quickIncomeA11y/
+  quickTransferA11y`, `last7Days`, `dailyAverage`, `dailyEmpty`, `dailyBar`, `dailySummary`.
+- **Tests:** `dailySpending.test.ts` (ventana sin gastos, varios gastos el mismo día, ingresos y
+  transferencias ignorados, no publicados ignorados, fuera de ventana, número de días, promedio,
+  fronteras de mes y año, iniciales) y casos nuevos en `HomeSections.test.tsx` para `QuickActions` y
+  `DailySpendingCard` (título y promedio, vacío, revelar monto al tocar, carga y error). +19 (536).
+- **Archivos:** `src/features/summary/utils/dailySpending.ts` (nuevo),
+  `src/features/summary/utils/__tests__/dailySpending.test.ts` (nuevo),
+  `src/features/summary/hooks/useDailySpending.ts` (nuevo),
+  `src/features/summary/components/QuickActions.tsx` (nuevo),
+  `src/features/summary/components/DailySpendingCard.tsx` (nuevo),
+  `src/features/summary/components/index.ts`,
+  `src/features/summary/components/__tests__/HomeSections.test.tsx`, `app/(tabs)/index.tsx`,
+  `app/transaction-form.tsx`, `src/i18n/es.ts`, `docs/UX_SPEC.md`, `docs/PROGRESS.md`.
+- **Pendientes (✋ manual):** revisar las acciones rápidas (que abren Registro rápido con el tipo
+  correcto) y el botón (+) central; la tarjeta "Últimos 7 días" con y sin gastos; tocar barras
+  (mostrar/mover/ocultar el monto); en oscuro y claro, y con texto grande.
+- **Calidad:** `npm run typecheck` en verde, `npm run lint` (0 errores, 2 avisos preexistentes) y
+  `npm test` (536) en verde.
+
+### [2026-10-17] Tarea: R8.3 - Categoría sugerida y movimientos frecuentes
+
+- **Funciones puras nuevas** en `src/features/transactions/utils/suggestions.ts`: `normalizeText`,
+  `suggestCategories`, `getFrequentTransactions`, con tests en `suggestions.test.ts`.
+- **UI en `app/transaction-form.tsx`**: sugerencia con debounce 250 ms, reorden de cuadrícula,
+  etiqueta "Sugerida" y pulso; fila horizontal "Frecuentes" con chips de un toque (guardado rápido
+  con deshacer, respeta modo sin conexión).
+- **Datos:** se amplió la ventana de `useTransactionsInRange` a 180 días para el historial; ranking
+  sigue usando 60 días.
+- **Textos:** `src/i18n/es.ts` (`suggested`, `frequentTitle`).
+- **Calidad:** `npm run typecheck`, `npm run lint` (0 errores, avisos preexistentes) y `npm test`
+  (552) en verde.
+
+### [2026-10-17] Tarea: R8.4 - Análisis encabezado y barras interactivas
+
+- **Encabezado** de `app/analysis.tsx`: IconButton volver con `arrow-back`, título centrado,
+  MonthSelector con chevrones de 20 px, frase de insight solo si hay datos.
+- **Función pura** `buildBarChartLayout` en `src/components/charts/layout.ts` con tests.
+- **GroupedBarChart** interactivo: selección por columna, opacidad 0.45 en no seleccionados,
+  accesibilidad por grupo, tabla alternativa.
+- **Sincronización:** seleccionar mes en el gráfico actualiza `monthAnchor` y el resumen del mes.
+- **Calidad:** `npm run typecheck`, `npm run lint` (0 errores, avisos preexistentes) y `npm test`
+  (557) en verde.
+
+### [2026-10-17] Tarea: R8.5 - Flujo del mes interactivo
+
+- **Funciones puras** en `src/features/analysis/utils/cashFlow.ts`: `cumulativeBalanceByDay`,
+  `buildLineChartLayout`, `nearestIndex`, con tests.
+- **Componente** `CashFlowChart` en `src/components/charts/CashFlowChart.tsx` con arrastre horizontal,
+  guía, etiqueta y punto; estado vacío.
+- **Integración** en `app/analysis.tsx`: tarjeta "Flujo del mes" antes del donut con balance acumulado.
+- **Calidad:** `npm run typecheck`, `npm run lint` (0 errores, avisos preexistentes) y `npm test`
+  (567) en verde.
+
+### [2026-10-17] Tarea: R8.6 - Micro-interacciones e ilustraciones
+
+- **PressableScale** en `src/components/ui/PressableScale.tsx`; aplicado en ListRow y QuickActions.
+- **EmptyIllustration** en `src/components/ui/EmptyIllustration.tsx` con variantes list/chart/target/wallet.
+- **EmptyState** acepta prop `illustration`; aplicado en Movimientos, Análisis, Presupuestos, Cuentas y
+  Recurrentes.
+- **Snackbar** con entrada/salida animada (220/150 ms), respetando reducir movimiento.
+- **Calidad:** `npm run typecheck`, `npm run lint` (0 errores, avisos preexistentes) y `npm test`
+  (567) en verde.

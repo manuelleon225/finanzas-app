@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
 
 import { Text } from '@/components/ui';
-import { formatCOP } from '@/lib/money';
+import { formatCOP, formatPesos } from '@/lib/money';
+import { select } from '@/lib/haptics';
 import { useTheme } from '@/theme';
+
+import { buildBarChartLayout } from './layout';
 
 export type GroupedBarGroup = {
   label: string;
@@ -16,24 +19,25 @@ export type GroupedBarChartProps = {
   colors: string[];
   seriesLabels: string[];
   height?: number;
+  selectedIndex?: number;
+  onSelectIndex?: (index: number) => void;
 };
 
 export function GroupedBarChart({
   groups,
   colors,
   seriesLabels,
-  height = 150,
+  height = 180,
+  selectedIndex,
+  onSelectIndex,
 }: GroupedBarChartProps) {
   const { spacing } = useTheme();
   const [width, setWidth] = useState(0);
 
-  const max = Math.max(1, ...groups.flatMap((group) => group.values));
-  const groupWidth = groups.length > 0 ? width / groups.length : 0;
-  const barGap = 3;
-  const barWidth = Math.max(
-    4,
-    Math.min(18, (groupWidth * 0.6 - barGap * (colors.length - 1)) / colors.length),
-  );
+  const layout =
+    width > 0
+      ? buildBarChartLayout({ data: groups, width, height, barWidth: 10, innerGap: 4 })
+      : null;
 
   const summary = groups
     .map(
@@ -51,32 +55,57 @@ export function GroupedBarChart({
       onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
       style={{ gap: spacing.sm }}
     >
-      {width > 0 ? (
-        <Svg width={width} height={height}>
-          {groups.map((group, groupIndex) => {
-            const barsWidth = barWidth * colors.length + barGap * (colors.length - 1);
-            const startX = groupIndex * groupWidth + (groupWidth - barsWidth) / 2;
-            return group.values.map((value, seriesIndex) => {
-              const barHeight = (value / max) * (height - 6);
-              return (
-                <Rect
-                  key={`${groupIndex}-${seriesIndex}`}
-                  x={startX + seriesIndex * (barWidth + barGap)}
-                  y={height - barHeight}
-                  width={barWidth}
-                  height={Math.max(0, barHeight)}
-                  rx={3}
-                  fill={colors[seriesIndex]}
-                />
-              );
-            });
-          })}
-        </Svg>
-      ) : null}
+      <View style={{ height, position: 'relative' }}>
+        {layout ? (
+          <>
+            <Svg width={width} height={height}>
+              {layout.groups.map((group, groupIndex) => {
+                const opacity =
+                  selectedIndex === undefined || selectedIndex === groupIndex ? 1 : 0.45;
+                return group.bars.map((bar, barIndex) => (
+                  <Rect
+                    key={`${groupIndex}-${barIndex}`}
+                    x={bar.x}
+                    y={bar.y}
+                    width={bar.width}
+                    height={Math.max(0, bar.height)}
+                    rx={4}
+                    fill={colors[barIndex % colors.length]}
+                    opacity={opacity}
+                  />
+                ));
+              })}
+            </Svg>
+            {layout.groups.map((group, groupIndex) => (
+              <Pressable
+                key={`touch-${groupIndex}`}
+                accessibilityRole="button"
+                accessibilityLabel={`${groups[groupIndex].label}: ingresos ${formatPesos(groups[groupIndex].values[0] ?? 0)}, gastos ${formatPesos(groups[groupIndex].values[1] ?? 0)}`}
+                onPress={() => {
+                  select();
+                  onSelectIndex?.(groupIndex);
+                }}
+                style={{
+                  position: 'absolute',
+                  left: group.touchRect.x,
+                  top: group.touchRect.y,
+                  width: group.touchRect.width,
+                  height: group.touchRect.height,
+                }}
+              />
+            ))}
+          </>
+        ) : null}
+      </View>
 
       <View style={styles.labelsRow}>
-        {groups.map((group) => (
-          <Text key={group.label} variant="micro" align="center" style={styles.label}>
+        {groups.map((group, index) => (
+          <Text
+            key={group.label}
+            variant="micro"
+            align="center"
+            style={[styles.label, selectedIndex === index ? { fontWeight: '700' } : null]}
+          >
             {group.label}
           </Text>
         ))}
@@ -100,7 +129,7 @@ export function GroupedBarChart({
             <Text variant="micro">
               {group.values
                 .map((value, index) => `${seriesLabels[index]}: ${formatCOP(value)}`)
-                .join(' · ')}
+                .join('  ·  ')}
             </Text>
           </View>
         ))}

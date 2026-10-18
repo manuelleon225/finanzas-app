@@ -1,27 +1,69 @@
 import { Redirect, useRouter } from 'expo-router';
-import { Alert, Pressable, View } from 'react-native';
+import { Alert, View } from 'react-native';
 
 import {
-  Button,
-  Card,
   EmptyState,
   ErrorState,
   IconButton,
+  IconTile,
+  ListRow,
   LoadingState,
   MoneyText,
-  Screen,
   ScreenHeader,
+  ScreenScaffold,
+  Skeleton,
+  SwipeableRow,
+  SwipeableRowGroup,
   Text,
+  useSwipeableRowGroup,
 } from '@/components/ui';
-import { useSession } from '@/features/auth/hooks/AuthProvider';
+import { resolveAccountTile } from '@/components/ui/tileHelpers';
 import type { AccountWithBalance } from '@/features/accounts/api/accounts';
 import { useAccounts, useArchiveAccount } from '@/features/accounts/hooks/useAccounts';
+import { accountSubtitle } from '@/features/accounts/utils/accountRow';
+import { useSession } from '@/features/auth/hooks/AuthProvider';
 import { es } from '@/i18n/es';
 import { useTheme } from '@/theme';
 
+function AccountRow({
+  account,
+  onEdit,
+  onArchive,
+}: {
+  account: AccountWithBalance;
+  onEdit: (account: AccountWithBalance) => void;
+  onArchive: (account: AccountWithBalance) => void;
+}) {
+  const group = useSwipeableRowGroup();
+  const tile = resolveAccountTile({ type: account.type });
+
+  return (
+    <SwipeableRow
+      onDelete={() => onArchive(account)}
+      actionLabel={es.accounts.archive}
+      actionIcon="archive-outline"
+    >
+      <ListRow
+        leading={<IconTile icon={tile.icon} tileKey={tile.tileKey} size={40} />}
+        title={account.name}
+        subtitle={accountSubtitle({
+          name: account.name,
+          type: account.type,
+          countsAsLiquid: account.counts_as_liquid,
+        })}
+        trailing={<MoneyText amount={account.balance} />}
+        onPress={() => {
+          group?.closeActive();
+          onEdit(account);
+        }}
+      />
+    </SwipeableRow>
+  );
+}
+
 export default function AccountsScreen() {
   const router = useRouter();
-  const { spacing, colors } = useTheme();
+  const { colors, radii, spacing } = useTheme();
   const { session, loading: sessionLoading } = useSession();
   const { data, isLoading, isError, refetch } = useAccounts();
   const archiveAccount = useArchiveAccount();
@@ -32,22 +74,6 @@ export default function AccountsScreen() {
 
   if (!session) {
     return <Redirect href="/login" />;
-  }
-
-  if (isLoading) {
-    return (
-      <Screen>
-        <LoadingState />
-      </Screen>
-    );
-  }
-
-  if (isError) {
-    return (
-      <Screen>
-        <ErrorState onRetry={() => void refetch()} />
-      </Screen>
-    );
   }
 
   const accounts = data ?? [];
@@ -72,8 +98,10 @@ export default function AccountsScreen() {
   }
 
   return (
-    <Screen scroll>
-      <View style={{ gap: spacing.lg, marginTop: spacing.lg }}>
+    <ScreenScaffold
+      variant="plain"
+      contentContainerStyle={{ gap: spacing.md }}
+      header={
         <ScreenHeader
           left={
             <IconButton
@@ -83,74 +111,63 @@ export default function AccountsScreen() {
             />
           }
           title={es.accounts.title}
+          actions={
+            <IconButton
+              icon="add-outline"
+              onPress={() => router.push('/account-form')}
+              accessibilityLabel={es.accounts.newAccount}
+            />
+          }
         />
-
-        <Card
-          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
-        >
-          <Text variant="body">{es.accounts.totalBalance}</Text>
-          <MoneyText amount={totalBalance} />
-        </Card>
-
-        <Button title={es.accounts.newAccount} onPress={() => router.push('/account-form')} />
-
-        {accounts.length === 0 ? (
-          <EmptyState
-            title={es.accounts.emptyTitle}
-            description={es.accounts.emptyDescription}
-            actionLabel={es.accounts.newAccount}
-            onAction={() => router.push('/account-form')}
-          />
-        ) : (
-          <View style={{ gap: spacing.md }}>
-            {accounts.map((account) => (
-              <Card key={account.account_id} style={{ gap: spacing.sm }}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: spacing.md,
-                  }}
-                >
-                  <View style={{ flex: 1, gap: spacing.xs }}>
-                    <Text variant="body">{account.name}</Text>
-                    <Text variant="caption">{es.accountTypes[account.type]}</Text>
-                  </View>
-                  <MoneyText amount={account.balance} />
-                </View>
-                <View style={{ flexDirection: 'row', gap: spacing.lg }}>
-                  <Pressable
-                    onPress={() =>
-                      router.push({
-                        pathname: '/account-form',
-                        params: { id: account.account_id },
-                      })
-                    }
-                    accessibilityRole="button"
-                    accessibilityLabel={`${es.common.edit}: ${account.name}`}
-                    hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
-                  >
-                    <Text variant="caption" color={colors.primary}>
-                      {es.common.edit}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => confirmArchive(account)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${es.accounts.archive}: ${account.name}`}
-                    hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
-                  >
-                    <Text variant="caption" color={colors.danger}>
-                      {es.accounts.archive}
-                    </Text>
-                  </Pressable>
-                </View>
-              </Card>
-            ))}
-          </View>
-        )}
+      }
+    >
+      <View
+        style={{
+          backgroundColor: colors.brand,
+          borderRadius: radii.xl,
+          padding: spacing.lg,
+          gap: spacing.xs,
+        }}
+      >
+        <Text variant="caption" color={colors.onBrandMuted}>
+          {es.accounts.totalBalance}
+        </Text>
+        <MoneyText amount={totalBalance} size="display" color={colors.onBrand} />
       </View>
-    </Screen>
+
+      {isLoading ? (
+        <View style={{ gap: spacing.md }}>
+          <Skeleton variant="card" height={80} />
+          <Skeleton variant="card" height={80} />
+        </View>
+      ) : isError ? (
+        <ErrorState onRetry={() => void refetch()} />
+      ) : accounts.length === 0 ? (
+        <EmptyState
+          icon="wallet-outline"
+          illustration="wallet"
+          title={es.accounts.emptyTitle}
+          description={es.accounts.emptyDescription}
+          actionLabel={es.accounts.newAccount}
+          onAction={() => router.push('/account-form')}
+        />
+      ) : (
+        <SwipeableRowGroup>
+          {accounts.map((account) => (
+            <AccountRow
+              key={account.account_id}
+              account={account}
+              onEdit={(target) =>
+                router.push({
+                  pathname: '/account-form',
+                  params: { id: target.account_id },
+                })
+              }
+              onArchive={confirmArchive}
+            />
+          ))}
+        </SwipeableRowGroup>
+      )}
+    </ScreenScaffold>
   );
 }

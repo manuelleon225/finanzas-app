@@ -4,3 +4,4 @@ export {
   type GroupedBarChartProps,
   type GroupedBarGroup,
 } from './GroupedBarChart';
+export { CashFlowChart, type CashFlowChartProps } from './CashFlowChart';

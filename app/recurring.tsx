@@ -1,5 +1,5 @@
 import { Redirect, useRouter } from 'expo-router';
-import { Alert, Pressable, Switch, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 
 import {
   Button,
@@ -11,6 +11,7 @@ import {
   MoneyText,
   Screen,
   ScreenHeader,
+  Switch,
   Text,
 } from '@/components/ui';
 import { useSession } from '@/features/auth/hooks/AuthProvider';
@@ -89,6 +90,8 @@ export default function RecurringScreen() {
 
         {rules.length === 0 ? (
           <EmptyState
+            icon="repeat-outline"
+            illustration="list"
             title={es.recurring.emptyTitle}
             description={es.recurring.emptyDescription}
             actionLabel={es.recurring.newRule}
@@ -122,7 +125,6 @@ export default function RecurringScreen() {
                       onValueChange={(value) =>
                         updateRule.mutate({ id: rule.id, input: { is_active: value } })
                       }
-                      trackColor={{ true: colors.primary, false: colors.border }}
                       accessibilityLabel={es.recurring.active}
                     />
                   </View>
@@ -136,7 +138,7 @@ export default function RecurringScreen() {
                       accessibilityLabel={`${es.common.edit}: ${label}`}
                       hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
                     >
-                      <Text variant="caption" color={colors.primary}>
+                      <Text variant="caption" color={colors.brand}>
                         {es.common.edit}
                       </Text>
                     </Pressable>

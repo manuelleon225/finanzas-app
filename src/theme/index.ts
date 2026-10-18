@@ -5,6 +5,19 @@ export { radii, type Radii } from './radii';
 export { spacing, type Spacing } from './spacing';
 export { tint } from './tint';
 export {
+  getTileColors,
+  resolveTileKey,
+  tilePalette,
+  type AccountTileInput,
+  type AccountType,
+  type CategoryKind,
+  type CategoryTileInput,
+  type TileColorPair,
+  type TileColors,
+  type TileInput,
+  type TileKey,
+} from './tilePalette';
+export {
   fontSizes,
   fontWeights,
   lineHeights,

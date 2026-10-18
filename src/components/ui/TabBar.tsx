@@ -17,16 +17,20 @@ type RouteMeta = {
 };
 
 const ROUTE_META: Record<string, RouteMeta> = {
-  index: { icon: 'home-outline', label: es.tabs.home },
-  movements: { icon: 'list-outline', label: es.tabs.movements },
-  plan: { icon: 'pie-chart-outline', label: es.tabs.plan },
-  more: { icon: 'ellipsis-horizontal-outline', label: es.tabs.more },
+  index: { icon: 'home', label: es.tabs.home },
+  movements: { icon: 'list', label: es.tabs.movements },
+  plan: { icon: 'pie-chart', label: es.tabs.plan },
+  more: { icon: 'ellipsis-horizontal', label: es.tabs.more },
 };
 
 const PLUS_INDEX = 2;
+const PLUS_RING = 64;
+const PLUS_SIZE = 56;
+const PLUS_LIFT = 14;
+const INACTIVE_ICON = 'ellipse-outline';
 
 function PlusButton({ onPress, label }: { onPress: () => void; label: string }) {
-  const { colors } = useTheme();
+  const { colors, radii } = useTheme();
 
   return (
     <View style={styles.plusSlot}>
@@ -34,9 +38,11 @@ function PlusButton({ onPress, label }: { onPress: () => void; label: string }) 
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={label}
-        style={[styles.plus, { backgroundColor: colors.brand }]}
+        style={[styles.plusRing, { backgroundColor: colors.bg, borderRadius: radii.pill }]}
       >
-        <AppIcon name="add-outline" size={24} color={colors.onBrand} />
+        <View style={[styles.plus, { backgroundColor: colors.brand, borderRadius: radii.pill }]}>
+          <AppIcon name="add" size={24} color={colors.onBrand} filled />
+        </View>
       </Pressable>
     </View>
   );
@@ -57,7 +63,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       style={[
         styles.bar,
         {
-          backgroundColor: colors.background,
+          backgroundColor: colors.bg,
           borderTopColor: colors.border,
           height: componentHeights.tabBar + insets.bottom,
           paddingBottom: insets.bottom,
@@ -68,6 +74,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         const focused = state.index === index;
         const meta = ROUTE_META[route.name];
         const label = descriptors[route.key]?.options.title ?? meta?.label ?? route.name;
+        const color = focused ? colors.brandText : colors.textSecondary;
 
         function handlePress() {
           const event = navigation.emit({
@@ -94,11 +101,12 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               style={styles.item}
             >
               <AppIcon
-                name={meta?.icon ?? 'ellipse-outline'}
+                name={meta?.icon ?? INACTIVE_ICON}
                 size={24}
-                color={focused ? colors.brand : colors.textSecondary}
+                color={color}
+                filled={focused}
               />
-              <Text variant="micro" color={focused ? colors.brand : colors.textSecondary}>
+              <Text variant="micro" color={color}>
                 {label}
               </Text>
             </Pressable>
@@ -113,7 +121,7 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: 1,
   },
   item: {
     flex: 1,
@@ -128,12 +136,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  plus: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+  plusRing: {
+    width: PLUS_RING,
+    height: PLUS_RING,
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{ translateY: -14 }],
+    transform: [{ translateY: -PLUS_LIFT }],
+  },
+  plus: {
+    width: PLUS_SIZE,
+    height: PLUS_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

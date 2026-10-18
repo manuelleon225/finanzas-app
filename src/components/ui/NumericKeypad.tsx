@@ -65,6 +65,7 @@ export function NumericKeypad({
             return (
               <Pressable
                 key={value}
+                testID="keypad-key"
                 onPress={() => handleKey(value)}
                 onLongPress={isBackspace ? handleBackspaceLongPress : undefined}
                 disabled={disabled}
@@ -76,8 +77,8 @@ export function NumericKeypad({
                   styles.key,
                   {
                     height: keyHeight,
-                    borderRadius: radii.md,
-                    backgroundColor: pressed ? colors.surfaceHigh : colors.surfaceRaised,
+                    borderRadius: radii.lg,
+                    backgroundColor: pressed ? colors.surfaceHigh : colors.surface,
                   },
                   disabled ? styles.disabled : null,
                 ]}

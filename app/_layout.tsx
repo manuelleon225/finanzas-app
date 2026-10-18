@@ -9,12 +9,11 @@ import type { PersistQueryClientOptions } from '@tanstack/react-query-persist-cl
 import { useFonts } from 'expo-font';
 import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import { LoadingState, SnackbarHost } from '@/components/ui';
+import { LoadingState, SnackbarHost, SystemBars } from '@/components/ui';
 import { LockScreen } from '@/features/auth/components/LockScreen';
 import { AuthProvider, useSession } from '@/features/auth/hooks/AuthProvider';
 import { useAuthDeepLink } from '@/features/auth/hooks/useAuthDeepLink';
@@ -83,14 +82,14 @@ function RootNavigator() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
         <LoadingState />
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="transaction-form" options={{ presentation: 'fullScreenModal' }} />
       </Stack>
@@ -129,7 +128,7 @@ export default function RootLayout() {
       >
         <AuthProvider>
           <RootNavigator />
-          <StatusBar style="auto" />
+          <SystemBars variant="plain" />
         </AuthProvider>
       </PersistQueryClientProvider>
     </GestureHandlerRootView>

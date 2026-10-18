@@ -1,5 +1,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
 
+import { colors } from '@/theme';
+
 import { MonthSelector } from '../MonthSelector';
 
 describe('MonthSelector', () => {
@@ -27,5 +29,13 @@ describe('MonthSelector', () => {
     await fireEvent.press(getByLabelText('Mes siguiente'));
     expect(onChange).not.toHaveBeenCalled();
     expect(getByLabelText('Mes siguiente').props.accessibilityState.disabled).toBe(true);
+  });
+
+  it('tone onBlock pinta el mes con onBrand', async () => {
+    const { getByText } = await render(
+      <MonthSelector value="2026-10" onChange={() => undefined} tone="onBlock" />,
+    );
+
+    expect(getByText('octubre de 2026')).toHaveStyle({ color: colors.dark.onBrand });
   });
 });

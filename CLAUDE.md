@@ -6,7 +6,7 @@
 > `AGENTS.md` y a los documentos de `docs/`. Si algo choca con el código, la fuente de verdad son
 > `docs/ARCHITECTURE.md`, `docs/DATA_MODEL.md`, `docs/DESIGN_SYSTEM.md` y `docs/UX_SPEC.md`.
 >
-> Última actualización: 2026-10-15 (cierre de R6.4).
+> Última actualización: 2026-10-16 (R7.14: auditoría final y limpieza del rediseño v3).
 
 ---
 
@@ -20,7 +20,7 @@
 6. [Backend: Supabase](#6-backend-supabase)
 7. [Modelo de datos y lógica](#7-modelo-de-datos-y-lógica)
 8. [Arquitectura de la app](#8-arquitectura-de-la-app)
-9. [Sistema de diseño v2](#9-sistema-de-diseño-v2)
+9. [Sistema de diseño v3](#9-sistema-de-diseño-v3)
 10. [Pantallas (UX)](#10-pantallas-ux)
 11. [Features en detalle](#11-features-en-detalle)
 12. [Testing y calidad](#12-testing-y-calidad)
@@ -44,13 +44,12 @@
   próximo ingreso base; (3) **registro rápido en 2–3 toques** con botón **(+)** central.
 - **Stack:** Expo SDK 57 + React Native 0.86 + TypeScript estricto + Expo Router; Supabase
   (Postgres + Auth + RLS + Edge Functions); TanStack Query (con cola offline); Zustand; RHF+zod.
-- **Estado:** MVP completo (fases P1–P9) + rediseño v2 (R0–R6) terminados en código. **Sin
-  publicar** (P10.1 pendiente). En verificación de cierre (R6.4).
-- **⚠️ Estado real hoy:** la base de datos del proyecto **no tiene aplicadas las migraciones 006 y
-  007** (ver §16), lo que rompe Inicio/Presupuestos/Análisis hasta que se ejecuten. Y **todo el
-  trabajo de R2.3 en adelante está sin commitear** sobre `main` (ver §15).
-- **Git:** rama `main`, último commit `7bdacb8` (R2.2). 142 archivos modificados/nuevos sin
-  commitear. No existe la rama `feat/redesign` que planeaba la guía.
+- **Estado:** MVP completo (fases P1–P9) + rediseño v2 (R0–R6) + rediseño v3 "bloque de color"
+  (R7.0–R7.14) terminados en código, con calidad en verde. **Sin publicar** (P10.1 pendiente). Cierre
+  v3 = QA visual manual (`docs/QA_VISUAL.md`).
+- **Git:** rama **`feat/ui-v3`** (base `main`; `feat/redesign` ya existe). Último commit `dedbe65`
+  (`docs: agrega guía de prompts del rediseño UI v3`). El trabajo de R7 está sin commitear en el
+  árbol de trabajo. El PR va de `feat/ui-v3` → `feat/redesign` → `main`.
 
 ---
 
@@ -344,25 +343,35 @@ Existe una v1 editable: si el producto cambia, se edita primero `docs/DATA_MODEL
 
 ---
 
-## 9. Sistema de diseño v2
+## 9. Sistema de diseño v3
 
 Fuente de verdad visual: `docs/DESIGN_SYSTEM.md`. Todos los valores salen de `src/theme`.
+
+La v3 ("bloque de color") monta cada pantalla sobre un **bloque** superior a color (marca, o
+degradado marca→marca→fondo en las pantallas con scroll) con título y controles en `onBrand`/
+`onBrandMuted`, y un **Sheet** (superficie de esquinas redondeadas) con el contenido. `ScreenScaffold`
+(`variant="block" | "plain"`) lo arma; `BlockHeader` + `Sheet` son las piezas.
 
 - **Identidad:** tema **oscuro por defecto**; marca **índigo** (`brand`) separada de los colores
   semánticos; diseño **plano (sin sombras)**; fuente **Manrope** con cifras tabulares.
 - **Color (tokens, claro/oscuro):** `bg`, `surface`, `surfaceRaised`, `surfaceHigh`, `border`,
-  `textPrimary`, `textSecondary`, `textMuted`, `brand`, `brandSoft`, `onBrand`, `income`
-  (verde = entra), `expense` (coral = sale), `extra` (ámbar = extra), `extraSoft`, `danger`,
-  `scrim`. Test de contraste WCAG AA (`src/theme/__tests__/contrast.test.ts`).
-- **Tipografía:** `displayLg` 40/48, `display` 34/40, `title` 22/28, `subtitle` 17/24, `body`
+  `textPrimary`, `textSecondary`, `textMuted`, `brand`, `brandSoft`, `brandText`, `onBrand`,
+  `onBrandMuted`, `income` (verde = entra), `expense` (coral = sale), `extra` (ámbar = extra),
+  `extraFill`, `extraSoft`, `danger`, `dangerSoft`, `scrim`. Test de contraste WCAG AA
+  (`src/theme/__tests__/contrast.test.ts`).
+- **Fichas de color:** `tilePalette` (`TileKey` + `getTileColors` + `resolveTileKey`) y
+  `categoryPalette` (12 colores) alimentan `IconTile`. Las aliases v2 (`background`, `primary`,
+  `onPrimary`) se **eliminaron**.
+- **Tipografía:** `displayLg` 44/52, `display` 34/40, `title` 24/30, `subtitle` 17/24, `body`
   15/22, `bodyStrong` 15/22 (600), `caption` 12/16, `micro` 11/14. Todo escala con el sistema.
-- **Espaciado/radios/alturas:** espaciado 4–40; radios sm 8/md 12/lg 16/xl 24/pill; botón 52,
-  campo 52, chip 32, tag 20, fila lista ≥64, tab bar 64 + safe area, áreas táctiles 44.
-- **Componentes (`src/components/ui`):** Screen, Text, Button (primary/secondary/ghost/
-  destructive), Input, Card, Chip, SegmentedControl, ListRow, Tag, ProgressBar, StackedBar,
+- **Espaciado/radios/alturas:** espaciado 4–40; radios sm 8/md 12/lg 16/xl 20/sheet 28/pill; botón
+  52, campo 52, chip 32, tag 20, fila lista ≥64, tab bar 64, icon button 44, áreas táctiles 44.
+- **Componentes (`src/components/ui`):** `ScreenScaffold`, Screen, Text, Button (primary/secondary/
+  ghost/destructive), Input, Card, Chip, SegmentedControl, ListRow, Tag, ProgressBar, StackedBar,
   BottomSheet, Skeleton, EmptyState, LoadingState, ErrorState, Snackbar(+Host), MoneyText,
-  AnimatedNumber, NumericKeypad, SwipeableRow, MonthSelector, ScreenHeader, IconButton, AppIcon,
-  ConnectivityPill, TabBar. Gráficos: `src/components/charts` (DonutChart, GroupedBarChart).
+  AnimatedNumber, NumericKeypad, SwipeableRow, MonthSelector, ScreenHeader, IconButton, IconTile,
+  Avatar, Switch, AppIcon, ConnectivityPill, TabBar. Gráficos: `src/components/charts` (DonutChart,
+  GroupedBarChart).
 - **Haptics** (`src/lib/haptics.ts`): `tap` (primary y +), `select` (chips/segmentos/teclas),
   `success` (guardar), `warning` (eliminar), `error` (validación).
 - **Animación:** rápida 150 ms, estándar 220 ms, lenta 320 ms; conteo 300–600 ms; con "reducir
@@ -393,8 +402,9 @@ Fuente de verdad: `docs/UX_SPEC.md`.
 - **Planificar:** Presupuestos (resumen + barra) · Pagos e ingresos recurrentes · Análisis.
 - **Presupuestos:** MonthSelector; lista con ProgressBar; umbrales ok/near/over; crear/editar en
   BottomSheet.
-- **Análisis:** insights (2–3 frases); Donut Gastos|Ingresos + lista por categoría (top 6 + "Otros");
-  "Últimos 6 meses" (barras agrupadas); "Base y extras".
+- **Análisis:** bloque con título + MonthSelector + primera frase de insights; Donut Gastos|Ingresos +
+  lista por categoría (top 6 + "Otros") con fichas de color; "Últimos 6 meses" (barras agrupadas);
+  "Base y extras".
 - **Recurrentes:** lista con switch; formulario con switch "Pedir confirmación cada vez" (solo
   gastos).
 - **Sin conexión:** píldora "Sin conexión · N por sincronizar"; filas "Sin sincronizar"/"No se
@@ -460,9 +470,9 @@ Fuente de verdad: `docs/UX_SPEC.md`.
 
 - **Comandos:** `npm.cmd run typecheck` (tsc --noEmit), `npm.cmd run lint`, `npm.cmd test`,
   `npm.cmd run format`, `npx.cmd expo export --platform android`.
-- **Estado verificado (2026-10-15):** typecheck ✅ · lint ✅ (0 errores, **2 warnings**
+- **Estado verificado (2026-10-16):** typecheck ✅ · lint ✅ (0 errores, **2 warnings**
   preexistentes de React Compiler + react-hook-form en `app/recurring-form.tsx` y
-  `app/transaction-form.tsx`) · **343 tests / 51 suites** ✅ · `expo export --platform android` ✅.
+  `app/transaction-form.tsx`) · **509 tests / 71 suites** ✅ · `expo export --platform android` ✅.
 - **Ruido de consola:** en el test de ProgressBar, `act(...)` de `Animated` (no falla).
 - **`npm audit`:** 67 (17 moderate, 50 high, 0 critical); en producción solo
   `decode-uri-component` (moderado, DoS) vía `expo-router`→`query-string`, sin fix compatible con
@@ -485,8 +495,9 @@ Fuente de verdad: `docs/UX_SPEC.md`.
 
 ## 14. Historial completo de prompts
 
-Dos guías: `guia-prompts-app-finanzas.md` (P0.1–P10.1) y
-`guia-prompts-rediseno-app-finanzas.md` (R0.1–R6.4, con Anexos A/B = design system y UX spec).
+Tres guías: `guia-prompts-app-finanzas.md` (P0.1–P10.1),
+`guia-prompts-rediseno-app-finanzas.md` (R0.1–R6.4, con Anexos A/B = design system y UX spec) y
+`guia-prompts-ui-v3-app-finanzas.md` (R7.0–R7.14, rediseño v3 "bloque de color", con Anexo B de QA).
 
 ### 14.1 Guía 1 (P0.1 – P10.1)
 | Prompt | Qué hizo | Estado |
@@ -546,38 +557,54 @@ Dos guías: `guia-prompts-app-finanzas.md` (P0.1–P10.1) y
 | R6.3 | Auditoría de seguridad y dependencias | ✅ (sin commit) |
 | R6.4 | Checklist de QA y cierre | ✅ (sin commit) |
 
+### 14.3 Guía 3 (R7.0 – R7.14): rediseño v3 "bloque de color"
+| Prompt | Qué hizo | Estado |
+|---|---|---|
+| R7.0 | Rama `feat/ui-v3` y documentos del diseño v3 | ✅ |
+| R7.1 | Tokens v3 (colores, tipografía, radios, `tilePalette`/`categoryPalette`) + contraste | ✅ |
+| R7.2 | Barras del sistema (edges-to-edge) | ✅ |
+| R7.3 | Iconos rellenos y fichas de color (`IconTile`) | ✅ |
+| R7.4 | Piezas base: bloque, `Sheet`, `Switch`, `Avatar`, variantes | ✅ |
+| R7.5 | Barra de pestañas v3 | ✅ |
+| R7.6 | Inicio | ✅ |
+| R7.7 | Registro rápido | ✅ |
+| R7.8 | Movimientos | ✅ |
+| R7.9 | Planificar y Presupuestos | ✅ |
+| R7.10 | Más | ✅ |
+| R7.11 | Cuentas y Categorías | ✅ |
+| R7.12 | Login, registro y estados vacíos y de error | ✅ |
+| R7.13 | Análisis | ✅ |
+| R7.14 | Auditoría final y limpieza | ✅ (sin commit) |
+
 ---
 
 ## 15. Estado actual
 
-- **Código:** todo el rediseño v2 (R2.3→R6.4) está implementado y con calidad en verde.
-- **Git (⚠️ importante):**
-  - Rama **`main`**, último commit **`7bdacb8`** `feat(R2.2): componentes base del sistema de
-    diseño v2`.
-  - **142 archivos** modificados/eliminados/nuevos **sin commitear** (todo R2.3 en adelante).
-  - **No existe** la rama `feat/redesign` que planeaba la guía (`git checkout -b feat/redesign`).
-  - Archivos borrados sin commitear: `app/(tabs)/settings.tsx`, `app/design-preview.tsx`,
-    `src/components/ui/Fab.tsx`.
-- **Base de datos:** 001–005 aplicadas; **006 y 007 pendientes** (ver §16). El proyecto fue
-  reanudado tras una pausa.
-- **Documentación:** `docs/APP_GUIDE.md` reescrita; `docs/QA_CHECKLIST.md` creada; este
-  `CLAUDE.md` creado. `docs/PROGRESS.md` con la entrada de R6.4.
+- **Código:** rediseño v2 (R2.3→R6.4) y rediseño v3 (R7.0→R7.14) implementados, con typecheck,
+  lint y tests en verde (509/71).
+- **Git:**
+  - Rama **`feat/ui-v3`**; último commit **`dedbe65`** `docs: agrega guía de prompts del rediseño
+    UI v3 (R7.0-R7.14)`.
+  - Trabajo de R7 **sin commitear** en el árbol de trabajo.
+  - Existen `main`, `feat/redesign` y `feat/ui-v3` (locales y en `origin`). El PR va de
+    `feat/ui-v3` → `feat/redesign` → `main`.
+- **Base de datos:** migraciones **001–007 aplicadas** (006 y 007 lo estaban ya desde R5.1/R5.5).
+- **Documentación:** `docs/APP_GUIDE.md` y este `CLAUDE.md` actualizados a v3; `docs/QA_VISUAL.md`
+  creada (checklist de QA visual v3); `docs/PROGRESS.md` con la entrada de R7.14.
 
 ---
 
 ## 16. Pendientes y bloqueantes
 
-### 16.1 Bloqueante inmediato (rompe Inicio)
-- **Aplicar en Supabase SQL Editor (en orden):**
-  1. `supabase/migrations/006_budgets.sql`
-  2. `supabase/migrations/007_pending_transactions.sql`
-  - Sintoma actual: Inicio muestra "Algo salió mal / Ocurrió un error. Intenta de nuevo."
-  - Evidencia: `budgets` → HTTP 404 `PGRST205`; `transactions.status` y
-    `recurring_rules.confirmation_mode` → HTTP 400 `42703` (columna inexistente).
-  - Después de aplicar, recargar la app.
+### 16.1 Base de datos
+- Migraciones **001–007 aplicadas**. (Un snapshot previo de este archivo decía que 006 y 007
+  estaban pendientes y rompían Inicio; ya no aplica.)
+- Verificación pendiente: correr `supabase/tests/003_rls_test_v2.sql` con **dos usuarios reales** y
+  confirmar PASS.
 
 ### 16.2 Verificación manual heredada (✋)
-- Ejecutar `docs/QA_CHECKLIST.md` (72 casos) en un dispositivo real y enviar capturas finales.
+- Recorrer `docs/QA_VISUAL.md` (checklist v3) en un dispositivo real, en claro y oscuro, y enviar
+  capturas finales. (`docs/QA_CHECKLIST.md` sigue disponible como checklist general.)
 - Correr `supabase/tests/003_rls_test_v2.sql` con **dos usuarios reales** y confirmar PASS.
 - Desplegar la Edge Function `delete-account`.
 - En Supabase (Authentication → URL Configuration): agregar Redirect URLs `finanzas://**` y
@@ -604,9 +631,9 @@ Dos guías: `guia-prompts-app-finanzas.md` (P0.1–P10.1) y
 
 ## 17. Problemas conocidos y riesgos
 
-### 17.1 Base de datos desactualizada
-006 y 007 no aplicadas → Inicio/Presupuestos/Análisis fallan. **Prioridad alta** (§16.1). Nota: la
-documentación decía que estaban aplicadas; la realidad del proyecto reanudado dice lo contrario.
+### 17.1 Base de datos
+Migraciones 001–007 aplicadas (corrige la nota anterior, ya obsoleta). Pendiente la verificación RLS
+con dos usuarios reales (§16.1).
 
 ### 17.2 Warning de PKCE (WebCrypto)
 `@supabase/auth-js` avisa: *"WebCrypto API is not supported. Code challenge method will default to
@@ -640,6 +667,19 @@ y no `ghost`; chip "Nota (opcional)"; ícono de recurrente en `trailing` (doc: e
 acciones de filas fallidas en BottomSheet (doc: inline); número mínimo de insights; orden de campos
 del formulario de recurrentes; separación 16 vs 12 entre tarjetas; color del primary presionado.
 
+**Diferencias del rediseño v3 (auditoría R7.14; docs sin modificar):**
+1. **`recurring.tsx`, `recurring-form.tsx` y `delete-account.tsx` no tienen prompt R7**: conservan
+   la estructura v2 (`Screen`/`ScreenHeader`, enlaces de texto, `Switch` v3 ya migrado) en vez del
+   bloque + `Sheet` de la v3.
+2. **`Screen` (v2) sigue existiendo** y en uso solo por esas pantallas y por los *early-returns* de
+   carga/error de algunos formularios. La v3 usa `ScreenScaffold`.
+3. **`Snackbar`**: posición `left/right: 16`, `bottom: 24` fija (no considera la barra de pestañas
+   ni la zona segura), frente al doc "12 px sobre la barra de pestañas". Duración 4000 ms (correcta).
+4. **`app/recurring-form.tsx`**: `styles.amountDisplay` con `fontSize: 36` / `lineHeight: 44`
+   literales (no salen de tokens).
+5. **`SegmentedControl`**: alto 40 (spec) con `hitSlop` vertical para llegar a 44 px de área táctil;
+   `Chip` igual (32 + `hitSlop`).
+
 ### 17.4 Ruido/dependencias
 - 2 warnings de lint preexistentes (React Compiler + react-hook-form).
 - `npm audit`: 50 high + 17 moderate, casi todo tooling; `decode-uri-component` sí alcanzable en
@@ -651,12 +691,11 @@ del formulario de recurrentes; separación 16 vs 12 entre tarjetas; color del pr
 
 Orden sugerido:
 
-1. **Desbloquear la app (crítico):** aplicar migrations 006 y 007 (§16.1).
+1. **QA visual v3:** recorrer `docs/QA_VISUAL.md` en dispositivo real (claro y oscuro) y enviar
+   capturas finales.
 2. **Aplicar el polyfill de PKCE** con `expo-crypto` (§17.2): sin dependencias nuevas y mejora la
    seguridad del flujo de recuperación/confirmación.
-3. **Commitear el trabajo pendiente** de forma ordenada. Hoy está todo sobre `main` sin commitear
-   (riesgo de pérdida). Opciones: crear `feat/redesign`, commitear por fases (R2.3→R6.4) o un
-   commit único de cierre. Decisión del usuario.
+3. **Abrir el PR** de `feat/ui-v3` → `feat/redesign` → `main` (commits por fase o uno de cierre).
 4. **Correr `docs/QA_CHECKLIST.md`** en un dispositivo real y adjuntar capturas.
 5. **Resolver las decisiones abiertas:** quitar dependencias sin uso (con permiso), y decidir sobre
    las 14 discrepancias de diseño (mi recomendación: actualizar `docs/UX_SPEC.md`/
@@ -725,3 +764,37 @@ supabase functions deploy delete-account
 
 *Fin del contexto maestro. Si algo aquí contradice al código o a `docs/`, gana el código/`docs/`.
 Mantén este archivo actualizado al cerrar tareas importantes.*
+
+## Estado R8
+
+R8.2-R8.6 aplicados: acciones r�pidas, �ltimos 7 d�as, categor�a sugerida y frecuentes, an�lisis interactivo, flujo del mes, micro-interacciones e ilustraciones.
+
+
+## Resumen de trabajo R8 (R8.2 a R8.7)
+
+### Prompts ejecutados
+- R8.2 (Prompt Maestro #3): acciones r�pidas y tarjeta "�ltimos 7 d�as" en Inicio.
+- R8.3 (Prompt Maestro #4): categor�a sugerida por nota y movimientos frecuentes en registro r�pido.
+- R8.4 (Prompt Maestro #5): encabezado de An�lisis y barras interactivas de 6 meses.
+- R8.5 (Prompt Maestro #6): flujo del mes interactivo (balance acumulado arrastrable).
+- R8.6 (Prompt Maestro #7): micro-interacciones (PressableScale), Snackbar animado, ilustraciones de estados vac�os.
+- R8.7 (Prompt Maestro #8): auditor�a final de consistencia y calidad.
+
+### Archivos principales tocados
+- app/(tabs)/index.tsx, app/analysis.tsx, app/transaction-form.tsx
+- src/features/summary/components/QuickActions.tsx, DailySpendingCard.tsx
+- src/features/summary/utils/dailySpending.ts (+tests)
+- src/features/transactions/utils/suggestions.ts (+tests)
+- src/components/charts/layout.ts, GroupedBarChart.tsx, CashFlowChart.tsx
+- src/features/analysis/utils/cashFlow.ts (+tests)
+- src/components/ui/PressableScale.tsx, EmptyIllustration.tsx, EmptyState.tsx, Snackbar.tsx, ListRow.tsx
+- src/i18n/es.ts, docs/UX_SPEC.md, docs/PROGRESS.md, docs/QA_VISUAL.md, docs/APP_GUIDE.md
+
+### Comandos de calidad (verde)
+- npm run typecheck
+- npm run lint (0 errores, avisos preexistentes)
+- npm test (567 tests)
+
+### Notas
+- No se modific� l�gica de negocio existente salvo ampliaci�n de ventana de historial a 180 d�as.
+- docs/DESIGN_SYSTEM.md y docs/UX_SPEC.md solo editados donde el prompt lo permiti�.

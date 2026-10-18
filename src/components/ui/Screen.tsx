@@ -10,7 +10,6 @@ export type ScreenProps = {
   padded?: boolean;
   style?: ViewStyle;
   contentContainerStyle?: ViewStyle;
-  overlay?: ReactNode;
 };
 
 export function Screen({
@@ -19,7 +18,6 @@ export function Screen({
   padded = true,
   style,
   contentContainerStyle,
-  overlay,
 }: ScreenProps) {
   const { colors, spacing } = useTheme();
   const padding = padded ? spacing.lg : 0;
@@ -27,7 +25,7 @@ export function Screen({
   if (scroll) {
     return (
       <SafeAreaView
-        style={[styles.flex, { backgroundColor: colors.background }]}
+        style={[styles.flex, { backgroundColor: colors.bg }]}
         edges={['top', 'left', 'right']}
       >
         <ScrollView
@@ -37,18 +35,16 @@ export function Screen({
         >
           {children}
         </ScrollView>
-        {overlay}
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView
-      style={[styles.flex, { backgroundColor: colors.background, padding }, style]}
+      style={[styles.flex, { backgroundColor: colors.bg, padding }, style]}
       edges={['top', 'left', 'right']}
     >
       {children}
-      {overlay}
     </SafeAreaView>
   );
 }

@@ -47,7 +47,7 @@ export function LockScreen() {
   }
 
   return (
-    <View style={[styles.overlay, { backgroundColor: colors.background }]}>
+    <View style={[styles.overlay, { backgroundColor: colors.bg }]}>
       <View style={[styles.content, { gap: spacing.lg }]}>
         <View style={{ gap: spacing.sm }}>
           <Text variant="title" align="center">

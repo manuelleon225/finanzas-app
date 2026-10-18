@@ -1,5 +1,5 @@
 import { formatCOP } from '@/lib/money';
-import { useTheme } from '@/theme';
+import { fontSizes, lineHeights, useTheme } from '@/theme';
 
 import { Text, type TextProps } from './Text';
 
@@ -15,10 +15,10 @@ export type MoneyTextProps = Omit<TextProps, 'children'> & {
 };
 
 const SIZE_STYLE: Record<MoneySize, { fontSize: number; lineHeight: number }> = {
-  displayLg: { fontSize: 40, lineHeight: 48 },
-  display: { fontSize: 34, lineHeight: 40 },
-  bodyStrong: { fontSize: 15, lineHeight: 22 },
-  caption: { fontSize: 12, lineHeight: 16 },
+  displayLg: { fontSize: fontSizes.displayLg, lineHeight: lineHeights.displayLg },
+  display: { fontSize: fontSizes.display, lineHeight: lineHeights.display },
+  bodyStrong: { fontSize: fontSizes.bodyStrong, lineHeight: lineHeights.bodyStrong },
+  caption: { fontSize: fontSizes.caption, lineHeight: lineHeights.caption },
 };
 
 export function MoneyText({
@@ -26,6 +26,7 @@ export function MoneyText({
   kind = 'neutral',
   signed = false,
   size = 'bodyStrong',
+  style,
   ...rest
 }: MoneyTextProps) {
   const { colors } = useTheme();
@@ -41,7 +42,7 @@ export function MoneyText({
       variant="money"
       color={color}
       accessibilityLabel={formatted}
-      style={[size !== 'bodyStrong' ? SIZE_STYLE[size] : null]}
+      style={[size !== 'bodyStrong' ? SIZE_STYLE[size] : null, style]}
       {...rest}
     >
       {formatted}

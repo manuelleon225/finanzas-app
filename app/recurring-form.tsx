@@ -1,7 +1,7 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Alert, Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import {
   Button,
@@ -15,6 +15,7 @@ import {
   Screen,
   ScreenHeader,
   SegmentedControl,
+  Switch,
   Text,
 } from '@/components/ui';
 import { useAccounts } from '@/features/accounts/hooks/useAccounts';
@@ -147,6 +148,7 @@ export default function RecurringFormScreen() {
     return (
       <Screen>
         <EmptyState
+          icon="wallet-outline"
           title={es.transactionForm.noAccountsTitle}
           description={es.transactionForm.noAccountsDescription}
           actionLabel={es.accounts.newAccount}
@@ -322,7 +324,6 @@ export default function RecurringFormScreen() {
                 <Switch
                   value={field.value === 'confirm'}
                   onValueChange={(value) => field.onChange(value ? 'confirm' : 'auto')}
-                  trackColor={{ true: colors.brand, false: colors.border }}
                   accessibilityLabel={es.recurring.confirmation}
                 />
               </View>

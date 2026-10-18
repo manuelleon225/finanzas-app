@@ -47,6 +47,7 @@ export function useAnalysis(month: Date, kind: AnalysisKind) {
       parent_id: category.parent_id,
       name: category.name,
       color: category.color,
+      icon: category.icon,
     }));
 
     const monthKey = format(month, 'yyyy-MM');

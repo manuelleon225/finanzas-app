@@ -8,7 +8,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { useTheme } from '@/theme';
+import { tint, useTheme } from '@/theme';
 
 export function clampProgress(value: number): number {
   if (typeof value !== 'number' || Number.isNaN(value)) {
@@ -17,17 +17,35 @@ export function clampProgress(value: number): number {
   return Math.min(1, Math.max(0, value));
 }
 
+export type ProgressBarTone = 'default' | 'onBlock';
+export type ProgressBarStatus = 'ok' | 'near' | 'over';
+
 export type ProgressBarProps = {
   value: number;
   color?: string;
+  tone?: ProgressBarTone;
+  status?: ProgressBarStatus;
   style?: ViewStyle;
 };
 
-export function ProgressBar({ value, color, style }: ProgressBarProps) {
+export function ProgressBar({ value, color, tone = 'default', status, style }: ProgressBarProps) {
   const { colors, radii } = useTheme();
   const [reduceMotion, setReduceMotion] = useState(false);
   const [progress] = useState(() => new Animated.Value(clampProgress(value)));
   const clamped = clampProgress(value);
+  const onBlock = tone === 'onBlock';
+
+  const fillColor = onBlock
+    ? colors.onBrand
+    : status === 'near'
+      ? tint(colors.expense, 0.65)
+      : status === 'over'
+        ? colors.expense
+        : status === 'ok'
+          ? colors.brand
+          : (color ?? colors.brand);
+
+  const trackColor = onBlock ? colors.blockTrack : colors.surfaceHigh;
 
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
@@ -56,17 +74,11 @@ export function ProgressBar({ value, color, style }: ProgressBarProps) {
       accessible
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 0, max: 100, now: Math.round(clamped * 100) }}
-      style={[
-        styles.track,
-        { backgroundColor: colors.surfaceRaised, borderRadius: radii.pill },
-        style,
-      ]}
+      style={[styles.track, { backgroundColor: trackColor, borderRadius: radii.pill }, style]}
     >
       <Animated.View
-        style={[
-          styles.fill,
-          { backgroundColor: color ?? colors.brand, borderRadius: radii.pill, width },
-        ]}
+        testID="progress-fill"
+        style={[styles.fill, { backgroundColor: fillColor, borderRadius: radii.pill, width }]}
       />
     </View>
   );

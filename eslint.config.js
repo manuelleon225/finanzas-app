@@ -33,6 +33,20 @@ module.exports = defineConfig([
     ignores: ['src/theme/**', '**/*.test.ts', '**/*.test.tsx'],
   },
   {
+    files: ['src/components/ui/BlockHeader.tsx'],
+    rules: {
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'Dimensions',
+          property: 'get',
+          message:
+            'BlockHeader no debe usar Dimensions.get: el bloque mide el 100% del contenedor (R8.0).',
+        },
+      ],
+    },
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     ignores: ['src/components/ui/AppIcon.tsx'],
     rules: {

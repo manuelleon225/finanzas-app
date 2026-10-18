@@ -19,12 +19,14 @@ export type AnalysisCategory = {
   parent_id: string | null;
   name: string;
   color: string;
+  icon?: string | null;
 };
 
 export type CategoryFlow = {
   categoryId: string;
   name: string;
   color: string | null;
+  icon: string | null;
   amount: number;
   percentage: number;
 };
@@ -93,6 +95,7 @@ export function spendingByCategory(
       categoryId: rootId,
       name: category?.name ?? '—',
       color: category?.color ?? null,
+      icon: category?.icon ?? null,
       amount,
       percentage: total > 0 ? (amount / total) * 100 : 0,
     };
@@ -103,6 +106,7 @@ export function spendingByCategory(
       categoryId: OTHERS_ID,
       name: es.analysis.others,
       color: null,
+      icon: null,
       amount: restTotal,
       percentage: total > 0 ? (restTotal / total) * 100 : 0,
     });

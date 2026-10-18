@@ -79,7 +79,7 @@ export function formatDayHeader(dateISO: string, todayISO: string, yesterdayISO:
     return es.transactionList.yesterday;
   }
 
-  return format(parseISO(dateISO), "EEE d 'de' MMM", { locale: dateFnsEs });
+  return format(parseISO(dateISO), 'EEE d MMM', { locale: dateFnsEs });
 }
 
 export function toInsertPayload(

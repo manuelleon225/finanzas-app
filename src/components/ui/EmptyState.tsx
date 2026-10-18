@@ -1,27 +1,34 @@
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { tint, useTheme } from '@/theme';
-
 import { es } from '@/i18n/es';
+import { useTheme } from '@/theme';
+
 import { AppIcon } from './AppIcon';
 import { Button } from './Button';
+import { EmptyIllustration, type EmptyIllustrationVariant } from './EmptyIllustration';
 import { Text } from './Text';
 
+const TILE_SIZE = 64;
+const TILE_RADIUS = 18;
+const TILE_ICON = 32;
+
 export type EmptyStateProps = {
+  icon: string;
   title?: string;
   description?: string;
   actionLabel?: string;
   onAction?: () => void;
-  icon?: string;
+  illustration?: EmptyIllustrationVariant;
   style?: ViewStyle;
 };
 
 export function EmptyState({
+  icon,
   title = es.states.emptyTitle,
   description = es.states.emptyDescription,
   actionLabel,
   onAction,
-  icon = 'sparkles-outline',
+  illustration,
   style,
 }: EmptyStateProps) {
   const { colors, spacing } = useTheme();
@@ -32,9 +39,22 @@ export function EmptyState({
       accessibilityLabel={`${title}. ${description}`}
       style={[styles.container, { padding: spacing.xl }, style]}
     >
-      <View style={[styles.circle, { backgroundColor: tint(colors.brand, 0.16) }]}>
-        <AppIcon name={icon} size={24} color={colors.brand} />
-      </View>
+      {illustration ? (
+        <EmptyIllustration variant={illustration} />
+      ) : (
+        <View
+          style={{
+            width: TILE_SIZE,
+            height: TILE_SIZE,
+            borderRadius: TILE_RADIUS,
+            backgroundColor: colors.brandSoft,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <AppIcon name={icon} size={TILE_ICON} color={colors.brandText} filled />
+        </View>
+      )}
       <Text variant="subtitle" align="center">
         {title}
       </Text>
@@ -52,12 +72,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-  },
-  circle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

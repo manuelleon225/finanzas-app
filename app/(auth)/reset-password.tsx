@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
-import { Button, LoadingState, Screen, Text } from '@/components/ui';
+import { Button, LoadingState, Text } from '@/components/ui';
 import { updatePassword } from '@/features/auth/api/auth';
 import { AuthLinkErrorView } from '@/features/auth/components/AuthLinkError';
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
@@ -41,9 +41,9 @@ export default function ResetPasswordScreen() {
 
   if (loading || !session) {
     return (
-      <Screen>
-        <LoadingState message={es.common.loading} />
-      </Screen>
+      <AuthScaffold title={es.auth.resetPasswordTitle} support={es.auth.resetPasswordSupport}>
+        <LoadingState />
+      </AuthScaffold>
     );
   }
 

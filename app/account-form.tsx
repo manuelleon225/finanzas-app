@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Switch, View } from 'react-native';
+import { View } from 'react-native';
 
 import {
   Button,
@@ -13,6 +13,8 @@ import {
   LoadingState,
   Screen,
   ScreenHeader,
+  ScreenScaffold,
+  Switch,
   Text,
 } from '@/components/ui';
 import { useSession } from '@/features/auth/hooks/AuthProvider';
@@ -33,7 +35,7 @@ import { useTheme } from '@/theme';
 
 export default function AccountFormScreen() {
   const router = useRouter();
-  const { spacing, colors } = useTheme();
+  const { spacing } = useTheme();
   const { session, loading: sessionLoading } = useSession();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const isEditing = typeof id === 'string' && id.length > 0;
@@ -104,8 +106,10 @@ export default function AccountFormScreen() {
   });
 
   return (
-    <Screen scroll>
-      <View style={{ gap: spacing.lg, marginTop: spacing.lg }}>
+    <ScreenScaffold
+      variant="plain"
+      contentContainerStyle={{ gap: spacing.lg }}
+      header={
         <ScreenHeader
           left={
             <IconButton
@@ -116,101 +120,100 @@ export default function AccountFormScreen() {
           }
           title={isEditing ? es.accounts.editAccount : es.accounts.newAccount}
         />
+      }
+    >
+      <Controller
+        name="name"
+        control={control}
+        render={({ field }) => (
+          <Input
+            label={es.accounts.name}
+            placeholder={es.accounts.namePlaceholder}
+            value={field.value}
+            onChangeText={field.onChange}
+            onBlur={field.onBlur}
+            error={errors.name?.message}
+          />
+        )}
+      />
 
-        <Controller
-          name="name"
-          control={control}
-          render={({ field }) => (
-            <Input
-              label={es.accounts.name}
-              placeholder={es.accounts.namePlaceholder}
-              value={field.value}
-              onChangeText={field.onChange}
-              onBlur={field.onBlur}
-              error={errors.name?.message}
-            />
-          )}
-        />
-
-        <Controller
-          name="type"
-          control={control}
-          render={({ field }) => (
-            <View style={{ gap: spacing.sm }}>
-              <Text variant="caption">{es.accounts.type}</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-                {accountTypes.map((type) => (
-                  <Chip
-                    key={type}
-                    label={es.accountTypes[type]}
-                    selected={field.value === type}
-                    onPress={() => {
-                      field.onChange(type);
-                      if (!liquidTouched) {
-                        setValue('countsAsLiquid', defaultCountsAsLiquid(type));
-                      }
-                    }}
-                  />
-                ))}
-              </View>
-            </View>
-          )}
-        />
-
-        <Controller
-          name="initialBalanceText"
-          control={control}
-          render={({ field }) => (
-            <Input
-              label={es.accounts.initialBalance}
-              keyboardType="number-pad"
-              value={field.value}
-              onChangeText={field.onChange}
-              onBlur={field.onBlur}
-              error={errors.initialBalanceText?.message}
-              helperText={es.accounts.initialBalanceHelper}
-            />
-          )}
-        />
-
-        <Controller
-          name="countsAsLiquid"
-          control={control}
-          render={({ field }) => (
-            <Card style={{ gap: spacing.sm }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: spacing.md,
-                }}
-              >
-                <View style={{ flex: 1, gap: spacing.xs }}>
-                  <Text variant="body">{es.accounts.countsAsLiquid}</Text>
-                  <Text variant="caption">{es.accounts.countsAsLiquidHelp}</Text>
-                </View>
-                <Switch
-                  value={field.value}
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    setLiquidTouched(true);
+      <Controller
+        name="type"
+        control={control}
+        render={({ field }) => (
+          <View style={{ gap: spacing.sm }}>
+            <Text variant="caption">{es.accounts.type}</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+              {accountTypes.map((type) => (
+                <Chip
+                  key={type}
+                  label={es.accountTypes[type]}
+                  selected={field.value === type}
+                  onPress={() => {
+                    field.onChange(type);
+                    if (!liquidTouched) {
+                      setValue('countsAsLiquid', defaultCountsAsLiquid(type));
+                    }
                   }}
-                  trackColor={{ true: colors.primary, false: colors.border }}
-                  accessibilityLabel={es.accounts.countsAsLiquid}
                 />
-              </View>
-            </Card>
-          )}
-        />
+              ))}
+            </View>
+          </View>
+        )}
+      />
 
-        <Button
-          title={es.accounts.saveAccount}
-          onPress={() => void onSubmit()}
-          loading={isPending}
-          disabled={isPending}
-        />
-      </View>
-    </Screen>
+      <Controller
+        name="initialBalanceText"
+        control={control}
+        render={({ field }) => (
+          <Input
+            label={es.accounts.initialBalance}
+            keyboardType="number-pad"
+            value={field.value}
+            onChangeText={field.onChange}
+            onBlur={field.onBlur}
+            error={errors.initialBalanceText?.message}
+            helperText={es.accounts.initialBalanceHelper}
+          />
+        )}
+      />
+
+      <Controller
+        name="countsAsLiquid"
+        control={control}
+        render={({ field }) => (
+          <Card style={{ gap: spacing.sm }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: spacing.md,
+              }}
+            >
+              <View style={{ flex: 1, gap: spacing.xs }}>
+                <Text variant="body">{es.accounts.countsAsLiquid}</Text>
+                <Text variant="caption">{es.accounts.countsAsLiquidHelp}</Text>
+              </View>
+              <Switch
+                value={field.value}
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  setLiquidTouched(true);
+                }}
+                accessibilityLabel={es.accounts.countsAsLiquid}
+              />
+            </View>
+          </Card>
+        )}
+      />
+
+      <Button
+        title={es.common.save}
+        onPress={() => void onSubmit()}
+        loading={isPending}
+        disabled={isPending}
+      />
+    </ScreenScaffold>
   );
 }

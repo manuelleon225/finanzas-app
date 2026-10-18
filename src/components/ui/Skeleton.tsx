@@ -11,21 +11,30 @@ import {
 import { useTheme } from '@/theme';
 
 export type SkeletonVariant = 'line' | 'circle' | 'card';
+export type SkeletonTone = 'default' | 'onBlock';
 
 export type SkeletonProps = {
   variant?: SkeletonVariant;
+  tone?: SkeletonTone;
   width?: DimensionValue;
   height?: number;
   style?: ViewStyle;
 };
 
-export function Skeleton({ variant = 'line', width = '100%', height, style }: SkeletonProps) {
+export function Skeleton({
+  variant = 'line',
+  tone = 'default',
+  width = '100%',
+  height,
+  style,
+}: SkeletonProps) {
   const { colors, radii } = useTheme();
   const [reduceMotion, setReduceMotion] = useState(false);
   const [opacity] = useState(() => new Animated.Value(0.5));
 
   const isCircle = variant === 'circle';
   const resolvedHeight = height ?? (isCircle ? 40 : variant === 'card' ? 96 : 12);
+  const baseColor = tone === 'onBlock' ? colors.blockTrack : colors.surfaceRaised;
 
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
@@ -61,9 +70,7 @@ export function Skeleton({ variant = 'line', width = '100%', height, style }: Sk
     : { width, height: resolvedHeight, borderRadius: variant === 'line' ? radii.pill : radii.lg };
 
   return (
-    <Animated.View
-      style={[styles.base, { backgroundColor: colors.surfaceRaised, opacity }, shape, style]}
-    />
+    <Animated.View style={[styles.base, { backgroundColor: baseColor, opacity }, shape, style]} />
   );
 }
 

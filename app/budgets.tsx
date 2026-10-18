@@ -11,17 +11,19 @@ import {
   EmptyState,
   ErrorState,
   IconButton,
+  IconTile,
   ListRow,
   LoadingState,
   MoneyText,
   MonthSelector,
   NumericKeypad,
   ProgressBar,
-  Screen,
   ScreenHeader,
+  ScreenScaffold,
   Skeleton,
   Text,
 } from '@/components/ui';
+import { resolveCategoryTile } from '@/components/ui/tileHelpers';
 import { applyKey } from '@/components/ui/utils/numericKeypad';
 import { useSession } from '@/features/auth/hooks/AuthProvider';
 import {
@@ -39,43 +41,38 @@ import {
   warning as hapticWarning,
 } from '@/lib/haptics';
 import { formatCOP, parseMoneyInput } from '@/lib/money';
-import { tint, useTheme } from '@/theme';
-
-function statusColor(status: BudgetProgressItem['status'], brand: string, expense: string): string {
-  if (status === 'ok') {
-    return brand;
-  }
-  if (status === 'near') {
-    return tint(expense, 0.65);
-  }
-  return expense;
-}
+import { useTheme } from '@/theme';
 
 function BudgetRow({ item, onPress }: { item: BudgetProgressItem; onPress: () => void }) {
   const { colors, spacing } = useTheme();
-  const color = statusColor(item.status, colors.brand, colors.expense);
+  const tile = resolveCategoryTile({
+    name: item.categoryName,
+    kind: 'expense',
+    icon: item.categoryIcon,
+    color: item.categoryColor,
+  });
   const remainingText =
     item.remaining >= 0
       ? es.budgets.remaining.replace('{monto}', formatCOP(item.remaining))
       : es.budgets.over.replace('{monto}', formatCOP(-item.remaining));
+  const remainingColor = item.remaining >= 0 ? colors.textSecondary : colors.expense;
 
   return (
     <Card style={{ gap: spacing.sm }}>
       <ListRow
-        icon={item.categoryIcon}
-        iconColor={item.categoryColor || colors.textSecondary}
+        leading={<IconTile icon={tile.icon} tileKey={tile.tileKey} size={40} />}
         title={item.categoryName}
         subtitle={es.budgets.spentOf
           .replace('{spent}', formatCOP(item.spent))
           .replace('{budget}', formatCOP(item.amount))}
         trailing={
-          <Text variant="caption" color={color}>
+          <Text variant="caption" color={remainingColor}>
             {remainingText}
           </Text>
         }
         onPress={onPress}
       />
-      <ProgressBar value={item.ratio} color={color} />
+      <ProgressBar value={item.ratio} status={item.status} />
     </Card>
   );
 }
@@ -168,8 +165,10 @@ export default function BudgetsScreen() {
   }
 
   return (
-    <Screen scroll>
-      <View style={{ gap: spacing.lg, marginTop: spacing.lg }}>
+    <ScreenScaffold
+      variant="plain"
+      contentContainerStyle={{ gap: spacing.md }}
+      header={
         <ScreenHeader
           left={
             <IconButton
@@ -179,35 +178,42 @@ export default function BudgetsScreen() {
             />
           }
           title={es.budgets.title}
+          actions={
+            <IconButton
+              icon="add-outline"
+              onPress={openCreate}
+              accessibilityLabel={es.budgets.newBudget}
+            />
+          }
         />
+      }
+    >
+      <MonthSelector value={monthAnchor} onChange={setMonthAnchor} />
 
-        <MonthSelector value={monthAnchor} onChange={setMonthAnchor} />
-
-        <Button title={es.budgets.newBudget} onPress={openCreate} />
-
-        {isLoading ? (
-          <View style={{ gap: spacing.md }}>
-            <Skeleton variant="card" height={96} />
-            <Skeleton variant="card" height={96} />
-            <Skeleton variant="card" height={96} />
-          </View>
-        ) : isError ? (
-          <ErrorState onRetry={refetch} />
-        ) : progress.items.length === 0 ? (
-          <EmptyState
-            title={es.budgets.emptyTitle}
-            description={es.budgets.emptyDescription}
-            actionLabel={es.budgets.newBudget}
-            onAction={openCreate}
-          />
-        ) : (
-          <View style={{ gap: spacing.md }}>
-            {progress.items.map((item) => (
-              <BudgetRow key={item.budgetId} item={item} onPress={() => openEdit(item)} />
-            ))}
-          </View>
-        )}
-      </View>
+      {isLoading ? (
+        <View style={{ gap: spacing.md }}>
+          <Skeleton variant="card" height={96} />
+          <Skeleton variant="card" height={96} />
+          <Skeleton variant="card" height={96} />
+        </View>
+      ) : isError ? (
+        <ErrorState onRetry={refetch} />
+      ) : progress.items.length === 0 ? (
+        <EmptyState
+          icon="pie-chart-outline"
+          illustration="target"
+          title={es.budgets.emptyTitle}
+          description={es.budgets.emptyDescription}
+          actionLabel={es.budgets.newBudget}
+          onAction={openCreate}
+        />
+      ) : (
+        <View style={{ gap: spacing.md }}>
+          {progress.items.map((item) => (
+            <BudgetRow key={item.budgetId} item={item} onPress={() => openEdit(item)} />
+          ))}
+        </View>
+      )}
 
       <BottomSheet visible={sheetOpen} onClose={() => setSheetOpen(false)}>
         <ScrollView
@@ -268,6 +274,6 @@ export default function BudgetsScreen() {
           ) : null}
         </ScrollView>
       </BottomSheet>
-    </Screen>
+    </ScreenScaffold>
   );
 }

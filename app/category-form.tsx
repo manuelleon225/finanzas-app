@@ -1,23 +1,25 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { Pressable, View } from 'react-native';
 import { z } from 'zod';
 
 import {
+  AppIcon,
   Button,
   Chip,
   IconButton,
+  IconTile,
   Input,
   LoadingState,
   Screen,
   ScreenHeader,
+  ScreenScaffold,
   Text,
 } from '@/components/ui';
 import { useSession } from '@/features/auth/hooks/AuthProvider';
 import type { CategoryKind } from '@/features/categories/api/categories';
-import { CategoryIcon } from '@/features/categories/components/CategoryIcon';
 import {
   useCategories,
   useCreateCategory,
@@ -26,6 +28,7 @@ import {
 import {
   COLOR_PALETTE,
   ICON_SET,
+  colorTileKey,
   validateCategoryName,
 } from '@/features/categories/utils/categories';
 import { es } from '@/i18n/es';
@@ -42,7 +45,7 @@ type CategoryForm = z.infer<typeof categorySchema>;
 
 export default function CategoryFormScreen() {
   const router = useRouter();
-  const { spacing, radii, colors } = useTheme();
+  const { spacing, radii, colors, componentHeights } = useTheme();
   const { session, loading: sessionLoading } = useSession();
   const params = useLocalSearchParams<{ kind?: string; id?: string; parentId?: string }>();
   const kind = (params.kind === 'income' ? 'income' : 'expense') as CategoryKind;
@@ -78,6 +81,9 @@ export default function CategoryFormScreen() {
       parentId: parentIdParam ?? null,
     },
   });
+
+  const selectedIcon = useWatch({ control, name: 'icon' }) ?? ICON_SET[0];
+  const selectedColor = useWatch({ control, name: 'color' }) ?? COLOR_PALETTE[0];
 
   useEffect(() => {
     if (isEditing && category) {
@@ -142,8 +148,10 @@ export default function CategoryFormScreen() {
   });
 
   return (
-    <Screen scroll>
-      <View style={{ gap: spacing.lg, marginTop: spacing.lg }}>
+    <ScreenScaffold
+      variant="plain"
+      contentContainerStyle={{ gap: spacing.lg }}
+      header={
         <ScreenHeader
           left={
             <IconButton
@@ -162,145 +170,147 @@ export default function CategoryFormScreen() {
                 : es.categories.newCategory
           }
         />
-
-        <Controller
-          name="name"
-          control={control}
-          render={({ field }) => (
-            <Input
-              label={es.categories.name}
-              placeholder={es.categories.namePlaceholder}
-              value={field.value}
-              onChangeText={field.onChange}
-              onBlur={field.onBlur}
-              error={errors.name?.message}
-            />
-          )}
+      }
+    >
+      <View style={{ alignItems: 'center' }}>
+        <IconTile
+          icon={selectedIcon}
+          tileKey={colorTileKey(selectedColor, kind)}
+          size={48}
+          accessibilityLabel={es.categories.icon}
         />
+      </View>
 
-        <Controller
-          name="icon"
-          control={control}
-          render={({ field }) => (
-            <View style={{ gap: spacing.sm }}>
-              <Text variant="caption">{es.categories.icon}</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-                {ICON_SET.map((icon) => {
-                  const selected = field.value === icon;
-                  return (
-                    <Pressable
-                      key={icon}
-                      onPress={() => field.onChange(icon)}
-                      accessibilityRole="button"
-                      accessibilityLabel={icon}
-                      accessibilityState={{ selected }}
-                      style={[
-                        {
-                          width: 44,
-                          height: 44,
-                          borderRadius: radii.md,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          borderWidth: 2,
-                          borderColor: selected ? colors.primary : colors.border,
-                          backgroundColor: selected ? colors.primary : colors.surface,
-                        },
-                      ]}
-                    >
-                      <CategoryIcon
-                        icon={icon}
-                        color={selected ? colors.onPrimary : colors.textSecondary}
-                        size={22}
-                      />
-                    </Pressable>
-                  );
-                })}
-              </View>
+      <Controller
+        name="name"
+        control={control}
+        render={({ field }) => (
+          <Input
+            label={es.categories.name}
+            placeholder={es.categories.namePlaceholder}
+            value={field.value}
+            onChangeText={field.onChange}
+            onBlur={field.onBlur}
+            error={errors.name?.message}
+          />
+        )}
+      />
+
+      <Controller
+        name="icon"
+        control={control}
+        render={({ field }) => (
+          <View style={{ gap: spacing.sm }}>
+            <Text variant="caption">{es.categories.icon}</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+              {ICON_SET.map((icon) => {
+                const selected = field.value === icon;
+                return (
+                  <Pressable
+                    key={icon}
+                    onPress={() => field.onChange(icon)}
+                    accessibilityRole="button"
+                    accessibilityLabel={icon}
+                    accessibilityState={{ selected }}
+                    style={{
+                      width: componentHeights.iconButton,
+                      height: componentHeights.iconButton,
+                      borderRadius: radii.md,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: selected ? colors.brand : colors.surfaceRaised,
+                    }}
+                  >
+                    <AppIcon
+                      name={icon}
+                      size={22}
+                      color={selected ? colors.onBrand : colors.textSecondary}
+                    />
+                  </Pressable>
+                );
+              })}
             </View>
-          )}
-        />
+          </View>
+        )}
+      />
 
+      <Controller
+        name="color"
+        control={control}
+        render={({ field }) => (
+          <View style={{ gap: spacing.sm }}>
+            <Text variant="caption">{es.categories.color}</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+              {COLOR_PALETTE.map((color, index) => {
+                const selected = field.value === color;
+                return (
+                  <Pressable
+                    key={color}
+                    onPress={() => field.onChange(color)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${es.categories.color} ${index + 1}`}
+                    accessibilityState={{ selected }}
+                    style={{
+                      borderWidth: 2,
+                      borderColor: selected ? colors.textPrimary : 'transparent',
+                      borderRadius: radii.lg,
+                      padding: 2,
+                    }}
+                  >
+                    <IconTile icon={selectedIcon} tileKey={colorTileKey(color, kind)} size={32} />
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        )}
+      />
+
+      {parentIdParam || hasChildren ? (
+        <View style={{ gap: spacing.xs }}>
+          <Text variant="caption">
+            {hasChildren
+              ? es.categories.cannotBeSubcategory
+              : `${es.categories.subcategoryOf}: ${parentName ?? '…'}`}
+          </Text>
+        </View>
+      ) : (
         <Controller
-          name="color"
+          name="parentId"
           control={control}
           render={({ field }) => (
             <View style={{ gap: spacing.sm }}>
-              <Text variant="caption">{es.categories.color}</Text>
+              <Text variant="caption">{es.categories.parent}</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-                {COLOR_PALETTE.map((color, index) => {
-                  const selected = field.value === color;
+                <Chip
+                  label={es.categories.noParent}
+                  selected={field.value == null}
+                  onPress={() => field.onChange(null)}
+                />
+                {parentOptions.map((option) => {
+                  const selected = field.value === option.id;
                   return (
-                    <Pressable
-                      key={color}
-                      onPress={() => field.onChange(color)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${es.categories.color} ${index + 1}`}
-                      accessibilityState={{ selected }}
-                      hitSlop={6}
-                      style={[
-                        {
-                          width: 32,
-                          height: 32,
-                          borderRadius: radii.pill,
-                          backgroundColor: color,
-                          borderWidth: 2,
-                          borderColor: selected ? colors.textPrimary : 'transparent',
-                        },
-                      ]}
+                    <Chip
+                      key={option.id}
+                      label={option.name}
+                      selected={selected}
+                      onPress={() => field.onChange(selected ? null : option.id)}
                     />
                   );
                 })}
               </View>
+              <Text variant="caption">{es.categories.parentHelper}</Text>
             </View>
           )}
         />
+      )}
 
-        {parentIdParam || hasChildren ? (
-          <View style={{ gap: spacing.xs }}>
-            <Text variant="caption">
-              {hasChildren
-                ? es.categories.cannotBeSubcategory
-                : `${es.categories.subcategoryOf}: ${parentName ?? '…'}`}
-            </Text>
-          </View>
-        ) : (
-          <Controller
-            name="parentId"
-            control={control}
-            render={({ field }) => (
-              <View style={{ gap: spacing.sm }}>
-                <Text variant="caption">{es.categories.parent}</Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-                  <Chip
-                    label={es.categories.noParent}
-                    selected={field.value == null}
-                    onPress={() => field.onChange(null)}
-                  />
-                  {parentOptions.map((option) => {
-                    const selected = field.value === option.id;
-                    return (
-                      <Chip
-                        key={option.id}
-                        label={option.name}
-                        selected={selected}
-                        onPress={() => field.onChange(selected ? null : option.id)}
-                      />
-                    );
-                  })}
-                </View>
-                <Text variant="caption">{es.categories.parentHelper}</Text>
-              </View>
-            )}
-          />
-        )}
-
-        <Button
-          title={es.categories.saveCategory}
-          onPress={() => void onSubmit()}
-          loading={isPending}
-          disabled={isPending}
-        />
-      </View>
-    </Screen>
+      <Button
+        title={es.common.save}
+        onPress={() => void onSubmit()}
+        loading={isPending}
+        disabled={isPending}
+      />
+    </ScreenScaffold>
   );
 }

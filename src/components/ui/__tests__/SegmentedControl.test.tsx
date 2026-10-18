@@ -1,5 +1,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
 
+import { colors } from '@/theme';
+
 import { SegmentedControl } from '../SegmentedControl';
 
 jest.mock('react-native-reanimated', () => {
@@ -44,5 +46,22 @@ describe('SegmentedControl', () => {
     );
     await fireEvent.press(getByRole('radio', { name: 'Ingreso' }));
     expect(onChange).toHaveBeenCalledWith('income');
+  });
+
+  it('tone onBlock pinta el segmento activo con texto brand', async () => {
+    const { getByText } = await render(
+      <SegmentedControl
+        tone="onBlock"
+        options={[
+          { label: 'Gasto', value: 'expense' },
+          { label: 'Ingreso', value: 'income' },
+        ]}
+        value="expense"
+        onChange={() => undefined}
+      />,
+    );
+
+    expect(getByText('Gasto')).toHaveStyle({ color: colors.dark.brand });
+    expect(getByText('Ingreso')).toHaveStyle({ color: colors.dark.onBrandMuted });
   });
 });

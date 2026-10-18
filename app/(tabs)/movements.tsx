@@ -1,35 +1,27 @@
 import { format, startOfMonth, subDays } from 'date-fns';
 import { Redirect, useRouter } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  SectionList,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { ActivityIndicator, RefreshControl, SectionList, StyleSheet, View } from 'react-native';
 
 import {
   AnimatedEntrance,
   AppIcon,
   BottomSheet,
   Button,
-  Card,
   Chip,
   ConnectivityPill,
   EmptyState,
   ErrorState,
   IconButton,
+  IconTile,
   Input,
   ListRow,
   LoadingState,
   MoneyText,
   MonthSelector,
-  Screen,
   ScreenHeader,
+  ScreenScaffold,
   Skeleton,
-  Snackbar,
   SwipeableRow,
   SwipeableRowGroup,
   Text,
@@ -55,6 +47,7 @@ import {
   useTransactions,
   useTransactionsInRange,
 } from '@/features/transactions/hooks/useTransactions';
+import { movementRowModel } from '@/features/transactions/utils/movementRow';
 import {
   connectivityText,
   mergePendingByDay,
@@ -68,12 +61,13 @@ import {
 } from '@/features/transactions/utils/transactions';
 import { es } from '@/i18n/es';
 import { todayISO } from '@/lib/dates';
+import { formatCompactCOP } from '@/lib/money';
 import { useSnackbarStore } from '@/lib/snackbar';
 import { useConnectivity } from '@/lib/useConnectivity';
-import { useTheme } from '@/theme';
+import { componentHeights, resolveTileKey, spacing, useTheme } from '@/theme';
 import type { TablesInsert } from '@/types/database';
 
-const ROW_HEIGHT = 64;
+const ROW_HEIGHT = componentHeights.listRow;
 const HEADER_HEIGHT = 40;
 const EMPTY_TRANSACTIONS: TransactionWithRelations[] = [];
 
@@ -86,10 +80,11 @@ type MovementItem =
 type DaySection = {
   title: string;
   total: number;
+  showTotal: boolean;
   data: MovementItem[];
 };
 
-const MovementRow = memo(function MovementRow({
+function MovementRow({
   item,
   onEdit,
   onDelete,
@@ -100,39 +95,19 @@ const MovementRow = memo(function MovementRow({
 }) {
   const { colors } = useTheme();
   const group = useSwipeableRowGroup();
-
-  const isExtra = item.nature === 'extra';
-  const isTransfer = item.type === 'transfer';
-
-  const title = isTransfer
-    ? `${item.account?.name ?? '?'} → ${item.transfer_account?.name ?? '?'}`
-    : item.note || item.category?.name || '—';
-  const subtitle = isTransfer
-    ? (item.note ?? undefined)
-    : item.note
-      ? [item.category?.name, item.account?.name].filter(Boolean).join(' · ')
-      : (item.account?.name ?? undefined);
-
-  const kind = item.type === 'income' ? 'income' : item.type === 'expense' ? 'expense' : 'neutral';
+  const model = movementRowModel(item);
 
   return (
     <AnimatedEntrance>
       <SwipeableRow onDelete={() => onDelete(item)}>
         <ListRow
-          icon={
-            isTransfer
-              ? 'swap-horizontal-outline'
-              : (item.category?.icon ?? 'ellipsis-horizontal-outline')
-          }
-          iconColor={
-            isTransfer ? colors.textSecondary : (item.category?.color ?? colors.textSecondary)
-          }
-          title={title}
-          subtitle={subtitle}
-          tag={isExtra ? { label: es.transactionList.extra, tone: 'extra' } : undefined}
+          leading={<IconTile icon={model.tile.icon} tileKey={model.tile.tileKey} size={40} />}
+          title={model.title}
+          subtitle={model.subtitle}
+          tag={model.isExtra ? { label: es.transactionList.extra, tone: 'extra' } : undefined}
           trailing={
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              {item.recurring_rule_id ? (
+            <View style={styles.trailing}>
+              {model.isRecurring ? (
                 <AppIcon
                   name="repeat-outline"
                   size={16}
@@ -140,7 +115,7 @@ const MovementRow = memo(function MovementRow({
                   accessibilityLabel={es.transactionList.recurring}
                 />
               ) : null}
-              <MoneyText amount={item.amount} kind={kind} signed />
+              <MoneyText amount={item.amount} kind={model.kind} signed />
             </View>
           }
           onPress={() => {
@@ -152,7 +127,9 @@ const MovementRow = memo(function MovementRow({
       </SwipeableRow>
     </AnimatedEntrance>
   );
-});
+}
+
+const MemoMovementRow = memo(MovementRow);
 
 function OfflineRow({
   payload,
@@ -169,7 +146,6 @@ function OfflineRow({
   failed: boolean;
   onPress?: () => void;
 }) {
-  const { colors } = useTheme();
   const isTransfer = payload.type === 'transfer';
 
   const title = isTransfer
@@ -177,19 +153,24 @@ function OfflineRow({
     : payload.note || category?.name || '—';
   const subtitle = isTransfer
     ? (payload.note ?? undefined)
-    : payload.note
-      ? [category?.name, accountName].filter(Boolean).join(' · ')
-      : accountName;
+    : [category?.name, accountName].filter(Boolean).join(' · ') || undefined;
 
   const kind =
     payload.type === 'income' ? 'income' : payload.type === 'expense' ? 'expense' : 'neutral';
+  const tile = isTransfer
+    ? { icon: 'swap-horizontal', tileKey: 'gray' as const }
+    : {
+        icon: category?.icon ?? 'ellipsis-horizontal',
+        tileKey: resolveTileKey({
+          name: category?.name ?? 'Otros',
+          kind: payload.type === 'income' ? 'income' : 'expense',
+          color: category?.color,
+        }),
+      };
 
   return (
     <ListRow
-      icon={
-        isTransfer ? 'swap-horizontal-outline' : (category?.icon ?? 'ellipsis-horizontal-outline')
-      }
-      iconColor={isTransfer ? colors.textSecondary : (category?.color ?? colors.textSecondary)}
+      leading={<IconTile icon={tile.icon} tileKey={tile.tileKey} size={40} />}
       title={title}
       subtitle={subtitle}
       tag={
@@ -205,34 +186,16 @@ function OfflineRow({
 }
 
 function PendingConfirmRow({ item }: { item: TransactionWithRelations }) {
-  const { colors } = useTheme();
-  const isTransfer = item.type === 'transfer';
-
-  const title = isTransfer
-    ? `${item.account?.name ?? '?'} → ${item.transfer_account?.name ?? '?'}`
-    : item.note || item.category?.name || '—';
-  const subtitle = isTransfer
-    ? (item.note ?? undefined)
-    : [item.category?.name, item.account?.name].filter(Boolean).join(' · ');
+  const model = movementRowModel(item);
+  const kind = item.type === 'income' ? 'income' : 'expense';
 
   return (
     <ListRow
-      icon={
-        isTransfer
-          ? 'swap-horizontal-outline'
-          : (item.category?.icon ?? 'ellipsis-horizontal-outline')
-      }
-      iconColor={isTransfer ? colors.textSecondary : (item.category?.color ?? colors.textSecondary)}
-      title={title}
-      subtitle={subtitle}
+      leading={<IconTile icon={model.tile.icon} tileKey={model.tile.tileKey} size={40} />}
+      title={model.title}
+      subtitle={model.subtitle}
       tag={{ label: es.transactionList.pendingTag, tone: 'pending' }}
-      trailing={
-        <MoneyText
-          amount={item.amount}
-          kind={item.type === 'income' ? 'income' : 'expense'}
-          signed
-        />
-      }
+      trailing={<MoneyText amount={item.amount} kind={kind} signed />}
       style={{ flex: 1, height: ROW_HEIGHT }}
     />
   );
@@ -253,8 +216,23 @@ function MovementRowSkeleton() {
   );
 }
 
-export default function MovementsScreen() {
+function SummaryColumn({ label, value }: { label: string; value: string }) {
   const { colors, spacing } = useTheme();
+
+  return (
+    <View style={{ flex: 1, gap: spacing.xs }}>
+      <Text variant="caption" color={colors.onBrandMuted}>
+        {label}
+      </Text>
+      <Text variant="money" color={colors.onBrand} numberOfLines={1}>
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+export default function MovementsScreen() {
+  const { colors, radii, spacing } = useTheme();
   const router = useRouter();
   const { session, loading: sessionLoading } = useSession();
   const isOnline = useConnectivity();
@@ -269,7 +247,6 @@ export default function MovementsScreen() {
   const [natureFilter, setNatureFilter] = useState<Nature | null>(null);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
-  const [deleted, setDeleted] = useState<TransactionWithRelations | null>(null);
   const [failedSheet, setFailedSheet] = useState<PendingTransaction | null>(null);
 
   useEffect(() => {
@@ -351,6 +328,7 @@ export default function MovementsScreen() {
       ({ date, items: dayItems }) => ({
         title: formatDayHeader(date, today, yesterday),
         total: totalByDate.get(date) ?? 0,
+        showTotal: true,
         data: dayItems,
       }),
     );
@@ -362,6 +340,7 @@ export default function MovementsScreen() {
     const confirmSection: DaySection = {
       title: es.transactionList.pendingSection,
       total: 0,
+      showTotal: false,
       data: pendingConfirmations.map((transaction) => ({
         kind: 'confirm' as const,
         key: `confirm-${transaction.id}`,
@@ -411,9 +390,16 @@ export default function MovementsScreen() {
         showSnackbar(es.connectivity.needsConnection);
         return;
       }
-      deleteTransaction.mutate(transaction.id, { onSuccess: () => setDeleted(transaction) });
+      deleteTransaction.mutate(transaction.id, {
+        onSuccess: () => {
+          showSnackbar(es.transactionList.deleted, {
+            label: es.transactionList.undo,
+            onPress: () => createTransaction.mutate(toInsertPayload(transaction)),
+          });
+        },
+      });
     },
-    [deleteTransaction, isOnline, showSnackbar],
+    [createTransaction, deleteTransaction, isOnline, showSnackbar],
   );
 
   if (sessionLoading) {
@@ -422,13 +408,6 @@ export default function MovementsScreen() {
 
   if (!session) {
     return <Redirect href="/login" />;
-  }
-
-  function undoDelete() {
-    if (!deleted) {
-      return;
-    }
-    createTransaction.mutate(toInsertPayload(deleted), { onSuccess: () => setDeleted(null) });
   }
 
   function clearFilters() {
@@ -443,82 +422,76 @@ export default function MovementsScreen() {
     setSearchInput('');
   }
 
-  const summaryBalanceKind =
-    summary.balance > 0 ? 'income' : summary.balance < 0 ? 'expense' : 'neutral';
+  const balanceText =
+    summary.balance > 0
+      ? `+${formatCompactCOP(summary.balance)}`
+      : formatCompactCOP(summary.balance);
+
+  const header = searchOpen ? (
+    <View style={[styles.searchRow, { gap: spacing.sm }]}>
+      <View style={{ flex: 1 }}>
+        <Input
+          placeholder={es.transactionList.searchPlaceholder}
+          value={searchInput}
+          onChangeText={setSearchInput}
+          autoFocus
+          autoCapitalize="none"
+          accessibilityLabel={es.transactionList.search}
+        />
+      </View>
+      <IconButton icon="close-outline" onPress={closeSearch} accessibilityLabel={es.common.close} />
+    </View>
+  ) : (
+    <View style={{ gap: spacing.md }}>
+      <ScreenHeader
+        title={es.transactionList.title}
+        actions={
+          <>
+            <IconButton
+              icon="search-outline"
+              onPress={() => setSearchOpen(true)}
+              accessibilityLabel={es.transactionList.search}
+            />
+            <IconButton
+              icon="options-outline"
+              onPress={() => setFiltersOpen(true)}
+              accessibilityLabel={es.transactionList.filters}
+              badge={activeFilterCount > 0}
+            />
+          </>
+        }
+      />
+      <MonthSelector value={monthAnchor} onChange={setMonthAnchor} />
+    </View>
+  );
 
   return (
-    <Screen
-      overlay={
-        <Snackbar
-          message={deleted ? es.transactionList.deleted : null}
-          actionLabel={es.transactionList.undo}
-          onAction={undoDelete}
-          onDismiss={() => setDeleted(null)}
-          durationMs={5000}
-        />
-      }
-    >
-      <View style={{ flex: 1, gap: spacing.md, marginTop: spacing.md }}>
-        {searchOpen ? (
-          <View style={[styles.searchRow, { gap: spacing.sm }]}>
-            <View style={{ flex: 1 }}>
-              <Input
-                placeholder={es.transactionList.searchPlaceholder}
-                value={searchInput}
-                onChangeText={setSearchInput}
-                autoFocus
-                autoCapitalize="none"
-                accessibilityLabel={es.transactionList.search}
-              />
-            </View>
-            <IconButton
-              icon="close-outline"
-              onPress={closeSearch}
-              accessibilityLabel={es.common.close}
+    <ScreenScaffold variant="plain" scroll={false} header={header}>
+      <View style={{ flex: 1, gap: spacing.sm }}>
+        <View
+          style={[
+            styles.summaryCard,
+            {
+              backgroundColor: colors.brand,
+              borderRadius: radii.xl,
+              padding: spacing.lg,
+            },
+          ]}
+        >
+          <View style={[styles.summaryRow, { gap: spacing.md }]}>
+            <SummaryColumn
+              label={es.transactionList.income}
+              value={formatCompactCOP(summary.income)}
             />
+            <SummaryColumn
+              label={es.transactionList.expense}
+              value={formatCompactCOP(summary.expense)}
+            />
+            <SummaryColumn label={es.transactionList.balance} value={balanceText} />
           </View>
-        ) : (
-          <>
-            <ScreenHeader
-              title={es.transactionList.title}
-              actions={
-                <>
-                  <IconButton
-                    icon="search-outline"
-                    onPress={() => setSearchOpen(true)}
-                    accessibilityLabel={es.transactionList.search}
-                  />
-                  <IconButton
-                    icon="options-outline"
-                    onPress={() => setFiltersOpen(true)}
-                    accessibilityLabel={es.transactionList.filters}
-                    badge={activeFilterCount > 0}
-                  />
-                </>
-              }
-            />
-            <MonthSelector value={monthAnchor} onChange={setMonthAnchor} />
-          </>
-        )}
+        </View>
 
         <ConnectivityPill label={pillLabel} />
-
-        <Card style={{ gap: spacing.sm }}>
-          <View style={styles.summaryRow}>
-            <View style={styles.summaryItem}>
-              <Text variant="caption">{es.transactionList.income}</Text>
-              <MoneyText amount={summary.income} kind="income" />
-            </View>
-            <View style={styles.summaryItem}>
-              <Text variant="caption">{es.transactionList.expense}</Text>
-              <MoneyText amount={summary.expense} kind="expense" signed />
-            </View>
-            <View style={styles.summaryItem}>
-              <Text variant="caption">{es.transactionList.balance}</Text>
-              <MoneyText amount={summary.balance} kind={summaryBalanceKind} signed />
-            </View>
-          </View>
-        </Card>
 
         {transactionsQuery.isLoading ? (
           <View style={{ gap: spacing.sm }}>
@@ -530,6 +503,8 @@ export default function MovementsScreen() {
           <ErrorState onRetry={() => void transactionsQuery.refetch()} />
         ) : sections.length === 0 ? (
           <EmptyState
+            icon={hasActiveQuery ? 'search-outline' : 'receipt-outline'}
+            illustration={hasActiveQuery ? undefined : 'list'}
             title={
               hasActiveQuery ? es.transactionList.emptyFiltered : es.transactionList.emptyTitle
             }
@@ -575,21 +550,26 @@ export default function MovementsScreen() {
                 <View
                   style={[
                     styles.sectionHeader,
-                    { backgroundColor: colors.background, height: HEADER_HEIGHT },
+                    { backgroundColor: colors.bg, height: HEADER_HEIGHT },
                   ]}
                 >
                   <Text variant="caption">{section.title}</Text>
-                  <MoneyText
-                    amount={section.total}
-                    kind={section.total < 0 ? 'expense' : section.total > 0 ? 'income' : 'neutral'}
-                    signed
-                  />
+                  {section.showTotal ? (
+                    <MoneyText
+                      amount={section.total}
+                      kind={
+                        section.total < 0 ? 'expense' : section.total > 0 ? 'income' : 'neutral'
+                      }
+                      signed
+                      size="caption"
+                    />
+                  ) : null}
                 </View>
               )}
               renderItem={({ item }) => {
                 if (item.kind === 'transaction') {
                   return (
-                    <MovementRow
+                    <MemoMovementRow
                       item={item.transaction}
                       onEdit={openEdit}
                       onDelete={handleDelete}
@@ -682,7 +662,7 @@ export default function MovementsScreen() {
           />
         </View>
       </BottomSheet>
-    </Screen>
+    </ScreenScaffold>
   );
 }
 
@@ -721,8 +701,46 @@ function FiltersSheet({
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
-      <ScrollView contentContainerStyle={{ gap: spacing.md }} showsVerticalScrollIndicator={false}>
+      <View style={{ gap: spacing.md }}>
         <Text variant="subtitle">{es.transactionList.filters}</Text>
+
+        <View style={{ gap: spacing.xs }}>
+          <Text variant="caption">{es.transactionList.filterAccount}</Text>
+          <View style={styles.chipRow}>
+            <Chip
+              label={es.transactionList.allAccounts}
+              selected={accountId === null}
+              onPress={() => onAccountChange(null)}
+            />
+            {accounts.map((account) => (
+              <Chip
+                key={account.account_id}
+                label={account.name}
+                selected={accountId === account.account_id}
+                onPress={() => onAccountChange(account.account_id)}
+              />
+            ))}
+          </View>
+        </View>
+
+        <View style={{ gap: spacing.xs }}>
+          <Text variant="caption">{es.transactionForm.category}</Text>
+          <View style={styles.chipRow}>
+            <Chip
+              label={es.transactionList.allCategories}
+              selected={categoryId === null}
+              onPress={() => onCategoryChange(null)}
+            />
+            {categories.map((category) => (
+              <Chip
+                key={category.id}
+                label={category.name}
+                selected={categoryId === category.id}
+                onPress={() => onCategoryChange(category.id)}
+              />
+            ))}
+          </View>
+        </View>
 
         <View style={{ gap: spacing.xs }}>
           <Text variant="caption">{es.transactionList.filterType}</Text>
@@ -766,49 +784,11 @@ function FiltersSheet({
           </View>
         </View>
 
-        <View style={{ gap: spacing.xs }}>
-          <Text variant="caption">{es.transactionList.filterAccount}</Text>
-          <View style={styles.chipRow}>
-            <Chip
-              label={es.transactionList.allAccounts}
-              selected={accountId === null}
-              onPress={() => onAccountChange(null)}
-            />
-            {accounts.map((account) => (
-              <Chip
-                key={account.account_id}
-                label={account.name}
-                selected={accountId === account.account_id}
-                onPress={() => onAccountChange(account.account_id)}
-              />
-            ))}
-          </View>
-        </View>
-
-        <View style={{ gap: spacing.xs }}>
-          <Text variant="caption">{es.transactionForm.category}</Text>
-          <View style={styles.chipRow}>
-            <Chip
-              label={es.transactionList.allCategories}
-              selected={categoryId === null}
-              onPress={() => onCategoryChange(null)}
-            />
-            {categories.map((category) => (
-              <Chip
-                key={category.id}
-                label={category.name}
-                selected={categoryId === category.id}
-                onPress={() => onCategoryChange(category.id)}
-              />
-            ))}
-          </View>
-        </View>
-
         <View style={styles.sheetFooter}>
-          <Button title={es.transactionList.clearFilters} variant="ghost" onPress={onClear} />
+          <Button title={es.transactionList.clear} variant="ghost" onPress={onClear} />
           <Button title={es.transactionList.apply} onPress={onClose} />
         </View>
-      </ScrollView>
+      </View>
     </BottomSheet>
   );
 }
@@ -818,14 +798,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  summaryCard: {
+    alignSelf: 'stretch',
+  },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
   },
-  summaryItem: {
-    flex: 1,
-    gap: 4,
+  trailing: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -839,11 +822,11 @@ const styles = StyleSheet.create({
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.sm,
   },
   sheetFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: spacing.md,
   },
 });

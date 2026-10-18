@@ -26,11 +26,8 @@ describe('formatDayHeader', () => {
     expect(formatDayHeader('2026-06-09', '2026-06-10', '2026-06-09')).toBe('Ayer');
   });
 
-  it('devuelve una fecha formateada para días anteriores', () => {
-    const label = formatDayHeader('2026-06-08', '2026-06-10', '2026-06-09');
-    expect(label).not.toBe('Hoy');
-    expect(label).not.toBe('Ayer');
-    expect(label.length).toBeGreaterThan(0);
+  it('devuelve una fecha corta para días anteriores', () => {
+    expect(formatDayHeader('2026-06-08', '2026-06-10', '2026-06-09')).toBe('lun 8 jun');
   });
 });
 

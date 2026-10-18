@@ -9,8 +9,32 @@ const COP_NUMBER_FORMATTER = new Intl.NumberFormat('es-CO', {
   maximumFractionDigits: 0,
 });
 
+const MILLIONS_FORMATTER = new Intl.NumberFormat('es-CO', {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 1,
+});
+
+const NBSP = '\u00a0';
+
 export function formatCOP(amount: number): string {
   return COP_FORMATTER.format(amount);
+}
+
+/**
+ * Formato compacto para resúmenes. Por debajo de 1.000.000 usa el formato
+ * completo ("$ 850.000"); desde 1.000.000 usa millones con una decimal y coma
+ * ("$ 3,2 M", "$ 12 M"). Trunca la decimal (no redondea) y conserva el signo.
+ */
+export function formatCompactCOP(amount: number): string {
+  const sign = amount < 0 ? '-' : '';
+  const abs = Math.abs(amount);
+
+  if (abs < 1_000_000) {
+    return `${sign}${formatCOP(abs)}`;
+  }
+
+  const millions = Math.trunc(abs / 100_000) / 10;
+  return `${sign}$${NBSP}${MILLIONS_FORMATTER.format(millions)}${NBSP}M`;
 }
 
 /** Formato en palabras para etiquetas accesibles: `87.500 pesos`. */

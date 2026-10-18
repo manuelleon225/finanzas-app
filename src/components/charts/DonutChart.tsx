@@ -17,6 +17,7 @@ export type DonutChartProps = {
   centerValue: number;
   size?: number;
   thickness?: number;
+  legend?: boolean;
 };
 
 export function DonutChart({
@@ -25,6 +26,7 @@ export function DonutChart({
   centerValue,
   size = 180,
   thickness = 22,
+  legend = true,
 }: DonutChartProps) {
   const { colors, spacing } = useTheme();
   const total = segments.reduce((sum, segment) => sum + segment.value, 0);
@@ -83,18 +85,20 @@ export function DonutChart({
         </View>
       </View>
 
-      <View style={{ gap: spacing.sm }}>
-        {segments.map((segment, index) => (
-          <View key={index} style={styles.legendRow}>
-            <View style={[styles.dot, { backgroundColor: segment.color }]} />
-            <Text variant="caption" style={{ flex: 1 }}>
-              {segment.label}
-            </Text>
-            <Text variant="caption">{Math.round((segment.value / (total || 1)) * 100)}%</Text>
-            <MoneyText amount={segment.value} kind="neutral" size="caption" />
-          </View>
-        ))}
-      </View>
+      {legend ? (
+        <View style={{ gap: spacing.sm }}>
+          {segments.map((segment, index) => (
+            <View key={index} style={styles.legendRow}>
+              <View style={[styles.dot, { backgroundColor: segment.color }]} />
+              <Text variant="caption" style={{ flex: 1 }}>
+                {segment.label}
+              </Text>
+              <Text variant="caption">{Math.round((segment.value / (total || 1)) * 100)}%</Text>
+              <MoneyText amount={segment.value} kind="neutral" size="caption" />
+            </View>
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }

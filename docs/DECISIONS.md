@@ -60,3 +60,23 @@ al cambio correspondiente.
   cuentas compartidas y login social quedan **fuera del alcance**.
 - **Motivo:** enfocar el alcance actual en el core (registro, recurrencias, disponible hoy) y en los
   bloqueantes de publicación sin dispersar el esfuerzo.
+
+## 2026-10-15 — Rediseño visual v3 ("bloque de color")
+
+- **Decisión (a):** dirección visual v3 "bloque de color": un bloque azul de marca a todo ancho, con
+  la hoja (superficie) encima, como protagonista de cada pantalla.
+  **Motivo:** el v2 era plano y sin jerarquía; el bloque da un foco único por pantalla y separa la
+  identidad de marca de los colores del dinero. Los documentos v2 se conservan en
+  `docs/archive/DESIGN_SYSTEM_v2.md` y `docs/archive/UX_SPEC_v2.md`.
+- **Decisión (b):** íconos con Ionicons **rellenos** dentro de fichas de color, **sin nueva librería
+  de íconos**; `AppIcon` sigue siendo el único punto de acceso y permite cambiar de librería después
+  tocando un solo archivo.
+  **Motivo:** una ficha rellena se lee mejor a tamaños pequeños y no hace falta traer otra dependencia.
+- **Decisión (c):** **oscuro por defecto** con tema **claro soportado**.
+  **Motivo:** mantiene la preferencia del v2 y respeta la configuración del sistema.
+- **Decisión (d):** degradado **sutil** del bloque con `react-native-svg`, **sin dependencias nuevas**.
+  **Motivo:** dar profundidad sin sombras, con algo que ya está en el proyecto.
+- **Decisión (e):** formato **compacto** de montos grandes en los resúmenes: desde 1.000.000, una
+  decimal con coma y sin ".0" (p. ej. `$ 3,2 M`, `$ 3 M`).
+  **Motivo:** los montos grandes no caben en las tarjetas de resumen; el valor exacto se ve al abrir
+  el detalle.

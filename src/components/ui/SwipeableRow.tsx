@@ -64,10 +64,17 @@ export function SwipeableRowGroup({ children }: SwipeableRowGroupProps) {
 
 export type SwipeableRowProps = {
   onDelete: () => void;
+  actionLabel?: string;
+  actionIcon?: string;
   children: ReactNode;
 };
 
-export function SwipeableRow({ onDelete, children }: SwipeableRowProps) {
+export function SwipeableRow({
+  onDelete,
+  actionLabel = es.common.delete,
+  actionIcon = 'trash-outline',
+  children,
+}: SwipeableRowProps) {
   const { colors } = useTheme();
   const group = useContext(SwipeableRowGroupContext);
   const translateX = useSharedValue(0);
@@ -118,12 +125,12 @@ export function SwipeableRow({ onDelete, children }: SwipeableRowProps) {
         <Pressable
           onPress={handleDelete}
           accessibilityRole="button"
-          accessibilityLabel={es.common.delete}
+          accessibilityLabel={actionLabel}
           style={[styles.action, { backgroundColor: colors.danger }]}
         >
-          <AppIcon name="trash-outline" size={24} color={colors.onBrand} />
+          <AppIcon name={actionIcon} size={24} color={colors.onBrand} />
           <Text variant="micro" color={colors.onBrand}>
-            {es.common.delete}
+            {actionLabel}
           </Text>
         </Pressable>
       </View>
@@ -133,7 +140,7 @@ export function SwipeableRow({ onDelete, children }: SwipeableRowProps) {
           <Pressable
             onPress={() => group?.closeActive()}
             accessibilityRole="button"
-            accessibilityActions={[{ name: 'delete', label: es.common.delete }]}
+            accessibilityActions={[{ name: 'delete', label: actionLabel }]}
             onAccessibilityAction={(event) => {
               if (event.nativeEvent.actionName === 'delete') {
                 handleDelete();

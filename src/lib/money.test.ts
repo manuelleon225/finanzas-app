@@ -1,4 +1,10 @@
-import { formatCOP, formatPesos, isValidMoneyText, parseMoneyInput } from '@/lib/money';
+import {
+  formatCOP,
+  formatCompactCOP,
+  formatPesos,
+  isValidMoneyText,
+  parseMoneyInput,
+} from '@/lib/money';
 
 const NBSP = '\u00a0';
 
@@ -24,8 +30,37 @@ describe('formatCOP', () => {
   });
 });
 
+describe('formatCompactCOP', () => {
+  it('usa el formato completo para cero', () => {
+    expect(formatCompactCOP(0)).toBe(`$${NBSP}0`);
+  });
+
+  it('usa el formato completo por debajo del millón', () => {
+    expect(formatCompactCOP(850000)).toBe(`$${NBSP}850.000`);
+    expect(formatCompactCOP(999999)).toBe(`$${NBSP}999.999`);
+  });
+
+  it('desde un millón usa millones sin decimal si es entero', () => {
+    expect(formatCompactCOP(1000000)).toBe(`$${NBSP}1${NBSP}M`);
+    expect(formatCompactCOP(3000000)).toBe(`$${NBSP}3${NBSP}M`);
+    expect(formatCompactCOP(12000000)).toBe(`$${NBSP}12${NBSP}M`);
+  });
+
+  it('muestra una decimal con coma cuando aplica', () => {
+    expect(formatCompactCOP(1250000)).toBe(`$${NBSP}1,2${NBSP}M`);
+    expect(formatCompactCOP(3250000)).toBe(`$${NBSP}3,2${NBSP}M`);
+    expect(formatCompactCOP(15500000)).toBe(`$${NBSP}15,5${NBSP}M`);
+  });
+
+  it('conserva el signo negativo delante', () => {
+    expect(formatCompactCOP(-850000)).toBe(`-$${NBSP}850.000`);
+    expect(formatCompactCOP(-1000000)).toBe(`-$${NBSP}1${NBSP}M`);
+    expect(formatCompactCOP(-3250000)).toBe(`-$${NBSP}3,2${NBSP}M`);
+  });
+});
+
 describe('formatPesos', () => {
-  it('formats in words for accessible labels', () => {
+  it('formatea el monto en palabras', () => {
     expect(formatPesos(87500)).toBe('87.500 pesos');
     expect(formatPesos(0)).toBe('0 pesos');
   });

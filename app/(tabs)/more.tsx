@@ -2,62 +2,124 @@ import Constants from 'expo-constants';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { Alert, Switch, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 
 import {
   AppIcon,
+  BottomSheet,
   Card,
   Chip,
-  ListRow,
-  Screen,
+  IconTile,
   ScreenHeader,
-  SegmentedControl,
+  ScreenScaffold,
+  Switch,
   Text,
 } from '@/components/ui';
 import { signOut } from '@/features/auth/api/auth';
+import { useSession } from '@/features/auth/hooks/AuthProvider';
+import { useProfile } from '@/features/auth/hooks/useProfile';
 import { useBiometricStore } from '@/features/auth/store/useBiometricStore';
+import { AppearanceOptions } from '@/features/more/components/AppearanceOptions';
+import { ProfileCard } from '@/features/more/components/ProfileCard';
 import { remindersSupported } from '@/features/recurring/api/reminders';
 import {
   useReminderPrefs,
   type AnticipationDays,
 } from '@/features/recurring/store/useReminderPrefs';
-import { ExportSheet } from '@/features/transactions/components/ExportSheet';
 import { usePreferencesStore } from '@/features/summary/store/usePreferencesStore';
+import { ExportSheet } from '@/features/transactions/components/ExportSheet';
 import { es } from '@/i18n/es';
-import { useTheme, useThemeModeStore, type ThemeModePreference } from '@/theme';
+import {
+  componentHeights,
+  useTheme,
+  useThemeModeStore,
+  type ThemeModePreference,
+  type TileKey,
+} from '@/theme';
 
-type SwitchRowProps = {
-  title: string;
-  description?: string;
-  value: boolean;
-  onValueChange: (value: boolean) => void;
-  disabled?: boolean;
+const TILE_SIZE = 32;
+const TILE_RADIUS = 10;
+const TILE_ICON = 18;
+
+const APPEARANCE_LABEL: Record<ThemeModePreference, string> = {
+  system: es.more.appearanceSystem,
+  dark: es.more.appearanceDark,
+  light: es.more.appearanceLight,
 };
 
-function SwitchRow({ title, description, value, onValueChange, disabled = false }: SwitchRowProps) {
-  const { colors, spacing } = useTheme();
+type SettingRowProps = {
+  leading: ReactNode;
+  title: string;
+  description?: string;
+  titleColor?: string;
+  value?: string;
+  showChevron?: boolean;
+  trailing?: ReactNode;
+  onPress?: () => void;
+};
+
+function SettingRow({
+  leading,
+  title,
+  description,
+  titleColor,
+  value,
+  showChevron = false,
+  trailing,
+  onPress,
+}: SettingRowProps) {
+  const { colors, radii, spacing } = useTheme();
+
+  const content = (
+    <>
+      {leading}
+      <View style={{ flex: 1, gap: spacing.xs }}>
+        <Text variant="body" color={titleColor}>
+          {title}
+        </Text>
+        {description ? (
+          <Text variant="caption" color={colors.textSecondary}>
+            {description}
+          </Text>
+        ) : null}
+      </View>
+      {value ? (
+        <Text variant="caption" color={colors.textSecondary}>
+          {value}
+        </Text>
+      ) : null}
+      {trailing}
+      {showChevron ? (
+        <AppIcon name="chevron-forward-outline" size={20} color={colors.textMuted} />
+      ) : null}
+    </>
+  );
+
+  const baseStyle = {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: spacing.md,
+    minHeight: componentHeights.listRow,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.md,
+  };
+
+  if (!onPress) {
+    return <View style={baseStyle}>{content}</View>;
+  }
 
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: spacing.md,
-      }}
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={description ? `${title}. ${description}` : title}
+      style={({ pressed }) => [
+        baseStyle,
+        pressed ? { backgroundColor: colors.surfaceRaised } : null,
+      ]}
     >
-      <View style={{ flex: 1, gap: spacing.xs }}>
-        <Text variant="body">{title}</Text>
-        {description ? <Text variant="caption">{description}</Text> : null}
-      </View>
-      <Switch
-        value={value}
-        onValueChange={onValueChange}
-        disabled={disabled}
-        trackColor={{ true: colors.brand, false: colors.border }}
-        accessibilityLabel={title}
-      />
-    </View>
+      {content}
+    </Pressable>
   );
 }
 
@@ -67,7 +129,30 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <View style={{ gap: spacing.sm }}>
       <Text variant="caption">{title}</Text>
-      {children}
+      <Card style={{ gap: spacing.xs }}>{children}</Card>
+    </View>
+  );
+}
+
+function RowTile({ icon, tileKey }: { icon: string; tileKey: TileKey }) {
+  return <IconTile icon={icon} tileKey={tileKey} size={32} />;
+}
+
+function DangerTile({ icon }: { icon: string }) {
+  const { colors } = useTheme();
+
+  return (
+    <View
+      style={{
+        width: TILE_SIZE,
+        height: TILE_SIZE,
+        borderRadius: TILE_RADIUS,
+        backgroundColor: colors.dangerSoft,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <AppIcon name={icon} size={TILE_ICON} color={colors.danger} filled />
     </View>
   );
 }
@@ -77,6 +162,11 @@ export default function MoreScreen() {
   const { colors, spacing } = useTheme();
   const mode = useThemeModeStore((state) => state.mode);
   const setMode = useThemeModeStore((state) => state.setMode);
+  const [appearanceOpen, setAppearanceOpen] = useState(false);
+
+  const profile = useProfile();
+  const { user } = useSession();
+  const displayName = profile.data ?? user?.email?.split('@')[0] ?? '';
 
   const biometricEnabled = useBiometricStore((state) => state.biometricEnabled);
   const setBiometricEnabled = useBiometricStore((state) => state.setBiometricEnabled);
@@ -96,7 +186,6 @@ export default function MoreScreen() {
   );
 
   const appVersion = Constants.expoConfig?.version ?? '';
-  const chevron = <AppIcon name="chevron-forward-outline" size={20} color={colors.textMuted} />;
 
   async function toggleReminders(value: boolean) {
     if (!value) {
@@ -165,130 +254,143 @@ export default function MoreScreen() {
   }
 
   return (
-    <Screen scroll>
-      <View style={{ gap: spacing.lg, marginTop: spacing.lg }}>
-        <ScreenHeader title={es.more.title} />
+    <ScreenScaffold
+      variant="plain"
+      header={<ScreenHeader title={es.more.title} />}
+      contentContainerStyle={{ gap: spacing.md }}
+    >
+      <ProfileCard name={displayName} />
 
-        <Section title={es.more.sectionOrganization}>
-          <Card style={{ gap: spacing.xs }}>
-            <ListRow
-              icon="wallet-outline"
-              iconColor={colors.brand}
-              title={es.accounts.title}
-              trailing={chevron}
-              onPress={() => router.push('/accounts')}
-            />
-            <ListRow
-              icon="pricetags-outline"
-              iconColor={colors.brand}
-              title={es.categories.title}
-              trailing={chevron}
-              onPress={() => router.push('/categories')}
-            />
-          </Card>
-        </Section>
+      <Section title={es.more.sectionOrganization}>
+        <SettingRow
+          leading={<RowTile icon="wallet-outline" tileKey="blue" />}
+          title={es.accounts.title}
+          showChevron
+          onPress={() => router.push('/accounts')}
+        />
+        <SettingRow
+          leading={<RowTile icon="pricetags-outline" tileKey="violet" />}
+          title={es.categories.title}
+          showChevron
+          onPress={() => router.push('/categories')}
+        />
+      </Section>
 
-        <Section title={es.more.sectionPreferences}>
-          <Card style={{ gap: spacing.md }}>
-            <View style={{ gap: spacing.sm }}>
-              <Text variant="body">{es.more.appearance}</Text>
-              <SegmentedControl<ThemeModePreference>
-                options={[
-                  { label: es.more.appearanceSystem, value: 'system' },
-                  { label: es.more.appearanceDark, value: 'dark' },
-                  { label: es.more.appearanceLight, value: 'light' },
-                ]}
-                value={mode}
-                onChange={setMode}
-              />
-            </View>
-
-            <SwitchRow
-              title={es.home.includeExtrasInAvailable}
-              description={es.home.includeExtrasInAvailableHelp}
+      <Section title={es.more.sectionPreferences}>
+        <SettingRow
+          leading={<RowTile icon="color-palette-outline" tileKey="yellow" />}
+          title={es.more.appearance}
+          value={APPEARANCE_LABEL[mode]}
+          showChevron
+          onPress={() => setAppearanceOpen(true)}
+        />
+        <SettingRow
+          leading={<RowTile icon="sparkles-outline" tileKey="yellow" />}
+          title={es.home.includeExtrasInAvailable}
+          description={es.home.includeExtrasInAvailableHelp}
+          trailing={
+            <Switch
               value={includeExtrasInAvailable}
               onValueChange={setIncludeExtrasInAvailable}
+              accessibilityLabel={es.home.includeExtrasInAvailable}
             />
-
-            <View style={{ gap: spacing.xs }}>
-              <SwitchRow
-                title={es.biometric.enable}
-                description={es.biometric.enableDescription}
+          }
+        />
+        <View style={{ gap: spacing.xs }}>
+          <SettingRow
+            leading={<RowTile icon="finger-print-outline" tileKey="green" />}
+            title={es.biometric.enable}
+            description={es.biometric.enableDescription}
+            trailing={
+              <Switch
                 value={biometricEnabled}
                 onValueChange={(value) => void toggleBiometric(value)}
                 disabled={enabling}
+                accessibilityLabel={es.biometric.enable}
               />
-              {biometricError ? (
-                <Text variant="caption" color={colors.danger}>
-                  {biometricError}
-                </Text>
-              ) : null}
-            </View>
-
-            <View style={{ gap: spacing.sm }}>
-              <SwitchRow
-                title={es.reminders.enable}
-                description={es.reminders.enableDescription}
+            }
+          />
+          {biometricError ? (
+            <Text variant="caption" color={colors.danger}>
+              {biometricError}
+            </Text>
+          ) : null}
+        </View>
+        <View style={{ gap: spacing.sm }}>
+          <SettingRow
+            leading={<RowTile icon="notifications-outline" tileKey="orange" />}
+            title={es.reminders.enable}
+            description={es.reminders.enableDescription}
+            trailing={
+              <Switch
                 value={remindersEnabled}
                 onValueChange={(value) => void toggleReminders(value)}
                 disabled={togglingReminders}
+                accessibilityLabel={es.reminders.enable}
               />
-              {remindersEnabled ? (
-                <View style={{ gap: spacing.xs }}>
-                  <Text variant="caption">{es.reminders.anticipation}</Text>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-                    <Chip
-                      label={es.reminders.sameDay}
-                      selected={anticipationDays === 0}
-                      onPress={() => setAnticipationDays(0 as AnticipationDays)}
-                    />
-                    <Chip
-                      label={es.reminders.oneDayBefore}
-                      selected={anticipationDays === 1}
-                      onPress={() => setAnticipationDays(1 as AnticipationDays)}
-                    />
-                  </View>
-                </View>
-              ) : null}
+            }
+          />
+          {remindersEnabled ? (
+            <View style={{ gap: spacing.sm }}>
+              <Text variant="caption">{es.reminders.anticipation}</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+                <Chip
+                  label={es.reminders.sameDay}
+                  selected={anticipationDays === 0}
+                  onPress={() => setAnticipationDays(0 as AnticipationDays)}
+                />
+                <Chip
+                  label={es.reminders.oneDayBefore}
+                  selected={anticipationDays === 1}
+                  onPress={() => setAnticipationDays(1 as AnticipationDays)}
+                />
+              </View>
             </View>
-          </Card>
-        </Section>
+          ) : null}
+        </View>
+      </Section>
 
-        <Section title={es.more.sectionData}>
-          <Card style={{ gap: spacing.xs }}>
-            <ListRow
-              icon="download-outline"
-              iconColor={colors.brand}
-              title={es.export.title}
-              trailing={chevron}
-              onPress={() => setExportOpen(true)}
-            />
-          </Card>
-        </Section>
+      <Section title={es.more.sectionData}>
+        <SettingRow
+          leading={<RowTile icon="download-outline" tileKey="sky" />}
+          title={es.export.title}
+          showChevron
+          onPress={() => setExportOpen(true)}
+        />
+      </Section>
 
-        <Section title={es.more.sectionAccount}>
-          <Card style={{ gap: spacing.xs }}>
-            <ListRow
-              icon="log-out-outline"
-              iconColor={colors.textSecondary}
-              title={es.auth.logout}
-              onPress={confirmLogout}
-            />
-            <ListRow
-              icon="trash-outline"
-              iconColor={colors.danger}
-              title={es.more.deleteAccount}
-              onPress={() => router.push('/delete-account')}
-            />
-          </Card>
-        </Section>
+      <Section title={es.more.sectionAccount}>
+        <SettingRow
+          leading={<RowTile icon="log-out-outline" tileKey="gray" />}
+          title={es.auth.logout}
+          onPress={confirmLogout}
+        />
+        <SettingRow
+          leading={<DangerTile icon="trash-outline" />}
+          title={es.more.deleteAccount}
+          titleColor={colors.danger}
+          onPress={() => router.push('/delete-account')}
+        />
+      </Section>
 
-        <Text variant="caption" align="center">
-          {es.more.version.replace('{version}', appVersion)}
-        </Text>
-      </View>
+      <Text variant="caption" align="center">
+        {es.more.version.replace('{version}', appVersion)}
+      </Text>
+
+      <BottomSheet visible={appearanceOpen} onClose={() => setAppearanceOpen(false)}>
+        <View style={{ gap: spacing.md }}>
+          <Text variant="subtitle">{es.more.appearance}</Text>
+          <AppearanceOptions
+            value={mode}
+            onChange={(next) => {
+              setMode(next);
+              setAppearanceOpen(false);
+            }}
+          />
+        </View>
+      </BottomSheet>
 
       <ExportSheet visible={exportOpen} onClose={() => setExportOpen(false)} />
-    </Screen>
+    </ScreenScaffold>
   );
 }

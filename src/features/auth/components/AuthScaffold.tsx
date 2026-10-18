@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
-import { Screen, Text } from '@/components/ui';
+import { ScreenScaffold, Text } from '@/components/ui';
 import { useTheme } from '@/theme';
 
 export type AuthScaffoldProps = {
@@ -14,7 +14,25 @@ export function AuthScaffold({ title, support, children }: AuthScaffoldProps) {
   const { colors, spacing } = useTheme();
 
   return (
-    <Screen scroll={false}>
+    <ScreenScaffold
+      variant="block"
+      scroll={false}
+      header={
+        <View style={{ gap: spacing.xs }}>
+          <Text variant="display" color={colors.onBrand}>
+            Finanzas
+          </Text>
+          <Text variant="title" color={colors.onBrand}>
+            {title}
+          </Text>
+          {support ? (
+            <Text variant="caption" color={colors.onBrandMuted}>
+              {support}
+            </Text>
+          ) : null}
+        </View>
+      }
+    >
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -23,23 +41,16 @@ export function AuthScaffold({ title, support, children }: AuthScaffoldProps) {
           style={styles.flex}
           contentContainerStyle={{
             flexGrow: 1,
-            gap: spacing.xl,
-            paddingTop: spacing.xxl,
+            gap: spacing.md,
+            paddingTop: spacing.lg,
             paddingBottom: spacing.xl,
           }}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={{ gap: spacing.xs }}>
-            <Text variant="display" color={colors.brand}>
-              Finanzas
-            </Text>
-            <Text variant="title">{title}</Text>
-            {support ? <Text variant="caption">{support}</Text> : null}
-          </View>
-          <View style={{ gap: spacing.md }}>{children}</View>
+          {children}
         </ScrollView>
       </KeyboardAvoidingView>
-    </Screen>
+    </ScreenScaffold>
   );
 }
 

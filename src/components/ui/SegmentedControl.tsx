@@ -19,10 +19,13 @@ export type SegmentedControlOption<T extends string> = {
   value: T;
 };
 
+export type SegmentedControlTone = 'default' | 'onBlock';
+
 export type SegmentedControlProps<T extends string> = {
   options: SegmentedControlOption<T>[];
   value: T;
   onChange: (value: T) => void;
+  tone?: SegmentedControlTone;
   style?: ViewStyle;
 };
 
@@ -30,9 +33,11 @@ export function SegmentedControl<T extends string>({
   options,
   value,
   onChange,
+  tone = 'default',
   style,
 }: SegmentedControlProps<T>) {
   const { colors, radii, componentHeights } = useTheme();
+  const onBlock = tone === 'onBlock';
   const [containerWidth, setContainerWidth] = useState(0);
   const reduceMotion = useReducedMotion();
 
@@ -67,7 +72,7 @@ export function SegmentedControl<T extends string>({
       style={[
         styles.container,
         {
-          backgroundColor: colors.surface,
+          backgroundColor: onBlock ? colors.blockSoft : colors.surface,
           borderRadius: radii.pill,
           height: componentHeights.segmented,
           padding: PADDING,
@@ -83,7 +88,7 @@ export function SegmentedControl<T extends string>({
             width: segmentWidth,
             height: componentHeights.segmented - PADDING * 2,
             borderRadius: radii.pill,
-            backgroundColor: colors.surfaceHigh,
+            backgroundColor: onBlock ? colors.onBrand : colors.surfaceHigh,
           },
           pillStyle,
         ]}
@@ -101,9 +106,21 @@ export function SegmentedControl<T extends string>({
             accessibilityRole="radio"
             accessibilityLabel={option.label}
             accessibilityState={{ selected: active }}
+            hitSlop={{ top: 2, bottom: 2 }}
             style={styles.segment}
           >
-            <Text variant="caption" color={active ? colors.textPrimary : colors.textSecondary}>
+            <Text
+              variant="caption"
+              color={
+                active
+                  ? onBlock
+                    ? colors.brand
+                    : colors.textPrimary
+                  : onBlock
+                    ? colors.onBrandMuted
+                    : colors.textSecondary
+              }
+            >
               {option.label}
             </Text>
           </Pressable>

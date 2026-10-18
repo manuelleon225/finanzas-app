@@ -12,7 +12,7 @@ import { tint, useTheme } from '@/theme';
 
 import { Text } from './Text';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive' | 'onBrand';
 
 export type ButtonProps = {
   title: string;
@@ -59,6 +59,10 @@ export function Button({
     backgroundColor = colors.danger;
     textColor = colors.onBrand;
     pressedBackground = tint(colors.danger, 0.85);
+  } else if (variant === 'onBrand') {
+    backgroundColor = colors.onBrand;
+    textColor = colors.brand;
+    pressedBackground = colors.onBrandMuted;
   }
 
   return (
@@ -73,7 +77,7 @@ export function Button({
         styles.base,
         {
           backgroundColor,
-          borderRadius: radii.button,
+          borderRadius: radii.lg,
           height: componentHeights.button,
           paddingHorizontal: spacing.lg,
         },

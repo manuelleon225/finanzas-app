@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Animated, Pressable, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '@/theme';
 
@@ -21,22 +21,65 @@ export function Snackbar({
   onAction,
 }: SnackbarProps) {
   const { colors, radii, spacing } = useTheme();
+  const [visible, setVisible] = useState(!!message);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const [opacity] = useState(() => new Animated.Value(message ? 1 : 0));
+  const [translateY] = useState(() => new Animated.Value(message ? 0 : 16));
 
   useEffect(() => {
-    if (!message) {
-      return;
+    let mounted = true;
+    const { AccessibilityInfo } = require('react-native');
+    AccessibilityInfo.isReduceMotionEnabled().then((value: boolean) => {
+      if (mounted) {
+        setReduceMotion(value);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (message) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setVisible(true);
+      if (reduceMotion) {
+        opacity.setValue(1);
+        translateY.setValue(0);
+      } else {
+        opacity.setValue(0);
+        translateY.setValue(16);
+        Animated.parallel([
+          Animated.timing(opacity, { toValue: 1, duration: 220, useNativeDriver: true }),
+          Animated.timing(translateY, { toValue: 0, duration: 220, useNativeDriver: true }),
+        ]).start();
+      }
+      const timer = setTimeout(onDismiss, durationMs);
+      return () => clearTimeout(timer);
     }
 
-    const timer = setTimeout(onDismiss, durationMs);
-    return () => clearTimeout(timer);
-  }, [message, onDismiss, durationMs]);
+    if (visible) {
+      if (reduceMotion) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setVisible(false);
+        opacity.setValue(0);
+        translateY.setValue(16);
+      } else {
+        Animated.parallel([
+          Animated.timing(opacity, { toValue: 0, duration: 150, useNativeDriver: true }),
+          Animated.timing(translateY, { toValue: 16, duration: 150, useNativeDriver: true }),
+        ]).start(() => setVisible(false));
+      }
+    }
+    return undefined;
+  }, [message, reduceMotion, durationMs, onDismiss, visible, opacity, translateY]);
 
-  if (!message) {
+  if (!visible) {
     return null;
   }
 
   return (
-    <View
+    <Animated.View
       style={[
         styles.snackbar,
         {
@@ -44,6 +87,8 @@ export function Snackbar({
           borderRadius: radii.md,
           padding: spacing.md,
           gap: spacing.sm,
+          opacity,
+          transform: [{ translateY }],
         },
       ]}
     >
@@ -57,7 +102,7 @@ export function Snackbar({
           </Text>
         </Pressable>
       ) : null}
-    </View>
+    </Animated.View>
   );
 }
 

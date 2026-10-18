@@ -1,4 +1,5 @@
-import { colors } from '../colors';
+import { colors, type ThemeColors } from '../colors';
+import { tilePalette, type TileKey } from '../tilePalette';
 
 function channel(value: number): number {
   const c = value / 255;
@@ -18,13 +19,9 @@ function contrast(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-type Pairs = [
-  fg: keyof (typeof colors)['dark'],
-  bg: keyof (typeof colors)['dark'],
-  label: string,
-][];
+type TextPair = [fg: keyof ThemeColors, bg: keyof ThemeColors, label: string];
 
-const pairs: Pairs = [
+const pairs: TextPair[] = [
   ['textPrimary', 'bg', 'textPrimary/bg'],
   ['textPrimary', 'surface', 'textPrimary/surface'],
   ['textPrimary', 'surfaceRaised', 'textPrimary/surfaceRaised'],
@@ -34,10 +31,19 @@ const pairs: Pairs = [
   ['textMuted', 'bg', 'textMuted/bg'],
   ['textMuted', 'surface', 'textMuted/surface'],
   ['onBrand', 'brand', 'onBrand/brand'],
+  ['onBrand', 'brandDeep', 'onBrand/brandDeep'],
+  ['onBrandMuted', 'brand', 'onBrandMuted/brand'],
+  ['onBrandMuted', 'brandDeep', 'onBrandMuted/brandDeep'],
+  ['brandText', 'bg', 'brandText/bg'],
+  ['brandText', 'surface', 'brandText/surface'],
+  ['brandText', 'brandSoft', 'brandText/brandSoft'],
   ['income', 'surface', 'income/surface'],
   ['expense', 'surface', 'expense/surface'],
   ['extra', 'surface', 'extra/surface'],
+  ['danger', 'surface', 'danger/surface'],
 ];
+
+const tileKeys = Object.keys(tilePalette) as TileKey[];
 
 describe('contraste WCAG (mínimo 4.5:1)', () => {
   for (const mode of ['dark', 'light'] as const) {
@@ -46,6 +52,20 @@ describe('contraste WCAG (mínimo 4.5:1)', () => {
       it(`${mode}: ${label}`, () => {
         const ratio = contrast(t[fg], t[bg]);
         expect(ratio).toBeGreaterThanOrEqual(4.5);
+      });
+    }
+  }
+});
+
+describe('contraste de fichas (mínimo 3:1)', () => {
+  for (const mode of ['dark', 'light'] as const) {
+    for (const key of tileKeys) {
+      it(`${mode}: ${key}`, () => {
+        const tile = tilePalette[key];
+        const bg = mode === 'light' ? tile.lightBg : tile.darkBg;
+        const icon = mode === 'light' ? tile.lightIcon : tile.darkIcon;
+        const ratio = contrast(icon, bg);
+        expect(ratio).toBeGreaterThanOrEqual(3);
       });
     }
   }

@@ -21,9 +21,10 @@ Diferenciadores:
 3. **Registro rápido**: agregar un movimiento en 2–3 toques (botón **(+)** central + categoría),
    con montos recordados y sin botón de guardar.
 
-Estado: **MVP completo (fases 1–9) + rediseño v2 (fases R0–R6)**. Verificado en dispositivo, en
-verificación de cierre (R6.4). **No publicado** (publicación = P10.1 de la guía anterior, aún en
-espera).
+Estado: **MVP completo (fases 1–9) + rediseño v2 (R0–R6) + rediseño v3 "bloque de color"
+(R7.0–R7.14)**. Verificado por fases; cierre v3 en QA manual (R7.14). **No publicado**
+(publicación = P10.1, aún en espera). Rama de trabajo: `feat/ui-v3`; el PR va de `feat/ui-v3` →
+`feat/redesign` → `main`.
 
 ---
 
@@ -37,7 +38,7 @@ espera).
 - **Zustand 5** (solo UI; stores persistidos: tema, preferencias, prefs de recordatorios,
   biometría; en memoria: `useAuthLinkStore`).
 - **react-hook-form 7** + **zod 4** (formularios/validación).
-- **date-fns 4** (fechas). **@expo-google-fonts/manrope** (tipografía v2).
+- **date-fns 4** (fechas). **@expo-google-fonts/manrope** (tipografía v3).
 - **react-native-svg 15** (gráficos propios), **react-native-reanimated 4** +
   **react-native-gesture-handler** (BottomSheet, SwipeableRow, animaciones).
 - **expo-haptics**, **expo-local-authentication**, **expo-secure-store**, **expo-notifications**
@@ -71,7 +72,7 @@ src/
       api/ hooks/ components/ utils/ store/
   lib/                      # supabase, queryClient, persister, netinfo, money, dates,
                             #   haptics, snackbar, useConnectivity
-  theme/                    # tokens v2 (colors, typography, spacing, radii, metrics, tint)
+  theme/                    # tokens v3 (colors, typography, spacing, radii, metrics, tint, tilePalette)
   i18n/es.ts                # TODOS los textos de UI en español
   types/database.ts         # tipos del esquema (a mano)
 supabase/
@@ -168,24 +169,32 @@ docs/                       # PRD, ARCHITECTURE, DATA_MODEL, DESIGN_SYSTEM, UX_S
 
 ---
 
-## 6. Sistema de diseño y UI (v2)
+## 6. Sistema de diseño y UI (v3)
 
 Fuente de verdad: `docs/DESIGN_SYSTEM.md` (visual) y `docs/UX_SPEC.md` (estructura y textos). No se
 inventan valores: todo sale de `src/theme`.
 
+La v3 ("bloque de color") gira alrededor de un **bloque** superior a color (marca o degradado
+marca→marca→fondo según la pantalla) con el título en `onBrand`, y un **Sheet** (superficie con
+esquinas redondeadas) que contiene el resto del contenido. `ScreenScaffold` con `variant="block"`
+arma ese bloque + sheet; `variant="plain"` deja solo el sheet.
+
 - **Tokens** (`src/theme`): color claro/oscuro (marca **índigo** `brand`; semánticos `income`
   verde, `expense` coral, `extra` ámbar, `danger`), tipografía Manrope (`displayLg`, `display`,
   `title`, `subtitle`, `body`, `bodyStrong`, `caption`, `micro`), espaciado, radios, alturas y
-  duraciones. Helper `tint(color, opacity)`. Test de contraste WCAG AA (`contrast.test.ts`).
-- **Componentes** (`src/components/ui`): Screen, Text, Button (primary/secondary/ghost/
-  destructive), Input, Card, Chip, SegmentedControl, ListRow, Tag, ProgressBar, StackedBar,
-  BottomSheet, Skeleton, EmptyState/LoadingState/ErrorState, Snackbar(+Host), MoneyText,
-  AnimatedNumber, NumericKeypad, SwipeableRow, MonthSelector, ScreenHeader, IconButton, AppIcon
-  (único punto de acceso a Ionicons), ConnectivityPill, TabBar. Gráficos en
+  duraciones. `tilePalette` (`TileKey` + `resolveTileKey`) + `categoryPalette` (12 colores de
+  ficha) para `IconTile`. Helper `tint(color, opacity)`. Test de contraste WCAG AA
+  (`contrast.test.ts`).
+- **Componentes** (`src/components/ui`): `ScreenScaffold` (+ `BlockHeader`/`Sheet`), Screen, Text,
+  Button, Input, Card, Chip, SegmentedControl, ListRow, Tag, ProgressBar, StackedBar, BottomSheet,
+  Skeleton, EmptyState/LoadingState/ErrorState, Snackbar(+Host), MoneyText, AnimatedNumber,
+  NumericKeypad, SwipeableRow, MonthSelector, ScreenHeader, IconButton, IconTile, Avatar, Switch,
+  AppIcon (único punto de acceso a Ionicons), ConnectivityPill, TabBar. Gráficos en
   `src/components/charts` (DonutChart, GroupedBarChart).
 - **Reglas**: sin sombras (jerarquía por tonos/tamaño/espacio); un solo botón primary por vista;
   ámbar exclusivo de "extra"; prohibidos hex/rgb y valores sueltos fuera de `src/theme` (regla de
-  lint); nunca importar Ionicons fuera de `AppIcon`.
+  lint); nunca importar Ionicons fuera de `AppIcon`; áreas táctiles de 44 px (con `hitSlop` cuando el
+  control es más bajo).
 - **Haptics** (`src/lib/haptics.ts`): `tap` (botón primary y +), `select` (chips, segmentos,
   teclas), `success` (guardar), `warning` (eliminar), `error` (validación fallida).
 - **Dinero**: entero de pesos, formateo `Intl es-CO` (usa `\u00a0` tras `$`); signo según el tipo;
@@ -279,9 +288,11 @@ inventan valores: todo sale de `src/theme`.
 ### 7.8 Análisis (`src/features/analysis`)
 - `utils/analysis.ts` (puras): `spendingByCategory` (agrupa subcategorías en la madre y el resto en
   "Otros", top 6), `monthlyTrend` (6 meses), `extraShareByMonth`, `buildInsights` (0–3 frases).
+  `utils/sliceColors.ts` (pura) asigna color de ficha a cada porción del donut ("Otros" → gris).
   `utils/pagination.ts` pagina en bloques de 1000.
-- Pantalla `analysis.tsx`: insights, SegmentedControl Gastos|Ingresos con DonutChart + lista por
-  categoría, "Últimos 6 meses" (GroupedBarChart), "Base y extras". Estados carga/vacío/error.
+- Pantalla `analysis.tsx` (v3): bloque con título + MonthSelector + primera frase de `buildInsights`
+  en `onBrand`; sheet con SegmentedControl Gastos|Ingresos y donut + lista por categoría,
+  "Últimos 6 meses" (GroupedBarChart) y "Base y extras" (StackedBar). Estados carga/vacío/error.
 
 ### 7.9 Exportar (`src/features/transactions` + Más)
 - `ExportSheet` (BottomSheet) desde Más: rango Este mes / Este año / Todo; genera CSV con
@@ -292,7 +303,7 @@ inventan valores: todo sale de `src/theme`.
 ## 8. Testing y calidad
 
 - Comandos: `npm run typecheck` (tsc --noEmit), `npm run lint`, `npm test` (jest), `npm run format`.
-- **343 tests** en verde (51 suites): tema/contraste, money, dates, resumen y "Disponible hoy",
+- **509 tests** en verde (71 suites): tema/contraste, money, dates, resumen y "Disponible hoy",
   recurrencia y generación, notificaciones, presupuestos, análisis, offline, deep links, CSV,
   componentes UI, schemas, etc.
 - `npm audit`: 67 avisos (17 moderate, 50 high, 0 critical); casi todos en dev/build tooling. En
@@ -380,16 +391,41 @@ inventan valores: todo sale de `src/theme`.
 | R6.3 | Auditoría de seguridad y dependencias | ✅ |
 | R6.4 | Checklist de QA y cierre (QA_CHECKLIST.md, guía, limpieza) | ✅ |
 
+### Guía 3 (R7.0 – R7.14): rediseño v3 "bloque de color"
+
+| Prompt | Qué se hizo | Estado |
+|---|---|---|
+| R7.0 | Rama `feat/ui-v3` y documentos del diseño v3 (AGENTS, DECISIONS, guía) | ✅ |
+| R7.1 | Tokens v3 (colores, tipografía, radios, `tilePalette`/`categoryPalette`) y tests de contraste | ✅ |
+| R7.2 | Barras del sistema (edges-to-edge, fondo del bloque en las franjas) | ✅ |
+| R7.3 | Iconos rellenos y fichas de color (`IconTile`) | ✅ |
+| R7.4 | Piezas base: bloque, `Sheet`, `Switch`, `Avatar` y variantes | ✅ |
+| R7.5 | Barra de pestañas v3 | ✅ |
+| R7.6 | Inicio | ✅ |
+| R7.7 | Registro rápido | ✅ |
+| R7.8 | Movimientos | ✅ |
+| R7.9 | Planificar y Presupuestos | ✅ |
+| R7.10 | Más | ✅ |
+| R7.11 | Cuentas y Categorías | ✅ |
+| R7.12 | Login, registro y estados vacíos y de error | ✅ |
+| R7.13 | Análisis | ✅ |
+| R7.14 | Auditoría final y limpieza (esta tarea) | ✅ |
+
 ---
 
 ## 11. Estado actual y pendientes
 
-**Completado:** MVP (fases 1–9) + rediseño v2 (R0–R5) y bloqueantes de publicación (R6.1–R6.3).
-En confirmación de cierre (R6.4).
+**Completado:** MVP (fases 1–9) + rediseño v2 (R0–R6) + rediseño v3 "bloque de color"
+(R7.0–R7.14) en código, con calidad en verde. Las pantallas recurrentes y "Eliminar cuenta" no
+tienen prompt R7: conservan la estructura v2 (ver diferencias con los docs más abajo).
 
 **Pendientes / decisiones abiertas:**
-- **✋ Verificación manual R6.4**: ejecutar `docs/QA_CHECKLIST.md` en dispositivo real y enviar
-  capturas finales para la última revisión de diseño.
+- **✋ QA visual v3 (`docs/QA_VISUAL.md`)**: recorrer la lista en dispositivo real, en claro y
+  oscuro, y enviar capturas finales de las pantallas principales.
+- **✋ Diferencias docs ↔ código v3**: ver `CLAUDE.md` §17 para el detalle (p. ej. `Screen` v2 aún
+  en uso, posición del `Snackbar`, `recurring*` y `delete-account` sin rediseñar). No editar
+  `docs/DESIGN_SYSTEM.md` ni `docs/UX_SPEC.md` sin decisión.
+- **✋ Abrir PR** de `feat/ui-v3` → `feat/redesign` → `main`.
 - **✋ Pasos manuales heredados**: ejecutar `003_rls_test_v2.sql` con dos usuarios; desplegar la
   Edge Function `delete-account`; en Supabase agregar Redirect URLs `finanzas://**` y `exp://**`,
   reactivar "Confirm email" y probar los flujos de correo.
@@ -424,3 +460,8 @@ En confirmación de cierre (R6.4).
 ---
 
 *Fin de la guía. Actualiza este documento cuando cambien decisiones importantes.*
+
+## Estado R8
+
+R8.2-R8.6 aplicados.
+

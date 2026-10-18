@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
+
+import { PressableScale } from './PressableScale';
 
 import { tint, useTheme } from '@/theme';
 
@@ -8,8 +10,9 @@ import { Text } from './Text';
 import { Tag, type TagTone } from './Tag';
 
 export type ListRowProps = {
-  icon: string;
-  iconColor: string;
+  icon?: string;
+  iconColor?: string;
+  leading?: ReactNode;
   title: string;
   subtitle?: string;
   trailing?: ReactNode;
@@ -21,6 +24,7 @@ export type ListRowProps = {
 export function ListRow({
   icon,
   iconColor,
+  leading,
   title,
   subtitle,
   trailing,
@@ -31,7 +35,7 @@ export function ListRow({
   const { colors, componentHeights } = useTheme();
 
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={subtitle ? `${title}. ${subtitle}` : title}
@@ -44,9 +48,17 @@ export function ListRow({
         style,
       ]}
     >
-      <View style={[styles.circle, { backgroundColor: tint(iconColor, 0.16) }]}>
-        <AppIcon name={icon} size={20} color={iconColor} />
-      </View>
+      {leading ??
+        (icon ? (
+          <View
+            style={[
+              styles.circle,
+              { backgroundColor: tint(iconColor ?? colors.textSecondary, 0.16) },
+            ]}
+          >
+            <AppIcon name={icon} size={20} color={iconColor ?? colors.textSecondary} />
+          </View>
+        ) : null)}
       <View style={styles.body}>
         <View style={styles.titleRow}>
           <Text variant="body" numberOfLines={1} style={{ flexShrink: 1 }}>
@@ -61,7 +73,7 @@ export function ListRow({
         ) : null}
       </View>
       {trailing}
-    </Pressable>
+    </PressableScale>
   );
 }
 

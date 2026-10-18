@@ -211,7 +211,14 @@ describe('buildInsights', () => {
     const insights = buildInsights({
       trend,
       topExpenses: [
-        { categoryId: 'food', name: 'Comida', color: null, amount: 100, percentage: 60 },
+        {
+          categoryId: 'food',
+          name: 'Comida',
+          color: null,
+          icon: null,
+          amount: 100,
+          percentage: 60,
+        },
       ],
     });
     expect(insights.some((line) => line.includes('Comida'))).toBe(true);

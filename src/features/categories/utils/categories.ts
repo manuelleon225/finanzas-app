@@ -1,5 +1,5 @@
 import { es } from '@/i18n/es';
-import { categoryPalette } from '@/theme';
+import { categoryPalette, resolveTileKey, type TileKey } from '@/theme';
 import type { Tables } from '@/types/database';
 
 export type CategoryKind = 'income' | 'expense';
@@ -32,6 +32,11 @@ export const ICON_SET: string[] = [
 ];
 
 export const COLOR_PALETTE: string[] = categoryPalette;
+
+/** Ficha (TileKey) que corresponde a un color guardado, ignorando el nombre. */
+export function colorTileKey(color: string, kind: CategoryKind): TileKey {
+  return resolveTileKey({ name: '', kind, color });
+}
 
 export type CategoryWithChildren = {
   category: Category;
@@ -71,6 +76,20 @@ export function mergeCategories(active: Category[], additions: Category[]): Cate
   }
 
   return merged;
+}
+
+/**
+ * Subtítulo de una categoría principal (v3 §"Categorías"): "1 subcategoría" o
+ * "N subcategorías" si tiene hijas; `undefined` si no tiene.
+ */
+export function categorySubtitle(childrenCount: number): string | undefined {
+  if (childrenCount <= 0) {
+    return undefined;
+  }
+
+  return childrenCount === 1
+    ? es.categories.subcategoryOne
+    : es.categories.subcategoryMany.replace('{count}', String(childrenCount));
 }
 
 export type ValidateCategoryNameParams = {

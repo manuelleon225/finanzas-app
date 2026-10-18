@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
-import { useTheme } from '@/theme';
+import { fontSizes, useTheme } from '@/theme';
 
 import { Text } from './Text';
 
@@ -40,7 +40,7 @@ export function Input({
           {
             backgroundColor: colors.surfaceRaised,
             borderColor,
-            borderRadius: radii.md,
+            borderRadius: radii.lg,
             height: componentHeights.input,
             paddingHorizontal: spacing.md,
           },
@@ -89,6 +89,6 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
     paddingVertical: 0,
-    fontSize: 15,
+    fontSize: fontSizes.body,
   },
 });

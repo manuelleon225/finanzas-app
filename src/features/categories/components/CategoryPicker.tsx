@@ -56,8 +56,8 @@ export function CategoryPicker({ kind, value, onChange, additionIds }: CategoryP
             style={[
               styles.chip,
               {
-                borderColor: selected ? colors.primary : colors.border,
-                backgroundColor: selected ? colors.primary : colors.surface,
+                borderColor: selected ? colors.brand : colors.border,
+                backgroundColor: selected ? colors.brand : colors.surface,
                 borderRadius: radii.pill,
                 paddingHorizontal: spacing.md,
               },
@@ -65,10 +65,10 @@ export function CategoryPicker({ kind, value, onChange, additionIds }: CategoryP
           >
             <CategoryIcon
               icon={category.icon}
-              color={selected ? colors.onPrimary : category.color}
+              color={selected ? colors.onBrand : category.color}
               size={16}
             />
-            <Text variant="caption" color={selected ? colors.onPrimary : colors.textPrimary}>
+            <Text variant="caption" color={selected ? colors.onBrand : colors.textPrimary}>
               {category.name}
             </Text>
           </Pressable>
