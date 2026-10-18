@@ -242,6 +242,32 @@ describe('DailySpendingCard', () => {
     expect(getByText(formatCompactCOP(35000))).toBeTruthy();
   });
 
+  it('oculta el monto al tocar la misma barra', async () => {
+    const { getByLabelText, queryByText } = await render(<DailySpendingCard daily={dailyPoints} />);
+
+    await fireEvent.press(getByLabelText(barLabel('2026-10-07', 35000)));
+    await fireEvent.press(getByLabelText(barLabel('2026-10-07', 35000)));
+    expect(queryByText(formatCompactCOP(35000))).toBeNull();
+  });
+
+  it('mueve la etiqueta al tocar otra barra', async () => {
+    const points = dailyPoints.map((point, index) =>
+      index === 5 ? { ...point, total: 10000 } : point,
+    );
+    const { getByLabelText, getByText, queryByText } = await render(
+      <DailySpendingCard daily={points} />,
+    );
+
+    await fireEvent.press(getByLabelText(barLabel('2026-10-07', 35000)));
+    await fireEvent.press(
+      getByLabelText(
+        es.home.dailyBar.replace('{dia}', 'martes').replace('{monto}', formatPesos(10000)),
+      ),
+    );
+    expect(getByText(formatCompactCOP(10000))).toBeTruthy();
+    expect(queryByText(formatCompactCOP(35000))).toBeNull();
+  });
+
   it('no muestra la tarjeta mientras carga', async () => {
     const { queryByText } = await render(<DailySpendingCard daily={[]} isLoading />);
 
